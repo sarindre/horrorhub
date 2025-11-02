@@ -1,0 +1,34 @@
+#+ Dependencies
+node_modules/
+
+#+ Build outputs
+dist/
+build/
+
+#+ Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+#+ Env & local config (keep secrets out of git)
+.env
+.env.*
+
+#+ Vite/Cache
+.vite/
+.vite-cache/
+
+#+ Coverage
+coverage/
+
+#+ Editors/OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+#+ Misc
+*.local
+*.swp
+*.swo
