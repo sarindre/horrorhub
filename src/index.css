@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Creepster&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -73,16 +74,18 @@
 .lightsout-dim {
   position: fixed;
   inset: 0;
-  background: radial-gradient(80% 80% at 50% 50%, rgba(0,0,0,0.2), rgba(0,0,0,0.75)),
-              rgba(0,0,0,0.55);
+  /* Slightly lighter dim with a softer falloff */
+  background: radial-gradient(75% 75% at 50% 50%, rgba(0,0,0,0.15), rgba(0,0,0,0.55)),
+              rgba(0,0,0,0.35);
   pointer-events: none;
 }
 .candle-spot {
   position: absolute;
-  left: 50%; top: 55%; width: 22vw; height: 22vw; transform: translate(-50%,-50%);
-  background: radial-gradient(circle at 50% 50%, rgba(255,199,120,0.12), rgba(255,199,120,0.0) 60%);
+  left: 50%; top: 55%; width: 28vw; height: 28vw; transform: translate(-50%,-50%);
+  /* Warmer, brighter inner glow */
+  background: radial-gradient(circle at 50% 50%, rgba(255,210,140,0.22), rgba(255,210,140,0.0) 65%);
   animation: candleFlicker 6s ease-in-out infinite;
-  filter: blur(10px);
+  filter: blur(12px);
 }
 @keyframes candleFlicker {
   0%,100% { opacity: 0.18; }
