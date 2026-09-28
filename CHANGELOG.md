@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Added the refresh roadmap in [BACKLOG.md](BACKLOG.md), outlining the next major horror-focused product improvements.
 - Captured the first product refresh priorities for HorrorHub, centered on discovery intelligence, watch planning, and horror-specific personalization.
 - Implemented the first real refresh feature: a horror-vibe mood selection system that lets users filter their library and sharpen recommendations by style such as atmospheric, slasher, occult, found footage, body horror, and cosmic.
+- Added a Creature Feature mood preset and a library "Max scares" intensity filter; the mood-based picks heading now shows the active vibe and scare level.
 
 ### Planned roadmap items
 - Mood-based horror matching

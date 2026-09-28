@@ -36,6 +36,10 @@ Implementation notes:
 - Added a visible mood preset selector in the library and recommendations UI
 - Library filtering now supports matching a selected horror vibe against tags
 - Recommendation scoring boosts titles that match the chosen preset
+- Added a Creature Feature preset and narrowed Body Horror to gore/body-horror/disturbing/sci-horror tags
+- Added a "Max scares" intensity slider to the library filters (titles with no scare score stay visible)
+- Mood-based picks heading now shows the active vibe and scare level
+- Remaining: TMDb "similar" picks are not yet mood-aware; add a found-footage-style dread/cosmic tuning pass once tag data is richer
 
 ### 2. Smart recommendation engine
 Status: Planned

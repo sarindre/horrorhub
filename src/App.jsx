@@ -175,7 +175,8 @@ const MOOD_PRESETS = [
   { id: "atmospheric", label: "Atmospheric", tags: ["slow-burn", "folk-horror", "haunted", "psychological", "arthouse"] },
   { id: "slasher", label: "Slasher", tags: ["slasher", "home-invasion", "survival", "campy", "classic"] },
   { id: "found-footage", label: "Found Footage", tags: ["found-footage", "found footage", "survival", "supernatural", "haunted"] },
-  { id: "body-horror", label: "Body Horror", tags: ["gore", "body-horror", "disturbing", "zombie", "creature"] },
+  { id: "body-horror", label: "Body Horror", tags: ["gore", "body-horror", "disturbing", "sci-horror"] },
+  { id: "creature", label: "Creature Feature", tags: ["creature", "zombie", "vampire", "sci-horror", "campy"] },
   { id: "occult", label: "Occult", tags: ["occult", "possession", "vampire", "supernatural", "haunted"] },
   { id: "cosmic", label: "Cosmic", tags: ["cosmic", "sci-horror", "psychological", "arthouse", "occult"] },
 ];
@@ -1240,6 +1241,7 @@ function LibraryView({ items, onUpdate, onRemove, apiKey, onOpenDetails }) {
   const [tagFilter, setTagFilter] = useState("");
   const [moodFilter, setMoodFilter] = useState("all");
   const [minRating, setMinRating] = useState(0);
+  const [maxScares, setMaxScares] = useState(10);
   const [sort, setSort] = useState("addedAt.desc");
   const [tagsExpanded, setTagsExpanded] = useState(false);
 
@@ -1281,6 +1283,11 @@ function LibraryView({ items, onUpdate, onRemove, apiKey, onOpenDetails }) {
 
     arr = arr.filter((i) => (i.rating || 0) >= minRating);
 
+    // Titles without a scare score are kept; only known-too-intense ones are hidden
+    if (maxScares < 10) {
+      arr = arr.filter((i) => typeof i.scares !== "number" || i.scares <= maxScares);
+    }
+
     switch (sort) {
       case "rating.desc":
         arr = [...arr].sort((a, b) => (b.rating || 0) - (a.rating || 0));
@@ -1314,7 +1321,7 @@ function LibraryView({ items, onUpdate, onRemove, apiKey, onOpenDetails }) {
     }
 
     return arr;
-  }, [items, debouncedQuery, tagFilter, moodFilter, minRating, sort]);
+  }, [items, debouncedQuery, tagFilter, moodFilter, minRating, maxScares, sort]);
 
   const watchlist = items.filter((i) => i.watchlist);
   const { existingTop, similarPicks } = useHybridRecommendations(items, apiKey);
@@ -1385,6 +1392,13 @@ function LibraryView({ items, onUpdate, onRemove, apiKey, onOpenDetails }) {
             <span className="text-sm opacity-70 w-6 text-right">{minRating}</span>
           </div>
 
+          {/* Max intensity */}
+          <div className="flex items-center gap-3">
+            <Label className="text-sm">Max scares</Label>
+            <Slider value={[maxScares]} min={0} max={10} step={1} onValueChange={(v) => setMaxScares(v[0])} className="w-[160px]" />
+            <span className="text-sm opacity-70 w-6 text-right">{maxScares}</span>
+          </div>
+
           {/* Sort */}
           <div className="flex gap-2">
             {[
@@ -1414,6 +1428,7 @@ function LibraryView({ items, onUpdate, onRemove, apiKey, onOpenDetails }) {
                 setTagFilter("");
                 setMoodFilter("all");
                 setMinRating(0);
+                setMaxScares(10);
                 setSort("addedAt.desc");
               }}
             >
@@ -1702,6 +1717,11 @@ function RecommendationsView({ items, apiKey, onAdd, onUpdate, onRemove, onOpenD
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-sm uppercase tracking-wide opacity-80">
           <Wand2 className="h-4 w-4" /> Mood-based picks (your watchlist)
+          {moodPreset !== "all" ? (
+            <span className="normal-case tracking-normal opacity-70">
+              · {MOOD_PRESETS.find((p) => p.id === moodPreset)?.label}, scare level {mood}/10
+            </span>
+          ) : null}
         </div>
         {recs.length ? (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
