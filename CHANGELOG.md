@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Created project guidance in [CLAUDE.md](CLAUDE.md) to document the app’s purpose, stack, product direction, and development workflow.
 - Added the refresh roadmap in [BACKLOG.md](BACKLOG.md), outlining the next major horror-focused product improvements.
 - Captured the first product refresh priorities for HorrorHub, centered on discovery intelligence, watch planning, and horror-specific personalization.
+- Implemented the first real refresh feature: a horror-vibe mood selection system that lets users filter their library and sharpen recommendations by style such as atmospheric, slasher, occult, found footage, body horror, and cosmic.
 
 ### Planned roadmap items
 - Mood-based horror matching

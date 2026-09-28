@@ -170,6 +170,24 @@ const SUGGESTED_TAGS = [
   "classic",
 ];
 
+const MOOD_PRESETS = [
+  { id: "all", label: "All vibes", tags: [] },
+  { id: "atmospheric", label: "Atmospheric", tags: ["slow-burn", "folk-horror", "haunted", "psychological", "arthouse"] },
+  { id: "slasher", label: "Slasher", tags: ["slasher", "home-invasion", "survival", "campy", "classic"] },
+  { id: "found-footage", label: "Found Footage", tags: ["found-footage", "found footage", "survival", "supernatural", "haunted"] },
+  { id: "body-horror", label: "Body Horror", tags: ["gore", "body-horror", "disturbing", "zombie", "creature"] },
+  { id: "occult", label: "Occult", tags: ["occult", "possession", "vampire", "supernatural", "haunted"] },
+  { id: "cosmic", label: "Cosmic", tags: ["cosmic", "sci-horror", "psychological", "arthouse", "occult"] },
+];
+
+function matchesMood(tags = [], moodId) {
+  if (!moodId || moodId === "all") return true;
+  const preset = MOOD_PRESETS.find((preset) => preset.id === moodId);
+  if (!preset) return true;
+  const lowered = (tags || []).map((tag) => String(tag || "").trim().toLowerCase());
+  return preset.tags.some((tag) => lowered.includes(tag.toLowerCase()));
+}
+
 function TagEditor({ tags = [], onChange }) {
   const [input, setInput] = useState("");
   const add = (t) => {
@@ -1220,6 +1238,7 @@ function LibraryView({ items, onUpdate, onRemove, apiKey, onOpenDetails }) {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [tagFilter, setTagFilter] = useState("");
+  const [moodFilter, setMoodFilter] = useState("all");
   const [minRating, setMinRating] = useState(0);
   const [sort, setSort] = useState("addedAt.desc");
   const [tagsExpanded, setTagsExpanded] = useState(false);
@@ -1254,6 +1273,10 @@ function LibraryView({ items, onUpdate, onRemove, apiKey, onOpenDetails }) {
     if (tagFilter) {
       const tf = tagFilter.toLowerCase();
       arr = arr.filter((i) => (i.tags || []).some((t) => (t || "").toLowerCase() === tf));
+    }
+
+    if (moodFilter !== "all") {
+      arr = arr.filter((i) => matchesMood(i.tags || [], moodFilter));
     }
 
     arr = arr.filter((i) => (i.rating || 0) >= minRating);
@@ -1291,7 +1314,7 @@ function LibraryView({ items, onUpdate, onRemove, apiKey, onOpenDetails }) {
     }
 
     return arr;
-  }, [items, debouncedQuery, tagFilter, minRating, sort]);
+  }, [items, debouncedQuery, tagFilter, moodFilter, minRating, sort]);
 
   const watchlist = items.filter((i) => i.watchlist);
   const { existingTop, similarPicks } = useHybridRecommendations(items, apiKey);
@@ -1327,6 +1350,19 @@ function LibraryView({ items, onUpdate, onRemove, apiKey, onOpenDetails }) {
 
         {/* Filters row */}
         <div className="flex flex-wrap items-center gap-2">
+          <div className="flex gap-2 flex-wrap">
+            {MOOD_PRESETS.map((preset) => (
+              <Button
+                key={preset.id}
+                size="sm"
+                variant={moodFilter === preset.id ? "default" : "outline"}
+                onClick={() => setMoodFilter(preset.id)}
+              >
+                {preset.label}
+              </Button>
+            ))}
+          </div>
+
           {/* Tag filter */}
           <div className="flex gap-2 flex-wrap">
             <Button size="sm" variant={tagFilter === "" ? "default" : "outline"} onClick={() => setTagFilter("")}>
@@ -1376,6 +1412,7 @@ function LibraryView({ items, onUpdate, onRemove, apiKey, onOpenDetails }) {
               onClick={() => {
                 setQuery("");
                 setTagFilter("");
+                setMoodFilter("all");
                 setMinRating(0);
                 setSort("addedAt.desc");
               }}
@@ -1521,6 +1558,7 @@ function WatchlistView({ items, onUpdate, onRemove, onOpenDetails, planDays = []
 // ----------------- Recommendations View -----------------
 function RecommendationsView({ items, apiKey, onAdd, onUpdate, onRemove, onOpenDetails, inLibraryIds, watchlistIds, mixer, ratingById }) {
   const [mood, setMood] = useState(5); // 0 = spooky, 10 = traumatizing
+  const [moodPreset, setMoodPreset] = useState("all");
 
   const currentYear = new Date().getFullYear();
   const pool = useMemo(() => {
@@ -1545,15 +1583,16 @@ function RecommendationsView({ items, apiKey, onAdd, onUpdate, onRemove, onOpenD
       const occultScore = has(['occult']) ? mixer.occult : 0;
       const slasherScore = has(['slasher','home-invasion']) ? mixer.slasher : 0;
       const folkScore = has(['folk-horror']) ? mixer.folk : 0;
+      const presetBoost = moodPreset !== 'all' && matchesMood(i.tags || [], moodPreset) ? 0.65 : 0;
       const tagBoost = (ghostScore + occultScore + slasherScore + folkScore) * 0.15; // scaled
-      const score = proximity * 0.6 + ratingBoost + wlBoost + tagBoost;
+      const score = proximity * 0.6 + ratingBoost + wlBoost + tagBoost + presetBoost;
       return { item: i, score };
     });
     return scored
       .sort((a, b) => b.score - a.score)
       .slice(0, 12)
       .map((x) => x.item);
-  }, [pool, mood]);
+  }, [pool, mood, moodPreset, mixer]);
 
   const { similarPicks } = useHybridRecommendations(items, apiKey);
   const external = (similarPicks || [])
@@ -1576,6 +1615,24 @@ function RecommendationsView({ items, apiKey, onAdd, onUpdate, onRemove, onOpenD
             </div>
           </div>
           <span className="text-sm opacity-80 w-28">{mood <= 3 ? "Spooky" : mood <= 6 ? "Intense" : "Traumatizing"}</span>
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-2xl">
+        <CardContent className="p-4 space-y-3">
+          <div className="text-sm uppercase tracking-wide opacity-80">Night vibe</div>
+          <div className="flex flex-wrap gap-2">
+            {MOOD_PRESETS.map((preset) => (
+              <Button
+                key={preset.id}
+                size="sm"
+                variant={moodPreset === preset.id ? "default" : "outline"}
+                onClick={() => setMoodPreset(preset.id)}
+              >
+                {preset.label}
+              </Button>
+            ))}
+          </div>
         </CardContent>
       </Card>
 

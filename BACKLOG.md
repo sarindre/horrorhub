@@ -14,7 +14,7 @@ Transform HorrorHub from a solid horror movie tracker into a more compelling, pe
 ## Backlog items
 
 ### 1. Mood-based horror matching
-Status: Planned
+Status: In Progress
 Priority: P1
 
 Create a feature that lets users discover horror based on emotional vibe and intensity rather than just title or genre.
@@ -31,6 +31,11 @@ Acceptance criteria:
 - Users can filter by horror mood or intensity
 - Recommendations align to watch vibe, not just metadata
 - Mood choices are reflected in the library and suggestions UI
+
+Implementation notes:
+- Added a visible mood preset selector in the library and recommendations UI
+- Library filtering now supports matching a selected horror vibe against tags
+- Recommendation scoring boosts titles that match the chosen preset
 
 ### 2. Smart recommendation engine
 Status: Planned
