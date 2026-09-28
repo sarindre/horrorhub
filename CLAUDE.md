@@ -1,0 +1,57 @@
+# CLAUDE.md
+
+## Project overview
+HorrorHub is a personal horror movie library and discovery app built with React + Vite. The product is designed as a dark, curated tracker for horror fans to:
+
+- search and add films to a personal library
+- rate and review movies
+- track watch dates and watchlists
+- tag films by mood, subgenre, and themes
+- export/import data from JSON and CSV sources
+- get recommendations based on ratings and watched titles
+
+## Stack and architecture
+- Frontend: React 19, Vite
+- Styling: Tailwind CSS
+- UI primitives: shadcn-style component patterns in `src/components/ui`
+- Animation: Framer Motion
+- Charts: Recharts
+- Data source: The Movie Database (TMDb) for metadata and poster images
+- Persistence: browser `localStorage`
+
+## Key files
+- `src/App.jsx`: main application logic and UI
+- `src/hooks/useHybridRecommendations.js`: recommendation logic using TMDb similarity data
+- `src/components/SearchBar.jsx`: search input component
+- `src/components/ui/*`: reusable UI primitives
+
+## Product direction
+This project should stay local-first, lightweight, and highly personalized. It is not meant to become a generic streaming app or a large social platform. The strongest product identity is a horror-specific personal library with strong curation, mood discovery, and planning tools.
+
+## Working conventions
+- Prefer small, focused UI additions over broad rewrites.
+- Keep the app aesthetic dark, polished, and horror-themed.
+- Preserve local-first behavior; avoid requiring a backend unless absolutely necessary.
+- Feature work should enhance discovery, personalization, and watch planning.
+- Keep imports/exports working smoothly for users moving data from Letterboxd or IMDb.
+
+## Suggested roadmap themes
+1. Discovery intelligence: recommendation quality, mood matching, and smart filtering
+2. Personal planning: themed watchlists, marathons, seasonality, and progress tracking
+3. Catalog intelligence: auto-tagging, content warnings, and better filtering
+4. Retention features: streaks, challenges, and themed collections
+
+## Commands
+- `npm install`
+- `npm run dev`
+- `npm run build`
+- `npm run lint`
+
+## Notes for future work
+The app already has a strong foundation of library management. The next refresh should emphasize:
+- horror-specific personalization
+- better recs based on taste rather than title search alone
+- themed watch planning and challenge experiences
+- clearer content flags and filtering for horror content
+
+This is a product with personality and a niche audience; success should feel like a premium personal horror curation tool, not a generic media app.
