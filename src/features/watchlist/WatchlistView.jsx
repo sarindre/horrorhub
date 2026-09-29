@@ -10,13 +10,15 @@ import { useToast } from "../../lib/toastContext.js";
 import { useContentPrefs } from "../../lib/contentContext.js";
 import { evaluateItem, filterByContent, itemFlags } from "../../lib/contentFlags.js";
 import { buildWeeklyPlan, planEventTitle } from "../../lib/plan.js";
+import { downloadBlob } from "../../lib/download.js";
+import { MarathonPlanner } from "./MarathonPlanner.jsx";
 
 const isReleased = (i, now = new Date()) => {
   const today = now.toISOString().slice(0, 10);
   return (typeof i.year === "undefined" || Number(i.year) <= now.getFullYear()) && (!i.releaseDate || i.releaseDate <= today);
 };
 
-export function WatchlistView({ items, onUpdate, onRemove, onOpenDetails, planDays = [], planTime = "20:00" }) {
+export function WatchlistView({ items, library = items, marathonStore, onUpdate, onRemove, onOpenDetails, planDays = [], planTime = "20:00" }) {
   const toast = useToast();
   const prefs = useContentPrefs();
   const [revealed, setRevealed] = useState(false);
@@ -54,13 +56,7 @@ export function WatchlistView({ items, onUpdate, onRemove, onOpenDetails, planDa
     }
     if (!slots.length) { toast("Nothing to schedule yet.", { kind: "error" }); return; }
     const events = slots.map((p) => ({ title: planEventTitle(p.film), start: p.start, description: "Weekly plan" }));
-    const blob = new Blob([createICS({ events })], { type: "text/calendar" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `horrorhub-weekly-${new Date().toISOString().slice(0, 10)}.ics`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadBlob(new Blob([createICS({ events })], { type: "text/calendar" }), `horrorhub-weekly-${new Date().toISOString().slice(0, 10)}.ics`);
   };
 
   return (
@@ -94,6 +90,10 @@ export function WatchlistView({ items, onUpdate, onRemove, onOpenDetails, planDa
           )}
         </CardContent>
       </Card>
+
+      {marathonStore ? (
+        <MarathonPlanner library={library} watchlist={items} planTime={planTime} store={marathonStore} onUpdate={onUpdate} onOpenDetails={onOpenDetails} />
+      ) : null}
 
       {/* Weekly Watch Plan */}
       <Card className="rounded-2xl">

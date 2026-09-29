@@ -50,6 +50,11 @@ All notable changes to this project will be documented in this file.
 - Number inputs (nudge cadence, "long ago" year) accept typing freely and clamp on blur instead of snapping after the first keystroke.
 - Removed the dead "October theme" toggle and the unused Tailwind config and `tailwindcss-animate` dependency. `npm run lint` now reports nothing.
 
+### Added (watch planning)
+- A Marathon planner on the Watchlist tab: pick a source (watchlist or whole library), a theme (any mood, plus seasonal themes such as "Halloween night" and "Holiday horror" when in season), how many films and how much time you have, and it builds a lineup that fits, with a 15-minute break between films. It prefers unwatched films, skips unreleased ones and anything over your content limits, and keeps one very long film from crowding out the rest.
+- Pacing control: Build up, Peak then wind down, or Ebb and flow, with a plain-English read on how the night flows. Each film shows its start and end time, runtime, scare level, why it was picked and its content warnings.
+- Shuffle for a different lineup, save plans locally, and download any plan as a calendar file with a real start and end time for each film. Saved plans are included in JSON export and import.
+
 ### Added (auto-tagging and catalog intelligence)
 - Films are tagged automatically from TMDb data. One request per film supplies genres, runtime, overview and keywords, and a rule table maps them onto the curated tag vocabulary (slasher, found-footage, folk-horror, occult, creature, cosmic, ...). New films get starter tags when added, and a background tagger enriches the whole library (and backfills existing libraries) a film at a time. It's switchable in Settings, and "Re-tag my whole library" reruns it.
 - Your edits always win: inferred tags are marked ✦, a tag you remove is remembered and never re-added, and tags you typed are never touched. The same tag now has one spelling ("Folk Horror" and "#folk_horror" both become `folk-horror`).

@@ -71,7 +71,7 @@ function SecretInput({ value, onChange, placeholder }) {
 
 // Controlled by the app: `settings` is the single source of truth and every
 // change goes through `update({ key: value })`, which validates and persists.
-export function Settings({ settings, update, onImport, onRetagAll, onCleanupTags, watchlist, data, challenges = [] }) {
+export function Settings({ settings, update, onImport, onRetagAll, onCleanupTags, watchlist, data, extras = {} }) {
   const thisYear = new Date().getFullYear();
   return (
     <div className="space-y-6">
@@ -186,7 +186,7 @@ export function Settings({ settings, update, onImport, onRetagAll, onCleanupTags
         <CardContent className="p-6 space-y-4">
           <div className="text-lg font-semibold">Backup & Import</div>
           <div className="text-sm opacity-70">Export your library to JSON, import from JSON/CSV, or export a watchlist calendar.</div>
-          <ExportImport data={data || []} onImport={onImport} watchlist={watchlist || []} extras={{ challenges }} />
+          <ExportImport data={data || []} onImport={onImport} watchlist={watchlist || []} extras={extras} />
         </CardContent>
       </Card>
 

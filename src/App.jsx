@@ -9,6 +9,7 @@ import { getMixer } from "./lib/settings.js";
 import { ContentPrefsContext } from "./lib/contentContext.js";
 import { useAutoTagger } from "./hooks/useAutoTagger.js";
 import { useChallenges } from "./hooks/useChallenges.js";
+import { useMarathons } from "./hooks/useMarathons.js";
 import { ChallengesView } from "./features/challenges/ChallengesView.jsx";
 import { analyzeLocal } from "./lib/filmMeta.js";
 import { cleanupLegacyKeywordTags, mergeInferred, tagState } from "./lib/tagging.js";
@@ -88,7 +89,9 @@ export function HorrorHub() {
     if (!window.confirm(summary)) return;
     replaceLibrary(items);
     const newChallenges = Array.isArray(payload?.challenges) ? challengeStore.merge(payload.challenges) : 0;
-    toast(`Imported from ${label}: ${added} new, ${updated} updated${newChallenges ? `, ${newChallenges} challenge${newChallenges === 1 ? "" : "s"}` : ""}.`, { kind: "success" });
+    const newPlans = Array.isArray(payload?.marathons) ? marathonStore.merge(payload.marathons) : 0;
+    const extra = [newChallenges && `${newChallenges} challenge${newChallenges === 1 ? "" : "s"}`, newPlans && `${newPlans} saved plan${newPlans === 1 ? "" : "s"}`].filter(Boolean);
+    toast(`Imported from ${label}: ${added} new, ${updated} updated${extra.length ? `, ${extra.join(", ")}` : ""}.`, { kind: "success" });
   };
 
   const watchlist = library.filter((i) => i.watchlist);
@@ -97,6 +100,8 @@ export function HorrorHub() {
     library,
     onComplete: (c) => toast(`Challenge complete: ${c.title} 🎉`, { kind: "success" }),
   });
+
+  const marathonStore = useMarathons();
 
   // Re-run auto-tagging on everything (your edits and removals are still respected).
   const retagAll = () => {
@@ -229,7 +234,7 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
             </TabsContent>
 
         <TabsContent value="watchlist" className="mt-6">
-          <WatchlistView items={watchlist} onUpdate={upsert} onRemove={remove} onOpenDetails={setSelected} planDays={settings.planDays} planTime={settings.planTime} />
+          <WatchlistView items={watchlist} library={library} marathonStore={marathonStore} onUpdate={upsert} onRemove={remove} onOpenDetails={setSelected} planDays={settings.planDays} planTime={settings.planTime} />
         </TabsContent>
 
         <TabsContent value="recs" className="mt-6">
@@ -266,7 +271,7 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
             </TabsContent>
 
             <TabsContent value="settings" className="mt-6">
-              <Settings settings={settings} update={updateSettings} onImport={importLib} onRetagAll={retagAll} onCleanupTags={cleanupTags} challenges={challengeStore.challenges} watchlist={watchlist} data={library} />
+              <Settings settings={settings} update={updateSettings} onImport={importLib} onRetagAll={retagAll} onCleanupTags={cleanupTags} extras={{ challenges: challengeStore.challenges, marathons: marathonStore.marathons }} watchlist={watchlist} data={library} />
             </TabsContent>
           </>
         )}

@@ -39,7 +39,7 @@ Implementation notes:
 - Added a Creature Feature preset and narrowed Body Horror to gore/body-horror/disturbing/sci-horror tags
 - Added a "Max scares" intensity slider to the library filters (titles with no scare score stay visible)
 - Mood-based picks heading now shows the active vibe and scare level
-- Remaining: TMDb "similar" picks are not yet mood-aware; add a found-footage-style dread/cosmic tuning pass once tag data is richer
+- The TMDb suggestions are now mood-aware too (keyword boost on the film's title/overview, see #9), and moods are learned from your library and explained (see #2). With #4 the tags the presets match against are now filled in automatically
 
 ### 2. Smart recommendation engine
 Status: Done (v1: local and heuristic; see follow-ups)
@@ -65,7 +65,7 @@ Follow-ups:
 - Scoring weights are hand-tuned constants. Once there's real usage data, revisit them (they're all in `taste.js` / `recommend.js` and tested)
 
 ### 3. Horror-specific watch planning
-Status: Planned
+Status: Done (v1; see follow-ups)
 Priority: P1
 
 Add planning tools that help users build watch sessions and movie marathons.
@@ -81,6 +81,18 @@ Acceptance criteria:
 - Users can generate a curated watch sequence from library or recommendations
 - Suggestions maintain pacing, mood, and intensity flow
 - A watch plan can be exported or saved locally
+
+Implementation notes (`lib/marathon.js`, `features/watchlist/MarathonPlanner.jsx`):
+- A Marathon planner on the Watchlist tab builds a lineup for one night from your watchlist or whole library: pick a theme (any mood preset, plus seasonal ones like "Halloween night" and "Holiday horror" when in season), how many films (2-5) and how much time you have (3-8 hours). It picks the best taste fits that fit the time budget (with a 15-minute break between films), prefers unwatched films, skips unreleased ones and anything over your content limits, and stops one very long film from crowding out the rest
+- Pacing: choose Build up, Peak then wind down (the scariest film lands about 70% of the way through, then it eases off) or Ebb and flow. Each lineup gets a plain-English read on how it flows, and each film shows its start/end time, runtime, scare level, why it was picked and any content warnings
+- Shuffle for a different lineup; save plans locally (named, with a snapshot of each film); download any plan as a calendar file with a real start and end time per film; "Add all to watchlist" when planning from the library. Saved plans are included in JSON export and import
+- Earlier steps (from #5 and #6): the weekly plan is built by a tested `buildWeeklyPlan` and previews its schedule with warnings; challenges generate short watch lists
+
+Follow-ups:
+- Runtime and scare level come from your own data. Films without a stored runtime are assumed to be 100 minutes (marked "est."), and unscored films count as 5/10, so pacing is only as good as your scare ratings (the planner says so when a lineup is flat)
+- Planning from TMDb suggestions (films you don't own yet) isn't supported: they have no runtime or scare rating. Add them to your library or watchlist first
+- Saved plans can't be edited or reordered by hand yet; rebuild and save again
+- Scheduling is one night at a time; a multi-night "marathon week" would build on the weekly plan
 
 ### 4. Auto-tagging and catalog intelligence
 Status: Done (v1: rule-based; see follow-ups)
