@@ -37,6 +37,10 @@ export function MovieCard({ item, onAdd, onUpdate, onRemove, showWatchlist = tru
     setScares(item.scares ?? 5);
     setAddedUI(false);
     setWatchlistedUI(!!item.watchlist || isWatchlisted);
+    // Resets the editable fields when the card shows a different film (or its
+    // watchlist state flips); resyncing on every field change would clobber
+    // in-progress edits to notes/tags/rating.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.id, isWatchlisted]);
 
   const poster = item.poster ? TMDB_IMG(item.poster, "w342") : "";

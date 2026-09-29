@@ -1,26 +1,32 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Wand2 } from "lucide-react";
 import { Card, CardContent } from "../../components/ui/card.jsx";
 import { Button } from "../../components/ui/button.jsx";
-import { TMDB_BASE, TMDB_IMG } from "../../lib/tmdb.js";
+import { TMDB_IMG, describeError, isAbort, tmdbGet } from "../../lib/tmdb.js";
 
 export function ContinuityGraph({ items, apiKey, onOpenDetails }){
   const [seedId, setSeedId] = useState(() => (items.find(i => (i.rating || 0) >= 4)?.id ?? items[0]?.id));
   const [nodes, setNodes] = useState([]); // {id,title,poster}
   const [edges, setEdges] = useState([]); // {from,to}
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const abortRef = useRef(null);
+  // cancel a map still being built when leaving the tab
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   const seed = useMemo(() => items.find(i => i.id === seedId) || items[0], [items, seedId]);
 
   const build = async () => {
     if (!apiKey || !seed) return;
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
     setLoading(true);
-    const headers = { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json;charset=utf-8' };
+    setError(null);
     try {
       const center = [{ id: String(seed.id), title: seed.title, poster: seed.poster ? TMDB_IMG(seed.poster, 'w342') : '' }];
       const seen = new Map(center.map(n => [n.id, n]));
-      const recRes = await fetch(`${TMDB_BASE}/movie/${seed.id}/recommendations?language=en-US&page=1`, { headers });
-      const data = await recRes.json();
+      const data = await tmdbGet(`/movie/${seed.id}/recommendations?language=en-US&page=1`, { apiKey, signal: controller.signal });
       const results = Array.isArray(data?.results) ? data.results.slice(0, 12) : [];
       const outEdges = [];
       for (const r of results) {
@@ -33,10 +39,11 @@ export function ContinuityGraph({ items, apiKey, onOpenDetails }){
       setNodes([...seen.values()]);
       setEdges(outEdges);
     } catch (e) {
-      console.error('Navigator build failed', e);
+      if (isAbort(e)) return;
+      setError(e);
       setNodes([]); setEdges([]);
     } finally {
-      setLoading(false);
+      if (abortRef.current === controller) setLoading(false);
     }
   };
 
@@ -46,7 +53,7 @@ export function ContinuityGraph({ items, apiKey, onOpenDetails }){
     const R = 130;
     const placed = others.map((n, i) => ({ id: n.id, x: center.x + R * Math.cos((i/Math.max(1,others.length)) * 2*Math.PI), y: center.y + R * Math.sin((i/Math.max(1,others.length)) * 2*Math.PI) }));
     return { center, placed };
-  }, [nodes, seedId]);
+  }, [nodes, seed?.id]);
 
   const pos = (id) => {
     if (String(id) === layout.center.id) return layout.center;
@@ -69,6 +76,11 @@ export function ContinuityGraph({ items, apiKey, onOpenDetails }){
             <Button size="sm" variant="outline" onClick={build} disabled={loading || !apiKey}>{loading? 'Building…':'Build Map'}</Button>
           </div>
         </div>
+        {!apiKey ? (
+          <div className="text-sm opacity-70">Add your TMDb API token in Settings to build a map.</div>
+        ) : error ? (
+          <div role="alert" className="text-sm text-red-300">{describeError(error)}</div>
+        ) : null}
         <div className="rounded-2xl border bg-black/20">
           <svg viewBox="0 0 640 360" className="w-full h-[360px]">
             <g stroke="rgba(255,255,255,0.25)" strokeWidth="1">

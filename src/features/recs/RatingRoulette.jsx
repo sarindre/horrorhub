@@ -1,13 +1,15 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../../components/ui/button.jsx";
 import { usePersistentState } from "../../lib/usePersistentState.js";
+import { useProviders } from "../../hooks/useProviders.js";
 import { MovieCard } from "../../components/MovieCard.jsx";
-import { TMDB_BASE } from "../../lib/tmdb.js";
+import { describeError, isAbort, mapMovie, tmdbGet } from "../../lib/tmdb.js";
 
 export function RatingRoulette({ apiKey, onAdd, onOpenDetails, ratingMap={}, inLibraryIds = new Set(), watchlistIds = new Set() }){
   const [page, setPage] = useState(1);
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [pageSize, setPageSize] = usePersistentState('horrorhub.roulette.pageSize', 12);
   const [hideRated, setHideRated] = usePersistentState('horrorhub.roulette.hideRated', true);
   const [hideInLibrary, setHideInLibrary] = usePersistentState('horrorhub.roulette.hideInLibrary', false);
@@ -16,64 +18,46 @@ export function RatingRoulette({ apiKey, onAdd, onOpenDetails, ratingMap={}, inL
   const [totalPages, setTotalPages] = useState(null);
   const [jumpVal, setJumpVal] = useState(1);
   const cacheRef = useRef(new Map()); // page -> rows
-  const providersRef = useRef(new Map()); // id -> [slugs]
-  const headers = apiKey ? { Authorization:`Bearer ${apiKey}`, 'Content-Type':'application/json;charset=utf-8' } : undefined;
+  const abortRef = useRef(null);
+  const providerMap = useProviders(rows.map((r) => r.id), apiKey, (providersSel || []).length > 0);
 
-  const fetchPage = async (p)=>{
-    if (!apiKey) { alert('Enter your TMDb API key in Settings.'); return; }
-    // use cache if available
+  const fetchPage = useCallback(async (p) => {
+    // a newer request (or a cached page) always wins over one still in flight
+    abortRef.current?.abort();
+    if (!apiKey) { setRows([]); setError(null); return; }
     if (cacheRef.current.has(p)) {
       setRows(cacheRef.current.get(p));
+      setError(null);
       return;
     }
+    const controller = new AbortController();
+    abortRef.current = controller;
     setLoading(true);
-    try{
-      const url = `${TMDB_BASE}/discover/movie?include_adult=false&language=en-US&with_genres=27&sort_by=popularity.desc&page=${p}`;
-      const res = await fetch(url, { headers });
-      const data = await res.json();
-      const mapped = (data.results||[]).map(m => ({ id:m.id, title:m.title, year: m.release_date? Number(m.release_date.slice(0,4)) : undefined, poster:m.poster_path, overview:m.overview, rating: ratingMap[m.id]||0, addedAt:new Date().toISOString(), watchedDates:[] }));
+    setError(null);
+    try {
+      const data = await tmdbGet(`/discover/movie?include_adult=false&language=en-US&with_genres=27&sort_by=popularity.desc&page=${p}`, { apiKey, signal: controller.signal });
+      const mapped = (data.results || []).map(mapMovie);
       cacheRef.current.set(p, mapped);
       setRows(mapped);
       if (typeof data.total_pages === 'number') setTotalPages(data.total_pages);
-    }catch{} finally{ setLoading(false); }
-  };
-  useEffect(()=>{ fetchPage(page); setJumpVal(page); },[page, apiKey]);
-
-  const providerSlug = (name='')=>{
-    const n = String(name).toLowerCase();
-    if (n.includes('netflix')) return 'netflix';
-    if (n.includes('prime')) return 'prime';
-    if (n.includes('hulu')) return 'hulu';
-    if (n.includes('disney')) return 'disney';
-    return null;
-  };
-  const ensureProvidersFor = async (ids=[])=>{
-    if (!apiKey || !ids.length) return;
-    const pending = ids.filter(id=> !providersRef.current.has(id));
-    if (!pending.length) return;
-    const reqs = pending.map(async (id)=>{
-      try{
-        const res = await fetch(`${TMDB_BASE}/movie/${id}/watch/providers`, { headers });
-        const data = await res.json();
-        const us = data?.results?.US || {};
-        const flatrate = Array.isArray(us.flatrate)? us.flatrate : [];
-        const ads = Array.isArray(us.ads)? us.ads : [];
-        const arr = [...flatrate, ...ads].map(p=> providerSlug(p.provider_name)).filter(Boolean);
-        providersRef.current.set(id, Array.from(new Set(arr)));
-      }catch{ providersRef.current.set(id, []); }
-    });
-    await Promise.all(reqs);
-  };
-  useEffect(()=>{ if ((providersSel||[]).length){ ensureProvidersFor(rows.map(r=> r.id)); } },[rows, providersSel, apiKey]);
+    } catch (err) {
+      if (!isAbort(err)) setError(err);
+    } finally {
+      if (abortRef.current === controller) setLoading(false);
+    }
+  }, [apiKey]);
+  useEffect(() => { fetchPage(page); setJumpVal(page); }, [page, fetchPage]);
+  // cancel any request still in flight when leaving the tab
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   // derive current ratings live from ratingMap and apply optional filters
-  const derived = rows.map(r => ({ ...r, rating: ratingMap[r.id] || r.rating || 0 }));
+  const derived = rows.map(r => ({ ...r, rating: ratingMap[r.id] || 0 }));
   const filtered = derived.filter(r => {
     if (hideRated && (r.rating||0) > 0) return false;
     if (hideInLibrary && inLibraryIds.has(r.id)) return false;
     if (hideWatchlisted && watchlistIds.has(r.id)) return false;
     if ((providersSel||[]).length){
-      const prov = providersRef.current.get(r.id) || [];
+      const prov = providerMap[r.id] || [];
       if (!prov.some(p=> providersSel.includes(p))) return false;
     }
     return true;
@@ -135,13 +119,22 @@ export function RatingRoulette({ apiKey, onAdd, onOpenDetails, ratingMap={}, inL
         </div>
       </div>
 
-      {display.length === 0 && !loading ? (
+      {!apiKey ? (
+        <div className="text-sm opacity-70">Add your TMDb API token in Settings to start rating films.</div>
+      ) : error ? (
+        <div role="alert" className="flex items-center gap-3 rounded-xl border border-red-500/40 bg-red-950/40 px-4 py-3 text-sm">
+          <span className="flex-1">{describeError(error)}</span>
+          <Button size="sm" variant="outline" onClick={() => fetchPage(page)}>Retry</Button>
+        </div>
+      ) : loading && display.length === 0 ? (
+        <div className="text-sm opacity-70">Loading…</div>
+      ) : display.length === 0 ? (
         <div className="text-sm opacity-70">No titles to show with current filters. Try Next page or disable a filter.</div>
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {display.map(r => (
-          <MovieCard key={r.id} item={r} onAdd={(it)=> onAdd?.(it)} onUpdate={(it)=> onAdd?.(it)} onOpenDetails={onOpenDetails} showWatchlist={false} compact isInLibrary={inLibraryIds.has(r.id)} isWatchlisted={watchlistIds.has(r.id)} providers={(providersRef.current.get(r.id)||[])} />
+          <MovieCard key={r.id} item={r} onAdd={(it)=> onAdd?.(it)} onUpdate={(it)=> onAdd?.(it)} onOpenDetails={onOpenDetails} showWatchlist={false} compact isInLibrary={inLibraryIds.has(r.id)} isWatchlisted={watchlistIds.has(r.id)} providers={providerMap[r.id] || []} />
         ))}
       </div>
     </div>

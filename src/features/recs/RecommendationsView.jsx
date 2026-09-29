@@ -6,9 +6,11 @@ import { Slider } from "../../components/ui/slider.jsx";
 import { MOOD_PRESETS, matchesMood } from "../../lib/moods.js";
 import { useHybridRecommendations } from "../../hooks/useHybridRecommendations";
 import { MovieCard } from "../../components/MovieCard.jsx";
-import { TMDB_BASE } from "../../lib/tmdb.js";
+import { useToast } from "../../lib/toastContext.js";
+import { describeError, tmdbGet } from "../../lib/tmdb.js";
 
 export function RecommendationsView({ items, apiKey, onAdd, onUpdate, onRemove, onOpenDetails, inLibraryIds, watchlistIds, mixer, ratingById }) {
+  const toast = useToast();
   const [mood, setMood] = useState(5); // 0 = spooky, 10 = traumatizing
   const [moodPreset, setMoodPreset] = useState("all");
 
@@ -109,19 +111,25 @@ export function RecommendationsView({ items, apiKey, onAdd, onUpdate, onRemove, 
               <div className="flex items-center gap-2 text-sm uppercase tracking-wide opacity-80">
                 <AlarmClock className="h-4 w-4" /> Cold Night Roulette
               </div>
-              <Button size="sm" variant="outline" onClick={async ()=>{
-              if (!apiKey) { alert('Enter your TMDb API key in Settings.'); return; }
-              const authHeader = { Authorization: `Bearer ${apiKey}`, 'Content-Type':'application/json;charset=utf-8' };
-              const pool = external;
-              if (!pool.length) { alert('No TMDb recommendations available yet.'); return; }
-              const enriched = await Promise.all(pool.slice(0,50).map(async (r)=>{
-                try{ const res = await fetch(`${TMDB_BASE}/movie/${r.id}?language=en-US`, { headers: authHeader }); const d = await res.json(); return { ...r, runtime: d?.runtime||null, year: r.year || (d?.release_date? Number(d.release_date.slice(0,4)) : undefined) }; } catch { return r; }
-              }));
-              const classics = enriched.filter(x=> (x.year||9999) < 1985);
-              const shorties = classics.filter(x=> (x.runtime||999) < 90);
-              const pickFrom = shorties.length ? shorties : classics.length ? classics : enriched;
-              const pick = pickFrom[Math.floor(Math.random()*pickFrom.length)];
-              onOpenDetails?.({ id: pick.id, title: pick.title, year: pick.year? Number(pick.year):undefined, poster: pick.poster, overview: '' });
+              <Button size="sm" variant="outline" onClick={async () => {
+                if (!apiKey) { toast('Add your TMDb API token in Settings first.', { kind: 'error' }); return; }
+                if (!external.length) { toast('No TMDb recommendations available yet.'); return; }
+                // runtimes aren't in the list response, so look them up (best effort)
+                const enriched = await Promise.all(external.slice(0, 50).map(async (r) => {
+                  try {
+                    const d = await tmdbGet(`/movie/${r.id}?language=en-US`, { apiKey, cacheMs: 5 * 60 * 1000 });
+                    return { ...r, runtime: d?.runtime || null, year: r.year || (d?.release_date ? Number(d.release_date.slice(0, 4)) : undefined) };
+                  } catch (err) {
+                    if (err?.kind === 'auth') throw err;
+                    return r;
+                  }
+                })).catch((err) => { toast(describeError(err), { kind: 'error' }); return null; });
+                if (!enriched) return;
+                const classics = enriched.filter((x) => (x.year || 9999) < 1985);
+                const shorties = classics.filter((x) => (x.runtime || 999) < 90);
+                const pickFrom = shorties.length ? shorties : classics.length ? classics : enriched;
+                const pick = pickFrom[Math.floor(Math.random() * pickFrom.length)];
+                onOpenDetails?.({ id: pick.id, title: pick.title, year: pick.year ? Number(pick.year) : undefined, poster: pick.poster, overview: '' });
             }}>Spin</Button>
             </div>
             <div className="text-xs opacity-70">Picks TMDb recommendations (pre‑1985) under 90 minutes.</div>

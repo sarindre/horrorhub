@@ -16,8 +16,11 @@ import { RatingRoulette } from "./features/recs/RatingRoulette.jsx";
 import { StatsView } from "./features/stats/StatsView.jsx";
 import { MovieDetails } from "./features/details/MovieDetails.jsx";
 import { Settings } from "./features/settings/Settings.jsx";
+import { ToastProvider } from "./components/Toast.jsx";
+import { useToast } from "./lib/toastContext.js";
 
 export function HorrorHub() {
+  const toast = useToast();
   const { library, upsert, remove, replaceLibrary, saveFailed } = useLibrary();
   const [settings, setSettings] = useState(loadSettings);
   const [selected, setSelected] = useState(null); // movie object to show details
@@ -53,11 +56,12 @@ export function HorrorHub() {
   // are never deleted; a bad file changes nothing.
   const importLib = (payload, label = "file") => {
     const { items: incoming, skipped, error } = validateImport(payload);
-    if (error) return alert(error);
+    if (error) return toast(error, { kind: "error" });
     const { items, added, updated } = mergeLibraries(library, incoming);
     const summary = `Import from ${label}:\n\n• ${added} new title${added === 1 ? "" : "s"}\n• ${updated} existing title${updated === 1 ? "" : "s"} updated (tags and watch dates are combined)${skipped ? `\n• ${skipped} row${skipped === 1 ? "" : "s"} skipped (missing id or title)` : ""}\n\nNothing in your library is deleted. Continue?`;
     if (!window.confirm(summary)) return;
     replaceLibrary(items);
+    toast(`Imported from ${label}: ${added} new, ${updated} updated.`, { kind: "success" });
   };
 
   const watchlist = library.filter((i) => i.watchlist);
@@ -139,7 +143,6 @@ export function HorrorHub() {
               <MovieDetails
                 item={selected}
                 localItem={library.find((i) => i.id === selected.id)}
-                onBack={() => setSelected(null)}
                 onUpdate={upsert}
                 onAdd={(m) => upsert(m)}
                 apiKey={settings.apiKey}
@@ -242,5 +245,9 @@ export function HorrorHub() {
 
 // Default export expected by Vite entry (main.jsx)
 export default function App() {
-  return <HorrorHub />;
+  return (
+    <ToastProvider>
+      <HorrorHub />
+    </ToastProvider>
+  );
 }

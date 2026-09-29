@@ -33,7 +33,18 @@ All notable changes to this project will be documented in this file.
 - The list shows loading, error (bad token, rate limit, offline), empty and no-token states, and a "Because you liked X" line under each pick.
 - Added `tmdbGet` with typed errors and `lib/recommend.js` (seed picking, ranking, caching) with 21 new tests.
 
+### Changed (code review, step 5: shared TMDb client and error handling)
+- All TMDb calls (Discover, Rating Roulette, Because You Liked…, Movie Details, Cold Night Roulette) now go through one client with typed errors, cancellation and an optional short-lived cache. Flipping between Discover sorts, or coming back from a details page, no longer refetches.
+- Bad token, rate limit and offline states are now shown instead of silently rendering nothing. Discover and Rating Roulette have a Retry button, and tabs tell you when no TMDb token is set (Rating Roulette used to pop an alert every time you opened it without one).
+- `alert()` popups are replaced by non-blocking toasts, including a confirmation toast after an import.
+- Streaming-service badges and the "Available on" filter live in a `useProviders` hook. The filter now updates as soon as lookups finish (it used to wait for an unrelated re-render).
+- Movie Details loads its four core lookups independently, so one failing request no longer blanks the page, and it shows an error banner if the main lookup fails.
+- Discover results show your current rating live instead of the rating at the time of the search.
+
 ### Fixed
+- Opening the details page of a film that wasn't in your library silently added it (through the automatic keyword tagging). Auto-tagging and DoesTheDogDie counts now only apply to films you already own.
+- Toggling the watchlist on a Discover / Rating Roulette card for a film you already own could wipe its watch dates, because those cards carried an empty `watchedDates` list. Result cards no longer carry library-owned fields.
+- An OMDb failure no longer stops the DoesTheDogDie and keyword steps from running.
 - Posters in "Similar to your favorites" never loaded because the URL was built twice.
 - Broken "…" characters in the Because You Liked… tab title and Build Map button label.
 - Adding or watchlisting a title that was already in your library from Discover could reset its tags, watch dates, scares and rating to defaults. Only the fields actually provided are updated now.

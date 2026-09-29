@@ -9,14 +9,17 @@ import { Label } from "../../components/ui/label.jsx";
 import { Slider } from "../../components/ui/slider.jsx";
 import { StarRating } from "../../components/StarRating.jsx";
 import { TagEditor } from "../../components/TagEditor.jsx";
-import { TMDB_BASE, TMDB_IMG } from "../../lib/tmdb.js";
+import { TMDB_IMG, describeError, isAbort, tmdbGet } from "../../lib/tmdb.js";
 import { isoDateOnly } from "../../lib/dates.js";
+
+const DETAILS_CACHE_MS = 5 * 60 * 1000;
 
 export function MovieDetails({ item, localItem, onUpdate, onAdd, apiKey, omdbKey, dddKey, externalOff = false }) {
   const [details, setDetails] = useState(null);
   const [videos, setVideos] = useState([]);
   const [cert, setCert] = useState("");
   const [cast, setCast] = useState([]);
+  const [loadError, setLoadError] = useState(null);
   const [imdbRating, setImdbRating] = useState(null);
   const [imdbVotes, setImdbVotes] = useState(null);
   const [rtScore, setRtScore] = useState(null);
@@ -32,38 +35,39 @@ export function MovieDetails({ item, localItem, onUpdate, onAdd, apiKey, omdbKey
     if (!apiKey || !item?.id) return;
     const controller = new AbortController();
     const signal = controller.signal;
-    const headers = { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json;charset=utf-8" };
+    const opts = { apiKey, signal, cacheMs: DETAILS_CACHE_MS };
     async function load() {
-      try {
-        const [dres, vres, rres, cres] = await Promise.all([
-          fetch(`${TMDB_BASE}/movie/${item.id}?language=en-US`, { headers, signal }),
-          fetch(`${TMDB_BASE}/movie/${item.id}/videos?language=en-US`, { headers, signal }),
-          fetch(`${TMDB_BASE}/movie/${item.id}/release_dates`, { headers, signal }),
-          fetch(`${TMDB_BASE}/movie/${item.id}/credits?language=en-US`, { headers, signal }),
-        ]);
-        const d = await dres.json();
-        const v = await vres.json();
-        const rd = await rres.json();
-        const c = await cres.json();
-        if (!signal.aborted) {
-          setDetails(d);
-          setVideos(v?.results || []);
-          setCast((c?.cast || []).slice(0, 10));
-          // Extract certification (MPAA) — prefer US, else first non-empty
-          const rels = rd?.results || [];
-          const us = rels.find((r) => r.iso_3166_1 === "US");
-          const pick = (us?.release_dates || []).find((x) => x.certification) ||
-            rels.flatMap((r) => r.release_dates || []).find((x) => x.certification);
-          setCert(pick?.certification || "");
-        }
+      // The four core lookups are independent: one failing shouldn't blank the page.
+      const [dres, vres, rres, cres] = await Promise.allSettled([
+        tmdbGet(`/movie/${item.id}?language=en-US`, opts),
+        tmdbGet(`/movie/${item.id}/videos?language=en-US`, opts),
+        tmdbGet(`/movie/${item.id}/release_dates`, opts),
+        tmdbGet(`/movie/${item.id}/credits?language=en-US`, opts),
+      ]);
+      if (signal.aborted) return;
+      const value = (r) => (r.status === "fulfilled" ? r.value : null);
+      setLoadError(dres.status === "rejected" && !isAbort(dres.reason) ? dres.reason : null);
+      const d = value(dres);
+      const v = value(vres);
+      const rd = value(rres);
+      const c = value(cres);
+      if (d) setDetails(d);
+      setVideos(v?.results || []);
+      setCast((c?.cast || []).slice(0, 10));
+      // Extract certification (MPAA) — prefer US, else first non-empty
+      const rels = rd?.results || [];
+      const us = rels.find((r) => r.iso_3166_1 === "US");
+      const pick = (us?.release_dates || []).find((x) => x.certification) ||
+        rels.flatMap((r) => r.release_dates || []).find((x) => x.certification);
+      setCert(pick?.certification || "");
 
-        // Optional: fetch external ratings via OMDb if omdbKey provided
-        if (omdbKey && !externalOff) {
-          const xres = await fetch(`${TMDB_BASE}/movie/${item.id}/external_ids`, { headers, signal });
-          const xdata = await xres.json();
+      // Optional: fetch external ratings via OMDb if omdbKey provided
+      if (omdbKey && !externalOff) {
+        try {
+          const xdata = await tmdbGet(`/movie/${item.id}/external_ids`, opts);
           const imdbId = xdata?.imdb_id;
           if (imdbId && !signal.aborted) {
-            const ores = await fetch(`https://www.omdbapi.com/?i=${encodeURIComponent(imdbId)}&apikey=${encodeURIComponent(omdbKey)}`);
+            const ores = await fetch(`https://www.omdbapi.com/?i=${encodeURIComponent(imdbId)}&apikey=${encodeURIComponent(omdbKey)}`, { signal });
             const odata = await ores.json();
             if (odata && odata.Response !== "False") {
               setImdbRating(odata.imdbRating && odata.imdbRating !== "N/A" ? odata.imdbRating : null);
@@ -72,65 +76,67 @@ export function MovieDetails({ item, localItem, onUpdate, onAdd, apiKey, omdbKey
               setRtScore(rt?.Value || null);
             }
           }
-        }
+        } catch { /* optional enrichment; ignore failures */ }
+      }
 
-        // Optional: DoesTheDogDie counts when key provided
-        if (dddKey && !externalOff && (jumpScares === 0 && goreCount === 0 && disturbCount === 0)) {
-          try {
-            const title = d?.title || item.title;
-            const q1 = {
-              query: `query($q:String!){ searchTitles(query:$q){ items { id name year } } }`,
-              variables: { q: `${title}` },
+      // Optional: DoesTheDogDie counts when key provided (only saved for films you own)
+      if (dddKey && !externalOff && localItem && (jumpScares === 0 && goreCount === 0 && disturbCount === 0)) {
+        try {
+          const title = d?.title || item.title;
+          const q1 = {
+            query: `query($q:String!){ searchTitles(query:$q){ items { id name year } } }`,
+            variables: { q: `${title}` },
+          };
+          const gres = await fetch("https://graphql.dog/api/graphql", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-API-KEY": dddKey },
+            body: JSON.stringify(q1),
+            signal,
+          });
+          const gdata = await gres.json().catch(() => ({}));
+          const first = gdata?.data?.searchTitles?.items?.[0];
+          if (first && !signal.aborted) {
+            const q2 = {
+              query: `query($id:ID!){ title(id:$id){ topicItemStats{ count topic{ slug } } } }`,
+              variables: { id: first.id },
             };
-            const gres = await fetch("https://graphql.dog/api/graphql", {
+            const sres = await fetch("https://graphql.dog/api/graphql", {
               method: "POST",
               headers: { "Content-Type": "application/json", "X-API-KEY": dddKey },
-              body: JSON.stringify(q1),
+              body: JSON.stringify(q2),
               signal,
             });
-            const gdata = await gres.json().catch(() => ({}));
-            const first = gdata?.data?.searchTitles?.items?.[0];
-            if (first && !signal.aborted) {
-              const q2 = {
-                query: `query($id:ID!){ title(id:$id){ topicItemStats{ count topic{ slug } } } }`,
-                variables: { id: first.id },
-              };
-              const sres = await fetch("https://graphql.dog/api/graphql", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "X-API-KEY": dddKey },
-                body: JSON.stringify(q2),
-                signal,
-              });
-              const sdata = await sres.json().catch(() => ({}));
-              const stats = sdata?.data?.title?.topicItemStats || [];
-              const get = (slug) => stats.find((x) => x?.topic?.slug === slug)?.count || 0;
-              const js = get("jump-scares") || get("jump-scare") || 0;
-              const gore = get("graphic-violence") || get("gore") || 0;
-              const disturb = get("disturbing") || get("body-horror") || 0;
-              if (js || gore || disturb) {
-                setJumpScares(js);
-                setGoreCount(gore);
-                setDisturbCount(disturb);
-                onUpdate?.({ ...(localItem || item), jumpScares: js, goreCount: gore, disturbCount: disturb });
-              }
-            }
-          } catch {}
-        }
-
-        // Auto-pull TMDb keywords into tags
-        try {
-          const kres = await fetch(`${TMDB_BASE}/movie/${item.id}/keywords`, { headers, signal });
-          const kdata = await kres.json();
-          const kws = (kdata?.keywords || []).map(k => k.name.toLowerCase().replace(/\s+/g,'-'));
-          if (kws.length) {
-            const existing = (localItem?.tags || []);
-            const next = Array.from(new Set([ ...existing, ...kws ])).slice(0, 32);
-            if (JSON.stringify(existing.slice().sort()) !== JSON.stringify(next.slice().sort())) {
-              onUpdate?.({ ...(localItem || item), tags: next });
+            const sdata = await sres.json().catch(() => ({}));
+            const stats = sdata?.data?.title?.topicItemStats || [];
+            const get = (slug) => stats.find((x) => x?.topic?.slug === slug)?.count || 0;
+            const js = get("jump-scares") || get("jump-scare") || 0;
+            const gore = get("graphic-violence") || get("gore") || 0;
+            const disturb = get("disturbing") || get("body-horror") || 0;
+            if (js || gore || disturb) {
+              setJumpScares(js);
+              setGoreCount(gore);
+              setDisturbCount(disturb);
+              onUpdate?.({ ...localItem, jumpScares: js, goreCount: gore, disturbCount: disturb });
             }
           }
-        } catch {}
-      } catch {}
+        } catch { /* optional enrichment; ignore failures */ }
+      }
+
+      // Auto-pull TMDb keywords into tags. Only for films already in your library:
+      // upserting here would otherwise add a film just because you looked at it.
+      if (localItem) {
+        try {
+          const kdata = await tmdbGet(`/movie/${item.id}/keywords`, opts);
+          const kws = (kdata?.keywords || []).map(k => k.name.toLowerCase().replace(/\s+/g,'-'));
+          if (kws.length && !signal.aborted) {
+            const existing = (localItem.tags || []);
+            const next = Array.from(new Set([ ...existing, ...kws ])).slice(0, 32);
+            if (JSON.stringify(existing.slice().sort()) !== JSON.stringify(next.slice().sort())) {
+              onUpdate?.({ ...localItem, tags: next });
+            }
+          }
+        } catch { /* optional enrichment; ignore failures */ }
+      }
     }
     load();
     return () => controller.abort();
@@ -154,6 +160,11 @@ export function MovieDetails({ item, localItem, onUpdate, onAdd, apiKey, omdbKey
 
   return (
     <div className="space-y-4">
+      {loadError ? (
+        <div role="alert" className="rounded-xl border border-red-500/40 bg-red-950/40 px-4 py-3 text-sm">
+          {describeError(loadError)} Showing what's saved locally.
+        </div>
+      ) : null}
       {backdrop ? (
         <div className="rounded-2xl overflow-hidden">
           <img src={backdrop} alt="backdrop" className="w-full h-48 object-cover" />

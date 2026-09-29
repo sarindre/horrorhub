@@ -4,8 +4,10 @@ import { Card, CardContent } from "../../components/ui/card.jsx";
 import { Button } from "../../components/ui/button.jsx";
 import { createICS } from "../../lib/ics.js";
 import { MovieCard } from "../../components/MovieCard.jsx";
+import { useToast } from "../../lib/toastContext.js";
 
 export function WatchlistView({ items, onUpdate, onRemove, onOpenDetails, planDays = [], planTime = '20:00' }) {
+  const toast = useToast();
   const tonightPick = React.useMemo(() => {
     const currentYear = new Date().getFullYear();
     const today = new Date().toISOString().slice(0,10);
@@ -49,7 +51,7 @@ export function WatchlistView({ items, onUpdate, onRemove, onOpenDetails, planDa
             <div className="text-sm uppercase tracking-wide opacity-80">Weekly Watch Plan</div>
             <Button size="sm" variant="outline" onClick={()=>{
               const daysSet = new Set(planDays);
-              if (!daysSet.size) { alert('Set preferred days in Settings.'); return; }
+              if (!daysSet.size) { toast('Set your preferred watch days in Settings first.', { kind: 'error' }); return; }
               const [hh,mm] = (planTime||'20:00').split(':').map(Number);
               const events = []; const start = new Date(); const list = items.slice(); let idx=0;
               for (let d=0; d<28 && idx<list.length; d++){
@@ -58,7 +60,7 @@ export function WatchlistView({ items, onUpdate, onRemove, onOpenDetails, planDa
                   events.push({ title:`Watch: ${m.title} (${m.year||''})`, start: dt, description:'Weekly plan' });
                 }
               }
-              if (!events.length) { alert('No events to schedule.'); return; }
+              if (!events.length) { toast('Nothing to schedule yet.', { kind: 'error' }); return; }
               const ics = createICS({ events });
               const blob = new Blob([ics], { type: 'text/calendar' }); const url = URL.createObjectURL(blob);
               const a = document.createElement('a'); a.href=url; a.download = `horrorhub-weekly-${new Date().toISOString().slice(0,10)}.ics`; a.click(); URL.revokeObjectURL(url);

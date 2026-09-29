@@ -4,8 +4,10 @@ import { Button } from "../../components/ui/button.jsx";
 import { parseImdbCSV, parseLetterboxdCSV } from "../../lib/csv.js";
 import { createICS } from "../../lib/ics.js";
 import { buildExport } from "../../lib/library.js";
+import { useToast } from "../../lib/toastContext.js";
 
 export function ExportImport({ data, onImport, watchlist = [] }) {
+  const toast = useToast();
   const fileRef = useRef(null);
   const lbRef = useRef(null);
   const imdbRef = useRef(null);
@@ -33,7 +35,7 @@ export function ExportImport({ data, onImport, watchlist = [] }) {
       try {
         onImport?.(parse(String(reader.result || "")), label);
       } catch (err) {
-        alert(err?.message || `Couldn't read that ${label} file.`);
+        toast(err?.message || `Couldn't read that ${label} file.`, { kind: 'error' });
       }
     };
     reader.readAsText(file);

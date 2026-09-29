@@ -179,16 +179,18 @@ Acceptance criteria:
 - ⬜ Mood matching for unowned films is keyword-based on TMDb overviews; a TMDb-keywords lookup per candidate would be more accurate (extra requests, so weigh it against rate limits).
 
 ### 10. Shared TMDb client and error handling
-Status: Planned
+Status: Done (one lint warning moved to #11)
 Priority: P1
 
-Fetch calls are scattered through the file with no `res.ok` check, no error state and no request cancellation, so a bad API key or a rate limit just shows nothing and slow responses can land out of order.
+Fetch calls were scattered through the code with no `res.ok` check, no error state and no request cancellation, so a bad API key or a rate limit just showed nothing and slow responses could land out of order.
 
 Acceptance criteria:
-- One `lib/tmdb.js` client (auth header, `res.ok`, typed errors, abort support, small response cache)
-- Visible "invalid key / rate limited / offline" states
-- Replace `alert()` with non-blocking toasts
-- Clear the 7 remaining `react-hooks/exhaustive-deps` lint warnings (fetch effects in Discover, Rating Roulette, Continuity, MovieCard sync)
+- ✅ One `lib/tmdb.js` client: auth header, `res.ok`, typed errors (`auth` / `rate-limit` / `network` / `http`), abort support, opt-in in-memory response cache, shared `mapMovie` / `parseProviders`. Discover, Rating Roulette, Continuity, Movie Details and Cold Night Roulette all use it. OMDb and DoesTheDogDie stay as direct calls (different APIs, best-effort enrichment)
+- ✅ Visible error states with Retry (Discover, Rating Roulette), inline messages (Recommendations, Continuity, Details) and "add your TMDb token" prompts when no key is set
+- ✅ `alert()` replaced by non-blocking toasts (`ToastProvider` / `useToast`). The import preview still uses a confirm dialog on purpose
+- ✅ Superseded requests are cancelled (no more stale results overwriting newer ones); provider lookups moved to a `useProviders` hook
+- ✅ Fetch-related `exhaustive-deps` warnings cleared; two intentional ones are annotated with the reason
+- ⬜ 1 lint warning left: `Settings` calls `onChange` from an effect. It goes away with the Settings rewrite in #11
 
 ### 11. Settings cleanup
 Status: Planned
@@ -201,6 +203,7 @@ Acceptance criteria:
 - `theme` actually switches the app theme (dark / light / system)
 - Key fields masked, with a short note in the README that keys live in this browser only
 - UI preference keys consolidated under one versioned preferences object
+- The last `react-hooks/exhaustive-deps` lint warning (Settings pushing state up via `onChange`) is gone, so `npm run lint` is fully clean
 
 ### 12. Subgenre Mixer sliders don't update picks live
 Status: Planned
