@@ -31,6 +31,7 @@ export const DEFAULT_SETTINGS = {
   dyslexic: false,
   // catalog + comfort
   autoTag: true,
+  autoMatch: true,
   showWarnings: true,
   avoidFlags: [],
   maxScares: 10,
@@ -77,6 +78,7 @@ export function normalizeSettings(raw) {
     highContrast: bool(s.highContrast, d.highContrast),
     dyslexic: bool(s.dyslexic, d.dyslexic),
     autoTag: bool(s.autoTag, d.autoTag),
+    autoMatch: bool(s.autoMatch, d.autoMatch),
     showWarnings: bool(s.showWarnings, d.showWarnings),
     avoidFlags: Array.isArray(s.avoidFlags) ? [...new Set(s.avoidFlags.filter((f) => FLAG_IDS.includes(f)))] : d.avoidFlags,
     maxScares: clampInt(s.maxScares, 0, 10, d.maxScares),

@@ -123,8 +123,14 @@ export function ownedTitleKeys(items) {
 export const isOwnedTitle = (keys, candidate) => keys.has(titleKey(candidate)) || keys.has(`${normTitle(candidate.title)}|`);
 
 // An unrated import row must not wipe an existing rating; other zeroes (e.g. scares 0) are real values.
+// Likewise an import's default `watchlist: false` must not take a film off your watchlist.
 const isEmpty = (field, v) =>
-  v === undefined || v === null || v === "" || (Array.isArray(v) && v.length === 0) || (field === "rating" && v === 0);
+  v === undefined ||
+  v === null ||
+  v === "" ||
+  (Array.isArray(v) && v.length === 0) ||
+  (field === "rating" && v === 0) ||
+  (field === "watchlist" && v === false);
 
 // Accepts a raw parsed import (bare array, or { items } from an export) and
 // returns the usable items plus a count of rows that had to be dropped.

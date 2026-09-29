@@ -50,6 +50,17 @@ All notable changes to this project will be documented in this file.
 - Number inputs (nudge cadence, "long ago" year) accept typing freely and clamp on blur instead of snapping after the first keystroke.
 - Removed the dead "October theme" toggle and the unused Tailwind config and `tailwindcss-animate` dependency. `npm run lint` now reports nothing.
 
+### Added (matching imported films to TMDb)
+- Films imported from Letterboxd or IMDb are now linked to TMDb in the background: the real TMDb id, poster, overview and release date are filled in while your ratings, watch dates, tags and notes are kept. IMDb ids resolve exactly; Letterboxd rows are matched by exact title and a release year within one, and anything doubtful is left for you rather than guessed.
+- If you already have the film (for example from Discover), the two are merged instead of duplicated: tags and watch dates are combined and it stays on your watchlist.
+- Linked films are then auto-tagged, get content warnings, count toward your taste profile and can seed recommendations.
+- Settings → Imported films shows how many are matched, waiting or need help, lets you search TMDb and link the right film by hand, and retries the ones that failed. It can be switched off under Catalog & Content.
+- Tests now run the background hooks for real (jsdom and Testing Library): 231 tests.
+
+### Fixed (data safety)
+- Merging an imported copy of a film into one you already own could take it off your watchlist, because the import's default `watchlist: false` overwrote your `true`. An import can now add a film to your watchlist but never remove one.
+- The library's `upsert`/`remove` callbacks got a new identity on every render, which restarted the background auto-tagger each time the library changed and aborted its in-flight request. They're now stable.
+
 ### Added (watch planning)
 - A Marathon planner on the Watchlist tab: pick a source (watchlist or whole library), a theme (any mood, plus seasonal themes such as "Halloween night" and "Holiday horror" when in season), how many films and how much time you have, and it builds a lineup that fits, with a 15-minute break between films. It prefers unwatched films, skips unreleased ones and anything over your content limits, and keeps one very long film from crowding out the rest.
 - Pacing control: Build up, Peak then wind down, or Ebb and flow, with a plain-English read on how the night flows. Each film shows its start and end time, runtime, scare level, why it was picked and its content warnings.

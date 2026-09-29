@@ -10,6 +10,8 @@ import { ContentPrefsContext } from "./lib/contentContext.js";
 import { useAutoTagger } from "./hooks/useAutoTagger.js";
 import { useChallenges } from "./hooks/useChallenges.js";
 import { useMarathons } from "./hooks/useMarathons.js";
+import { useImportMatcher } from "./hooks/useImportMatcher.js";
+import { isUnmatched } from "./lib/tmdbMatch.js";
 import { ChallengesView } from "./features/challenges/ChallengesView.jsx";
 import { analyzeLocal } from "./lib/filmMeta.js";
 import { cleanupLegacyKeywordTags, mergeInferred, tagState } from "./lib/tagging.js";
@@ -30,7 +32,7 @@ import { useToast } from "./lib/toastContext.js";
 
 export function HorrorHub() {
   const toast = useToast();
-  const { library, upsert, remove, replaceLibrary, saveFailed } = useLibrary();
+  const { library, upsert, remove, relink, replaceLibrary, saveFailed } = useLibrary();
   const [settings, updateSettings] = useSettings();
   useTheme(settings.theme);
   const mixer = useMemo(() => getMixer(settings), [settings]);
@@ -95,6 +97,23 @@ export function HorrorHub() {
   };
 
   const watchlist = library.filter((i) => i.watchlist);
+
+  // Link Letterboxd/IMDb imports to TMDb (real ids, posters, metadata) in the background.
+  // Runs before the tagger's next pass, which then tags the newly linked films.
+  const matcher = useImportMatcher({
+    library,
+    upsert,
+    relink,
+    apiKey: settings.apiKey,
+    enabled: settings.autoMatch,
+    onProblem: (message) => toast(message, { kind: "error" }),
+    onDone: ({ matched, failed }) =>
+      toast(`Matched ${matched} of ${matched + failed} imported film${matched + failed === 1 ? "" : "s"} to TMDb.${failed ? ` ${failed} need a manual match in Settings.` : ""}`, { kind: failed ? "info" : "success" }),
+  });
+  const retryMatching = () => {
+    replaceLibrary(library.map((i) => (isUnmatched(i) ? { ...i, tmdbMatchTriedAt: undefined } : i)));
+    toast("Retrying the films that couldn't be matched…");
+  };
 
   const challengeStore = useChallenges({
     library,
@@ -187,6 +206,11 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
           could be lost on reload. Open Settings → Backup &amp; Import and export a backup now.
         </div>
       ) : null}
+      {matcher.running ? (
+        <div role="status" className="mb-3 text-xs opacity-70">
+          Matching imported films to TMDb… {matcher.pending} left
+        </div>
+      ) : null}
       {tagger.running ? (
         <div role="status" className="mb-3 text-xs opacity-70">
           Auto-tagging your library from TMDb data… {tagger.pending} film{tagger.pending === 1 ? "" : "s"} left
@@ -271,7 +295,7 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
             </TabsContent>
 
             <TabsContent value="settings" className="mt-6">
-              <Settings settings={settings} update={updateSettings} onImport={importLib} onRetagAll={retagAll} onCleanupTags={cleanupTags} extras={{ challenges: challengeStore.challenges, marathons: marathonStore.marathons }} watchlist={watchlist} data={library} />
+              <Settings settings={settings} update={updateSettings} onImport={importLib} onRetagAll={retagAll} onCleanupTags={cleanupTags} onRelink={relink} onRetryMatching={retryMatching} extras={{ challenges: challengeStore.challenges, marathons: marathonStore.marathons }} watchlist={watchlist} data={library} />
             </TabsContent>
           </>
         )}

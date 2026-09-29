@@ -4,6 +4,7 @@ import { Button } from "../../components/ui/button.jsx";
 import { Input } from "../../components/ui/input.jsx";
 import { Label } from "../../components/ui/label.jsx";
 import { ExportImport } from "./ExportImport.jsx";
+import { ImportedFilms } from "./ImportedFilms.jsx";
 import { THEMES } from "../../lib/settings.js";
 import { CONTENT_FLAGS } from "../../lib/contentFlags.js";
 
@@ -71,7 +72,7 @@ function SecretInput({ value, onChange, placeholder }) {
 
 // Controlled by the app: `settings` is the single source of truth and every
 // change goes through `update({ key: value })`, which validates and persists.
-export function Settings({ settings, update, onImport, onRetagAll, onCleanupTags, watchlist, data, extras = {} }) {
+export function Settings({ settings, update, onImport, onRetagAll, onCleanupTags, onRelink, onRetryMatching, watchlist, data, extras = {} }) {
   const thisYear = new Date().getFullYear();
   return (
     <div className="space-y-6">
@@ -145,6 +146,7 @@ export function Settings({ settings, update, onImport, onRetagAll, onCleanupTags
             yourself is respected.
           </div>
           <Toggle id="autotag-toggle" label="Auto-tag films from TMDb data (needs your TMDb token)" checked={settings.autoTag} onChange={(v) => update({ autoTag: v })} />
+          <Toggle id="automatch-toggle" label="Match films imported from Letterboxd/IMDb to TMDb automatically" checked={settings.autoMatch} onChange={(v) => update({ autoMatch: v })} />
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={onRetagAll}>Re-tag my whole library</Button>
             <Button variant="outline" size="sm" onClick={onCleanupTags}>Clean up old keyword tags</Button>
@@ -181,6 +183,8 @@ export function Settings({ settings, update, onImport, onRetagAll, onCleanupTags
           </div>
         </CardContent>
       </Card>
+
+      <ImportedFilms library={data || []} apiKey={settings.apiKey} autoMatch={settings.autoMatch} onRelink={onRelink} onRetryAll={onRetryMatching} />
 
       <Card className="rounded-2xl">
         <CardContent className="p-6 space-y-4">

@@ -95,6 +95,14 @@ describe("mergeLibraries", () => {
     expect(items[0]).toMatchObject({ rating: 5, scares: 8, tags: ["creature"] });
   });
 
+  it("never takes a film off your watchlist because an import defaulted watchlist to false", () => {
+    const listed = [{ id: 7, title: "Queued", year: 2001, watchlist: true }];
+    expect(mergeLibraries(listed, [{ id: 7, title: "Queued", year: 2001, watchlist: false }]).items[0].watchlist).toBe(true);
+    // ...but an import can still put a film on it
+    const plain = [{ id: 8, title: "Plain", year: 2002, watchlist: false }];
+    expect(mergeLibraries(plain, [{ id: 8, title: "Plain", year: 2002, watchlist: true }]).items[0].watchlist).toBe(true);
+  });
+
   it("unions tags and lets non-empty incoming values win", () => {
     const { items } = mergeLibraries(existing, [{ id: 101, title: "The Thing", year: 1982, rating: 4, tags: ["sci-horror"] }]);
     expect(items[0].rating).toBe(4);

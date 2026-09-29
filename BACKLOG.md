@@ -267,10 +267,27 @@ Priority: P2
 `components/ui/*` are hand-rolled stubs (a native date input as "Calendar", a Dialog that ignores `asChild`), while the Radix packages in `package.json` go largely unused. Either adopt the real shadcn/Radix components or drop the unused dependencies.
 
 ### 16. Enrich imported titles with TMDb metadata
-Status: Planned
+Status: Done (see follow-ups)
 Priority: P1
 
-CSV imports create ids like `letterboxd:Title:Year` (title + year matching now merges them into existing titles, but new ones have no poster, overview or TMDb id). Add a background "match to TMDb" step so imported films get posters, tags and details, and dedupe against Discover.
+CSV imports created films with text ids like `letterboxd:Title:Year` and no poster, overview or TMDb id, so they couldn't be tagged, warned about, or used to seed recommendations.
+
+Implementation notes (`lib/tmdbMatch.js`, `hooks/useImportMatcher.js`, `features/settings/ImportedFilms.jsx`):
+- After an import, a background matcher links each film to TMDb, one at a time (about 4 a second, only with a TMDb token, switchable in Settings). IMDb ids resolve exactly through TMDb's `/find`. Letterboxd rows are searched by title and year, relaxing the year filter step by step
+- Matching is deliberately strict, since a wrong match would attach someone else's poster and tags: the title must match exactly (ignoring case and punctuation) and the release year must be within one; with no year, only a single unambiguous title match is accepted
+- A match swaps in the real TMDb id, poster, overview and release date while keeping everything you entered (rating, watch dates, tags, notes). If you already have that TMDb film (say from Discover), the two are merged: tags and watch dates combined, the imported rating filling a blank, and it stays on your watchlist. Nothing is lost
+- Newly linked films are then picked up by auto-tagging, content warnings, taste profile and recommendation seeding like any other film
+- Films that couldn't be placed are marked as tried (so they aren't retried every session) and listed in Settings → Imported films, where you can search TMDb by hand and link the right one, or retry automatic matching. A completion toast reports "Matched N of M"
+
+Acceptance criteria:
+- ✅ Imported films get TMDb ids, posters and details
+- ✅ They then get tags and warnings and feed recommendations
+- ✅ They dedupe against films you already have from Discover
+
+Follow-ups:
+- Imports still create the text-id film first and match afterwards. Matching during the import (with a progress bar) would avoid the interim state, but blocks on many network calls
+- Foreign-language titles rely on TMDb's original-title field; an obscure or mistitled film needs the manual match
+- A manual match doesn't check the year, so you can link any film; it's your call by design
 
 ### 17. Copy and onboarding cleanup
 Status: Planned
@@ -282,7 +299,7 @@ Remove leftover scaffolding text ("MVP • Local first", the static "How to use"
 Status: Planned
 Priority: P2
 
-The pure helpers (`lib/*`) and a render smoke test are covered. Add tests for recommendation scoring, the mood/intensity filters and tag inference once they move out of the components.
+Progress: 231 tests. The pure logic in `lib/*` (recommendation scoring, taste, tagging, content flags, challenges, planning, matching, storage, settings) is covered, every view is smoke-rendered, and the background hooks (`useAutoTagger`, `useImportMatcher`) are tested running for real in jsdom against a stubbed TMDb, which caught restart-on-every-render and dropped-completion bugs. Still open: interaction tests for the UI (clicking, typing, tab changes; the render tests are server-side), tests for `useChallenges`/`useMarathons`/`useContentGate`/`useProviders`, and a coverage report in CI.
 
 ## Notes
 The product should feel like a personal horror curator, not just a database. The strongest differentiator is a recommendation system that understands horror taste, mood, and watch planning.

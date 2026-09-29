@@ -55,6 +55,7 @@ This project should stay local-first, lightweight, and highly personalized. It i
 - Library items are shaped by `normalizeItem` in `src/lib/library.js`. Imports go through `validateImport` + `mergeLibraries`, which never delete data.
 - When changing the stored library shape, bump `LIBRARY_VERSION`/key and add a migration in `loadLibrary`.
 - Run `npm test`, `npm run lint` and `npm run build` before committing.
+- Tests: pure logic gets plain Vitest tests next to the code; views are smoke-rendered on the server (`renderToString`, so text nodes can be split by `<!-- -->` markers when matching); hooks with effects or async loops are tested in jsdom with `// @vitest-environment jsdom` at the top of the file and a stubbed `fetch`. Background work (auto-tagging, import matching) must depend only on stable callbacks so it doesn't restart on every render.
 
 ## Notes for future work
 The app already has a strong foundation of library management. The next refresh should emphasize:
