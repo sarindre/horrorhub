@@ -4,125 +4,133 @@ import { Button } from "../../components/ui/button.jsx";
 import { Input } from "../../components/ui/input.jsx";
 import { Label } from "../../components/ui/label.jsx";
 import { ExportImport } from "./ExportImport.jsx";
+import { THEMES } from "../../lib/settings.js";
 
-export function Settings({ settings, onChange, onImport, watchlist, data }) {
-  const [apiKey, setApiKey] = useState(settings.apiKey || "");
-  const [omdbKey, setOmdbKey] = useState(settings.omdbKey || "");
-  const [dddKey, setDddKey] = useState(settings.dddKey || "");
-  const [theme, setTheme] = useState(settings.theme || "dark");
-  const [flicker, setFlicker] = useState(settings.flicker ?? true);
-  const [fog, setFog] = useState(settings.fog ?? true);
-  const [ambientAudio, setAmbientAudio] = useState(settings.ambientAudio ?? false);
-  const [lightsOut, setLightsOut] = useState(settings.lightsOut ?? false);
-  const [seasonal, setSeasonal] = useState(settings.seasonal ?? (new Date().getMonth()===9));
-  const [releaseRadar, setReleaseRadar] = useState(settings.releaseRadar ?? true);
-  const [nudgeDays, setNudgeDays] = useState(settings.nudgeDays ?? 7);
-  const [mGhosts, setMGhosts] = useState(settings.mixerGhosts ?? 1);
-  const [mOccult, setMOccult] = useState(settings.mixerOccult ?? 1);
-  const [mSlasher, setMSlasher] = useState(settings.mixerSlasher ?? 1);
-  const [mFolk, setMFolk] = useState(settings.mixerFolk ?? 1);
-  const [spookyFont, setSpookyFont] = useState(settings.spookyFont ?? true);
-  const [highContrast, setHighContrast] = useState(settings.highContrast ?? false);
-  const [dyslexic, setDyslexic] = useState(settings.dyslexic ?? false);
-  const [externalOff, setExternalOff] = useState(settings.externalOff ?? false);
-  const [planDays, setPlanDays] = useState(settings.planDays ?? [5,6]);
-  const [planTime, setPlanTime] = useState(settings.planTime ?? '20:00');
-  const [longAgoYear, setLongAgoYear] = useState(settings.longAgoYear ?? 1900);
-  useEffect(() => {
-    onChange?.({ apiKey, omdbKey, dddKey, theme, flicker, fog, ambientAudio, lightsOut, seasonal, releaseRadar, nudgeDays, mixerGhosts: mGhosts, mixerOccult: mOccult, mixerSlasher: mSlasher, mixerFolk: mFolk, highContrast, dyslexic, planDays, planTime, externalOff, spookyFont, longAgoYear });
-  }, [apiKey, omdbKey, dddKey, theme, flicker, fog, ambientAudio, lightsOut, seasonal, releaseRadar, nudgeDays, mGhosts, mOccult, mSlasher, mFolk, highContrast, dyslexic, planDays, planTime, externalOff, spookyFont, longAgoYear]);
+const THEME_LABELS = { dark: "Dark", light: "Light", system: "System" };
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MIXER_ROWS = [
+  ["Ghosts", "mixerGhosts"],
+  ["Occult", "mixerOccult"],
+  ["Slasher", "mixerSlasher"],
+  ["Folk", "mixerFolk"],
+];
 
+function Toggle({ id, label, checked, onChange }) {
+  return (
+    <div className="pt-2 flex items-center gap-2">
+      <input id={id} type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      <Label htmlFor={id}>{label}</Label>
+    </div>
+  );
+}
+
+// Lets you type freely (e.g. "10") and only clamps and commits on blur/Enter,
+// instead of snapping to the minimum after the first keystroke.
+function NumberField({ value, min, max, onCommit, className = "w-20" }) {
+  const [draft, setDraft] = useState(String(value));
+  useEffect(() => setDraft(String(value)), [value]);
+  const commit = () => {
+    const n = Math.min(max, Math.max(min, Math.round(Number(draft)) || value));
+    setDraft(String(n));
+    onCommit(n);
+  };
+  return (
+    <Input
+      type="number"
+      min={min}
+      max={max}
+      className={className}
+      value={draft}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => { if (e.key === "Enter") commit(); }}
+    />
+  );
+}
+
+// API keys are masked by default; Show reveals them for checking a paste.
+function SecretInput({ value, onChange, placeholder }) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div className="flex gap-2">
+      <Input
+        type={visible ? "text" : "password"}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        autoComplete="off"
+        spellCheck={false}
+      />
+      <Button type="button" variant="outline" size="sm" onClick={() => setVisible((v) => !v)} aria-pressed={visible}>
+        {visible ? "Hide" : "Show"}
+      </Button>
+    </div>
+  );
+}
+
+// Controlled by the app: `settings` is the single source of truth and every
+// change goes through `update({ key: value })`, which validates and persists.
+export function Settings({ settings, update, onImport, watchlist, data }) {
+  const thisYear = new Date().getFullYear();
   return (
     <div className="space-y-6">
       <Card className="rounded-2xl">
         <CardContent className="p-6 space-y-4">
           <div className="text-lg font-semibold">Appearance & Data</div>
           <div className="flex gap-2">
-            <Button variant={theme === "dark" ? "default" : "outline"} onClick={() => setTheme("dark")}>
-              Dark
-            </Button>
-            <Button variant={theme === "light" ? "default" : "outline"} onClick={() => setTheme("light")}>
-              Light
-            </Button>
-            <Button variant={theme === "system" ? "default" : "outline"} onClick={() => setTheme("system")}>
-              System
-            </Button>
+            {THEMES.map((t) => (
+              <Button key={t} variant={settings.theme === t ? "default" : "outline"} onClick={() => update({ theme: t })}>
+                {THEME_LABELS[t]}
+              </Button>
+            ))}
           </div>
-          <div className="text-sm opacity-70">Theme value is stored locally. Wire it to your app shell if you add a real theme switcher.</div>
-          <div className="pt-2 flex items-center gap-2">
-            <input id="spookyfont-toggle" type="checkbox" checked={spookyFont} onChange={(e)=>setSpookyFont(e.target.checked)} />
-            <Label htmlFor="spookyfont-toggle">Spooky header font</Label>
-          </div>
-          <div className="pt-2 flex items-center gap-2">
-            <input id="flicker-toggle" type="checkbox" checked={flicker} onChange={(e)=>setFlicker(e.target.checked)} />
-            <Label htmlFor="flicker-toggle">Ambient edge flicker</Label>
-          </div>
-          <div className="pt-2 flex items-center gap-2">
-            <input id="fog-toggle" type="checkbox" checked={fog} onChange={(e)=>setFog(e.target.checked)} />
-            <Label htmlFor="fog-toggle">Fog overlay</Label>
-          </div>
-          <div className="pt-2 flex items-center gap-2">
-            <input id="audio-toggle" type="checkbox" checked={ambientAudio} onChange={(e)=>setAmbientAudio(e.target.checked)} />
-            <Label htmlFor="audio-toggle">Ambient whispers/heartbeat</Label>
-          </div>
-          <div className="pt-2 flex items-center gap-2">
-            <input id="externaloff-toggle" type="checkbox" checked={externalOff} onChange={(e)=>setExternalOff(e.target.checked)} />
-            <Label htmlFor="externaloff-toggle">Disable external lookups (OMDb / DoesTheDogDie)</Label>
-          </div>
-          <div className="pt-2 flex items-center gap-2">
-            <input id="lightsout-toggle" type="checkbox" checked={lightsOut} onChange={(e)=>setLightsOut(e.target.checked)} />
-            <Label htmlFor="lightsout-toggle">Lights‑Out dimmer</Label>
-          </div>
-          <div className="pt-2 flex items-center gap-2">
-            <input id="seasonal-toggle" type="checkbox" checked={seasonal} onChange={(e)=>setSeasonal(e.target.checked)} />
-            <Label htmlFor="seasonal-toggle">October theme (blood moon + countdown)</Label>
-          </div>
-          <div className="pt-2 flex items-center gap-2">
-            <input id="radar-toggle" type="checkbox" checked={releaseRadar} onChange={(e)=>setReleaseRadar(e.target.checked)} />
-            <Label htmlFor="radar-toggle">Release Radar notifications</Label>
-          </div>
+          <div className="text-sm opacity-70">Dark is the default. System follows your device's light/dark setting.</div>
+          <Toggle id="spookyfont-toggle" label="Spooky header font" checked={settings.spookyFont} onChange={(v) => update({ spookyFont: v })} />
+          <Toggle id="flicker-toggle" label="Ambient edge flicker" checked={settings.flicker} onChange={(v) => update({ flicker: v })} />
+          <Toggle id="fog-toggle" label="Fog overlay" checked={settings.fog} onChange={(v) => update({ fog: v })} />
+          <Toggle id="audio-toggle" label="Ambient whispers/heartbeat" checked={settings.ambientAudio} onChange={(v) => update({ ambientAudio: v })} />
+          <Toggle id="externaloff-toggle" label="Disable external lookups (OMDb / DoesTheDogDie)" checked={settings.externalOff} onChange={(v) => update({ externalOff: v })} />
+          <Toggle id="lightsout-toggle" label="Lights‑Out dimmer" checked={settings.lightsOut} onChange={(v) => update({ lightsOut: v })} />
+          <Toggle id="radar-toggle" label="Release Radar notifications" checked={settings.releaseRadar} onChange={(v) => update({ releaseRadar: v })} />
           <div className="pt-2 flex items-center gap-2">
             <Label className="text-sm">Nudge cadence (days 3–14)</Label>
-            <Input type="number" min={3} max={14} className="w-20" value={nudgeDays} onChange={(e)=> setNudgeDays(Math.min(14, Math.max(3, Number(e.target.value)||7)))} />
-          </div>          <div className="pt-2 flex items-center gap-2">
+            <NumberField value={settings.nudgeDays} min={3} max={14} onCommit={(n) => update({ nudgeDays: n })} />
+          </div>
+          <div className="pt-2 flex items-center gap-2">
             <Label className="text-sm">“Long ago” year</Label>
-            <Input type="number" min="1800" max={new Date().getFullYear()} className="w-24" value={longAgoYear} onChange={(e)=> setLongAgoYear(Math.max(1800, Math.min(new Date().getFullYear(), Number(e.target.value)||1900)))} />
+            <NumberField value={settings.longAgoYear} min={1800} max={thisYear} className="w-24" onCommit={(n) => update({ longAgoYear: n })} />
             <div className="text-xs opacity-70">Used when logging “Watched long ago” and to exclude from Stats.</div>
           </div>
           <div className="pt-4 text-sm font-semibold">Subgenre Mixer</div>
           <div className="grid grid-cols-2 gap-3 text-sm items-center">
-            <Label>Ghosts</Label>
-            <input type="range" min="0" max="2" step="1" value={mGhosts} onChange={e=>setMGhosts(Number(e.target.value))} />
-            <Label>Occult</Label>
-            <input type="range" min="0" max="2" step="1" value={mOccult} onChange={e=>setMOccult(Number(e.target.value))} />
-            <Label>Slasher</Label>
-            <input type="range" min="0" max="2" step="1" value={mSlasher} onChange={e=>setMSlasher(Number(e.target.value))} />
-            <Label>Folk</Label>
-            <input type="range" min="0" max="2" step="1" value={mFolk} onChange={e=>setMFolk(Number(e.target.value))} />
+            {MIXER_ROWS.map(([label, key]) => (
+              <div key={key} className="contents">
+                <Label>{label}</Label>
+                <input type="range" min="0" max="2" step="1" value={settings[key]} onChange={(e) => update({ [key]: Number(e.target.value) })} />
+              </div>
+            ))}
           </div>
           <div className="pt-4 text-sm font-semibold">Accessibility</div>
-          <div className="pt-2 flex items-center gap-2">
-            <input id="hc-toggle" type="checkbox" checked={highContrast} onChange={(e)=>setHighContrast(e.target.checked)} />
-            <Label htmlFor="hc-toggle">High-Contrast mode</Label>
-          </div>
-          <div className="pt-2 flex items-center gap-2">
-            <input id="dys-toggle" type="checkbox" checked={dyslexic} onChange={(e)=>setDyslexic(e.target.checked)} />
-            <Label htmlFor="dys-toggle">Dyslexia‑friendly font</Label>
-          </div>
+          <Toggle id="hc-toggle" label="High-Contrast mode" checked={settings.highContrast} onChange={(v) => update({ highContrast: v })} />
+          <Toggle id="dys-toggle" label="Dyslexia‑friendly font" checked={settings.dyslexic} onChange={(v) => update({ dyslexic: v })} />
           <div className="pt-4 text-sm font-semibold">Weekly Watch Plan</div>
           <div className="text-xs opacity-80">Preferred days</div>
           <div className="flex flex-wrap gap-2 text-sm">
-            {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d,idx)=> (
-              <label key={d} className="inline-flex items-center gap-1"><input type="checkbox" checked={planDays.includes(idx)} onChange={(e)=>{
-                setPlanDays(p=> e.target.checked ? Array.from(new Set([...p, idx])) : p.filter(x=>x!==idx));
-              }} />{d}</label>
+            {WEEKDAYS.map((d, idx) => (
+              <label key={d} className="inline-flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  checked={settings.planDays.includes(idx)}
+                  onChange={(e) => update({ planDays: e.target.checked ? [...settings.planDays, idx] : settings.planDays.filter((x) => x !== idx) })}
+                />
+                {d}
+              </label>
             ))}
           </div>
           <div className="flex items-center gap-2 text-sm mt-2">
             <Label>Time</Label>
-            <Input type="time" value={planTime} onChange={(e)=> setPlanTime(e.target.value||'20:00')} className="w-28" />
+            <Input type="time" value={settings.planTime} onChange={(e) => update({ planTime: e.target.value })} className="w-28" />
           </div>
-          <div className="pt-2" />
         </CardContent>
       </Card>
 
@@ -137,15 +145,16 @@ export function Settings({ settings, onChange, onImport, watchlist, data }) {
       <Card className="rounded-2xl">
         <CardContent className="p-6 space-y-3">
           <div className="text-lg font-semibold">Connections</div>
+          <div className="text-sm opacity-70">Keys are stored only in this browser (localStorage) and sent only to the service they belong to.</div>
           <Label className="text-sm">TMDb API Access Token (v4)</Label>
-          <Input type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder="Paste your Bearer token here" />
+          <SecretInput value={settings.apiKey} onChange={(v) => update({ apiKey: v })} placeholder="Paste your Bearer token here" />
           <div className="text-sm opacity-70">Get a free account at themoviedb.org → Settings → API → v4 auth. Paste the long token here.</div>
           <div className="pt-3" />
           <Label className="text-sm">OMDb API Key (optional, for IMDb/RT ratings)</Label>
-          <Input type="text" value={omdbKey} onChange={(e) => setOmdbKey(e.target.value)} placeholder="If set, details pages show IMDb and Rotten Tomatoes" />
+          <SecretInput value={settings.omdbKey} onChange={(v) => update({ omdbKey: v })} placeholder="If set, details pages show IMDb and Rotten Tomatoes" />
           <div className="pt-3" />
           <Label className="text-sm">DoesTheDogDie API Key (optional, for jump scares & content)</Label>
-          <Input type="text" value={dddKey} onChange={(e) => setDddKey(e.target.value)} placeholder="If set, details pages auto-fill jump scares/gore/disturbing" />
+          <SecretInput value={settings.dddKey} onChange={(v) => update({ dddKey: v })} placeholder="If set, details pages auto-fill jump scares/gore/disturbing" />
         </CardContent>
       </Card>
     </div>

@@ -22,6 +22,15 @@ describe("App smoke render", () => {
     expect(html).toContain("My Library");
   });
 
+  it("migrates legacy flat settings to the versioned v2 key on load", () => {
+    const store = fakeStorage({ "horrorhub.settings.v1": JSON.stringify({ apiKey: " tok ", flicker: false }) });
+    vi.stubGlobal("localStorage", store);
+    const html = renderToString(<App />);
+    expect(html).not.toContain("flicker-spot"); // the migrated flicker=false setting is honored
+    const saved = JSON.parse(store._map.get("horrorhub.settings.v2"));
+    expect(saved).toMatchObject({ version: 2, settings: { apiKey: "tok", flicker: false, theme: "dark" } });
+  });
+
   it("renders a migrated legacy (v2) library", () => {
     const legacy = [{ id: 1, title: "Hereditary", year: 2018, rating: 4.5, tags: ["Occult"] }];
     const store = fakeStorage({ "horrorhub.library.v2": JSON.stringify(legacy) });

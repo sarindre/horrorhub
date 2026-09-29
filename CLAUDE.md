@@ -50,7 +50,8 @@ This project should stay local-first, lightweight, and highly personalized. It i
 - `npm test`
 
 ## Data rules
-- Never write to `localStorage` directly; use `src/lib/storage.js` (`readJSON`/`writeJSON`) or `usePersistentState`.
+- Never write to `localStorage` directly; use `src/lib/storage.js` (`readJSON`/`writeJSON`), `usePersistentState` (UI preferences, stored in one object by `src/lib/prefs.js`) or `useSettings` (app settings).
+- Settings live in `src/lib/settings.js` (`DEFAULT_SETTINGS` + `normalizeSettings`). To add a setting: add a default, validate it in `normalizeSettings`, then read it from `settings` and change it with `update({ key: value })`. Don't keep a local copy in component state.
 - Library items are shaped by `normalizeItem` in `src/lib/library.js`. Imports go through `validateImport` + `mergeLibraries`, which never delete data.
 - When changing the stored library shape, bump `LIBRARY_VERSION`/key and add a migration in `loadLibrary`.
 - Run `npm test`, `npm run lint` and `npm run build` before committing.

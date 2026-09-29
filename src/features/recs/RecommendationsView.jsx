@@ -9,7 +9,7 @@ import { MovieCard } from "../../components/MovieCard.jsx";
 import { useToast } from "../../lib/toastContext.js";
 import { describeError, tmdbGet } from "../../lib/tmdb.js";
 
-export function RecommendationsView({ items, apiKey, onAdd, onUpdate, onRemove, onOpenDetails, inLibraryIds, watchlistIds, mixer, ratingById }) {
+export function RecommendationsView({ items, apiKey, onAdd, onUpdate, onRemove, onOpenDetails, inLibraryIds, watchlistIds, mixer, onMixerChange, ratingById }) {
   const toast = useToast();
   const [mood, setMood] = useState(5); // 0 = spooky, 10 = traumatizing
   const [moodPreset, setMoodPreset] = useState("all");
@@ -96,10 +96,12 @@ export function RecommendationsView({ items, apiKey, onAdd, onUpdate, onRemove, 
         <CardContent className="p-4 h-full flex flex-col">
           <div className="text-sm font-semibold mb-2">Subgenre Mixer</div>
           <div className="grid sm:grid-cols-2 gap-4 text-xs opacity-80 items-center">
-            <div className="flex items-center gap-2"><span>Ghosts</span><input type="range" min="0" max="2" step="1" defaultValue={mixer.ghosts} onChange={(e)=>{ mixer.ghosts = Number(e.target.value); }} /></div>
-            <div className="flex items-center gap-2"><span>Occult</span><input type="range" min="0" max="2" step="1" defaultValue={mixer.occult} onChange={(e)=>{ mixer.occult = Number(e.target.value); }} /></div>
-            <div className="flex items-center gap-2"><span>Slasher</span><input type="range" min="0" max="2" step="1" defaultValue={mixer.slasher} onChange={(e)=>{ mixer.slasher = Number(e.target.value); }} /></div>
-            <div className="flex items-center gap-2"><span>Folk</span><input type="range" min="0" max="2" step="1" defaultValue={mixer.folk} onChange={(e)=>{ mixer.folk = Number(e.target.value); }} /></div>
+            {[["Ghosts", "ghosts"], ["Occult", "occult"], ["Slasher", "slasher"], ["Folk", "folk"]].map(([label, key]) => (
+              <div key={key} className="flex items-center gap-2">
+                <span>{label}</span>
+                <input type="range" min="0" max="2" step="1" value={mixer[key]} onChange={(e) => onMixerChange?.(label, Number(e.target.value))} />
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>

@@ -193,23 +193,26 @@ Acceptance criteria:
 - ⬜ 1 lint warning left: `Settings` calls `onChange` from an effect. It goes away with the Settings rewrite in #11
 
 ### 11. Settings cleanup
-Status: Planned
+Status: Done (light theme needs a visual pass)
 Priority: P1
 
-Settings mirrors ~20 pieces of state into local state and pushes them up with one large effect. The `theme` choice is saved but never applied. API keys are stored in plain text and the OMDb/DoesTheDogDie fields aren't masked. Other UI preferences (discover/roulette filters) still use ad hoc `horrorhub.*` keys with no schema version.
+Settings mirrored ~20 pieces of state into local state and pushed them up with one large effect. The `theme` choice was saved but never applied, the "Spooky header font" setting never worked (the Tailwind v4 build never loaded `tailwind.config.js`), the "October theme" toggle did nothing, and other UI preferences used ad hoc `horrorhub.*` keys with no schema version.
 
 Acceptance criteria:
-- Single source of truth for settings (no mirrored state), with a versioned schema and migration
-- `theme` actually switches the app theme (dark / light / system)
-- Key fields masked, with a short note in the README that keys live in this browser only
-- UI preference keys consolidated under one versioned preferences object
-- The last `react-hooks/exhaustive-deps` lint warning (Settings pushing state up via `onChange`) is gone, so `npm run lint` is fully clean
+- ✅ Single source of truth: `useSettings()` holds one validated settings object, `Settings` is a controlled view, no mirrored state or sync effect. Schema is versioned (`horrorhub.settings.v2`, defaults in one place, values clamped/trimmed) with automatic migration from v1 (the v1 key is kept as a backup)
+- ✅ `theme` really switches dark / light / system (`useTheme` + an inline script in `index.html` so there's no flash). Default stays dark. `Button` outline/ghost variants are now theme-aware; other primitives already had `dark:` variants
+- ✅ API key fields are masked with a Show/Hide toggle; the Connections card and README state that keys live only in this browser
+- ✅ Discover/Roulette filter preferences consolidated into one versioned object (`horrorhub.prefs.v1`), adopting the old per-key values on first read
+- ✅ `npm run lint` is fully clean (the last `exhaustive-deps` warning went with the sync effect)
+- ✅ Fixed along the way: spooky font now builds (font defined in CSS; dead `tailwind.config.js` and unused `tailwindcss-animate` removed), number fields no longer snap to the minimum while typing, planDays default is the same everywhere
+- ✅ Removed the dead "October theme" toggle (nothing consumed it). A real seasonal theme belongs with #6
+- ⬜ Visually QA the Light theme across every screen. Only the primitives were made theme-aware, and I haven't been able to look at it in a browser. Other one-off spots with hard-coded white/black text may still need `dark:` variants (see #15)
 
 ### 12. Subgenre Mixer sliders don't update picks live
-Status: Planned
+Status: Done
 Priority: P1
 
-The Mixer on the Recommendations tab mutates the `mixer` object directly (`mixer.ghosts = ...`), which doesn't trigger a re-render. Make the sliders controlled and persist them in settings.
+The Mixer on the Recommendations tab mutated the `mixer` object directly, which doesn't trigger a re-render. The sliders are now controlled from settings (`onMixerChange` → `updateSettings`), so they update the picks live and stay in sync with the Settings page.
 
 ### 13. Tab consolidation and responsive layout
 Status: Planned

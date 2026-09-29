@@ -10,6 +10,7 @@ import { Discover } from "./discover/Discover.jsx";
 import { MovieDetails } from "./details/MovieDetails.jsx";
 import { Settings } from "./settings/Settings.jsx";
 import { MovieCard } from "../components/MovieCard.jsx";
+import { DEFAULT_SETTINGS, getMixer } from "../lib/settings.js";
 
 const items = [
   { id: 1, title: "Hereditary", year: 2018, rating: 4.5, scares: 8, tags: ["occult", "psychological"], watchedDates: ["2024-10-01T00:00:00.000Z"], watchlist: false, addedAt: "2024-10-01T00:00:00.000Z" },
@@ -25,12 +26,17 @@ describe("feature views render", () => {
   it("LibraryView", () => expect(render(<LibraryView items={items} onUpdate={noop} onRemove={noop} onOpenDetails={noop} />)).toContain("Hereditary"));
   it("WatchlistView", () => expect(render(<WatchlistView items={[items[1]]} onUpdate={noop} onRemove={noop} onOpenDetails={noop} />)).toContain("The Thing"));
   it("RecommendationsView", () =>
-    expect(render(<RecommendationsView items={items} onAdd={noop} onUpdate={noop} onRemove={noop} onOpenDetails={noop} inLibraryIds={new Set([1, 2])} watchlistIds={new Set([2])} ratingById={{}} />)).toContain("Night vibe"));
+    expect(render(<RecommendationsView items={items} onAdd={noop} onUpdate={noop} onRemove={noop} onOpenDetails={noop} inLibraryIds={new Set([1, 2])} watchlistIds={new Set([2])} ratingById={{}} mixer={getMixer(DEFAULT_SETTINGS)} onMixerChange={noop} />)).toContain("Night vibe"));
   it("ContinuityGraph", () => expect(() => render(<ContinuityGraph items={items} onOpenDetails={noop} />)).not.toThrow());
   it("RatingRoulette", () => expect(() => render(<RatingRoulette onAdd={noop} onOpenDetails={noop} />)).not.toThrow());
   it("StatsView", () => expect(() => render(<StatsView items={items} />)).not.toThrow());
   it("Discover", () => expect(() => render(<Discover onAdd={noop} onRemove={noop} inLibraryIds={new Set()} onToggleWatchlist={noop} onOpenDetails={noop} watchlistIds={new Set()} ratingById={{}} />)).not.toThrow());
   it("MovieDetails", () => expect(render(<MovieDetails item={items[0]} localItem={items[0]} onUpdate={noop} onAdd={noop} />)).toContain("Hereditary"));
-  it("Settings", () => expect(render(<Settings settings={{}} onChange={noop} onImport={noop} watchlist={[]} data={items} />)).toContain("Backup"));
+  it("Settings", () => {
+    const html = render(<Settings settings={DEFAULT_SETTINGS} update={noop} onImport={noop} watchlist={[]} data={items} />);
+    expect(html).toContain("Backup");
+    expect(html).toContain('type="password"'); // API keys are masked
+    expect(html).not.toContain("October theme"); // dead setting removed
+  });
   it("MovieCard", () => expect(render(<MovieCard item={items[0]} onUpdate={noop} onRemove={noop} />)).toContain("Hereditary"));
 });

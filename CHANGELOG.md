@@ -41,7 +41,17 @@ All notable changes to this project will be documented in this file.
 - Movie Details loads its four core lookups independently, so one failing request no longer blanks the page, and it shows an error banner if the main lookup fails.
 - Discover results show your current rating live instead of the rating at the time of the search.
 
+### Changed (code review, step 6: settings cleanup)
+- Settings now have one source of truth: a `useSettings()` hook holding a complete, validated object (defaults in one place, numbers clamped, pasted keys trimmed). The Settings page is a controlled view with no mirrored state. Stored as `horrorhub.settings.v2`; old settings migrate automatically and the v1 key is kept as a backup.
+- The Theme setting (Dark / Light / System) now actually changes the app. It's applied before first paint so there's no flash, and Dark stays the default.
+- API key fields are masked with a Show/Hide toggle, and the Connections card says keys never leave this browser except to their own service.
+- Discover and Rating Roulette filter preferences are stored in one versioned object (`horrorhub.prefs.v1`) instead of one key per checkbox; existing values are adopted automatically.
+- The Subgenre Mixer on Recommendations is now controlled from settings, so moving a slider re-ranks the picks immediately and matches the Settings page.
+- Number inputs (nudge cadence, "long ago" year) accept typing freely and clamp on blur instead of snapping after the first keystroke.
+- Removed the dead "October theme" toggle and the unused Tailwind config and `tailwindcss-animate` dependency. `npm run lint` now reports nothing.
+
 ### Fixed
+- The "Spooky header font" setting never worked: the Tailwind v4 build didn't load `tailwind.config.js`, so `font-spooky` was never generated. The font is now defined in the CSS.
 - Opening the details page of a film that wasn't in your library silently added it (through the automatic keyword tagging). Auto-tagging and DoesTheDogDie counts now only apply to films you already own.
 - Toggling the watchlist on a Discover / Rating Roulette card for a film you already own could wipe its watch dates, because those cards carried an empty `watchedDates` list. Result cards no longer carry library-owned fields.
 - An OMDb failure no longer stops the DoesTheDogDie and keyword steps from running.

@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { readJSON, writeJSON } from "./storage.js";
+import { getPref, setPref } from "./prefs.js";
 
-// useState that remembers its value in localStorage (per-viewer UI preferences).
-export function usePersistentState(key, initial) {
-  const [value, setValue] = useState(() => readJSON(key, initial));
+// useState that remembers its value across visits (per-viewer UI preferences).
+// `name` is a dotted preference name such as "discover.hideInLibrary".
+export function usePersistentState(name, initial) {
+  const [value, setValue] = useState(() => getPref(name, initial));
   useEffect(() => {
-    writeJSON(key, value);
-  }, [key, value]);
+    setPref(name, value);
+  }, [name, value]);
   return [value, setValue];
 }

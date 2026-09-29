@@ -36,9 +36,9 @@ export function Discover({ apiKey, onAdd, onRemove, inLibraryIds, onToggleWatchl
   const [error, setError] = useState(null);
   const [upcoming, setUpcoming] = useState([]);
   const [showUpcoming, setShowUpcoming] = useState(false);
-  const [hideWatchlisted, setHideWatchlisted] = usePersistentState('horrorhub.discover.hideWatchlisted', false);
-  const [hideInLibrary, setHideInLibrary] = usePersistentState('horrorhub.discover.hideInLibrary', false);
-  const [providersSel, setProvidersSel] = usePersistentState('horrorhub.discover.providers', []);
+  const [hideWatchlisted, setHideWatchlisted] = usePersistentState('discover.hideWatchlisted', false);
+  const [hideInLibrary, setHideInLibrary] = usePersistentState('discover.hideInLibrary', false);
+  const [providersSel, setProvidersSel] = usePersistentState('discover.providers', []);
   const providerMap = useProviders(results.map((r) => r.id), apiKey, (providersSel || []).length > 0);
 
   // Every list request goes through here. Starting a new one cancels the previous,

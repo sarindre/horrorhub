@@ -5,7 +5,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs.j
 import { readJSON, readString, writeJSON, writeString } from "./lib/storage.js";
 import { mergeLibraries, validateImport } from "./lib/library.js";
 import { FlickerOverlay, FogOverlay, AmbientAudio, LightsOutOverlay } from "./components/overlays.jsx";
-import { loadSettings, saveSettings } from "./lib/settings.js";
+import { getMixer } from "./lib/settings.js";
+import { useSettings } from "./hooks/useSettings.js";
+import { useTheme } from "./hooks/useTheme.js";
 import { useLibrary } from "./hooks/useLibrary.js";
 import { LibraryView } from "./features/library/LibraryView.jsx";
 import { Discover } from "./features/discover/Discover.jsx";
@@ -22,11 +24,10 @@ import { useToast } from "./lib/toastContext.js";
 export function HorrorHub() {
   const toast = useToast();
   const { library, upsert, remove, replaceLibrary, saveFailed } = useLibrary();
-  const [settings, setSettings] = useState(loadSettings);
+  const [settings, updateSettings] = useSettings();
+  useTheme(settings.theme);
+  const mixer = useMemo(() => getMixer(settings), [settings]);
   const [selected, setSelected] = useState(null); // movie object to show details
-  useEffect(() => {
-    saveSettings(settings);
-  }, [settings]);
 
   const inLibraryIds = useMemo(() => new Set(library.map((i) => i.id)), [library]);
   const watchlistIds = useMemo(() => new Set(library.filter((i) => i.watchlist).map((i) => i.id)), [library]);
@@ -78,7 +79,7 @@ export function HorrorHub() {
     const lastNudge = Number(readString('horrorhub.lastNudge', 0));
     const sinceNudge = Math.floor((Date.now() - lastNudge)/(1000*60*60*24));
     if (diffDays >= nudgeDays && sinceNudge >= nudgeDays) setShowNudge(true);
-  }, [settings]);
+  }, [settings.nudgeDays]);
   // Release Radar notifications effect
   useEffect(() => {
     if (!settings.releaseRadar) return;
@@ -110,7 +111,7 @@ export function HorrorHub() {
           <div className="opacity-80">Find horror movies, rate them, tag vibes, log watches, manage a watchlist, and get smarter picks.</div>
         </div>
         <div className="flex gap-2">
-          <Button variant={settings.lightsOut ? "default" : "outline"} onClick={()=>setSettings(s=>({...s, lightsOut: !s.lightsOut}))}>
+          <Button variant={settings.lightsOut ? "default" : "outline"} onClick={() => updateSettings({ lightsOut: !settings.lightsOut })}>
             {settings.lightsOut ? 'Lights on' : 'Lights out'}
           </Button>
           {/* Export/Import moved to Settings */}
@@ -163,7 +164,7 @@ export function HorrorHub() {
             </TabsContent>
 
         <TabsContent value="watchlist" className="mt-6">
-          <WatchlistView items={watchlist} onUpdate={upsert} onRemove={remove} onOpenDetails={setSelected} planDays={settings.planDays || []} planTime={settings.planTime || '20:00'} />
+          <WatchlistView items={watchlist} onUpdate={upsert} onRemove={remove} onOpenDetails={setSelected} planDays={settings.planDays} planTime={settings.planTime} />
         </TabsContent>
 
         <TabsContent value="recs" className="mt-6">
@@ -177,7 +178,8 @@ export function HorrorHub() {
     inLibraryIds={inLibraryIds}
     watchlistIds={watchlistIds}
     ratingById={ratingById}
-    mixer={{ ghosts: settings.mixerGhosts ?? 1, occult: settings.mixerOccult ?? 1, slasher: settings.mixerSlasher ?? 1, folk: settings.mixerFolk ?? 1 }}
+    mixer={mixer}
+    onMixerChange={(name, value) => updateSettings({ [`mixer${name}`]: value })}
   />
 </TabsContent>
         <TabsContent value="continuity" className="mt-6">
@@ -191,11 +193,11 @@ export function HorrorHub() {
         </TabsContent>
 
             <TabsContent value="stats" className="mt-6">
-              <StatsView items={library} longAgoYear={settings.longAgoYear ?? 1900} />
+              <StatsView items={library} longAgoYear={settings.longAgoYear} />
             </TabsContent>
 
             <TabsContent value="settings" className="mt-6">
-              <Settings settings={settings} onChange={(s) => setSettings(s)} onImport={importLib} watchlist={watchlist} data={library} />
+              <Settings settings={settings} update={updateSettings} onImport={importLib} watchlist={watchlist} data={library} />
             </TabsContent>
           </>
         )}
@@ -222,8 +224,8 @@ export function HorrorHub() {
         </ol>
         <p className="mt-3">Data is stored in your browser. Later you can sync to Supabase/SQLite or add push notifications via a backend.</p>
       </div>
-      {(settings.flicker ?? true) && <FlickerOverlay />}
-      {(settings.fog ?? true) && <FogOverlay />}
+      {settings.flicker && <FlickerOverlay />}
+      {settings.fog && <FogOverlay />}
       {settings.ambientAudio ? <AmbientAudio /> : null}
       {settings.lightsOut ? <LightsOutOverlay /> : null}
       {showNudge ? (

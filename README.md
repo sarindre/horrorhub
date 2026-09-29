@@ -28,6 +28,7 @@ HorrorHub has no backend. Your library, settings and API keys are stored in this
 
 - **Back up regularly:** Settings → Backup & Import → *Export* downloads a JSON file.
 - **Importing** (JSON, Letterboxd CSV, IMDb CSV) merges into your library after a preview. Nothing is deleted, empty fields never overwrite what you've curated, and tags and watch dates are combined.
+- **API keys** (TMDb, OMDb, DoesTheDogDie) are stored here too, in plain text, and only ever sent to the service they belong to. Don't paste them on a shared computer, and export your library (not your settings) when sharing a backup.
 - If the browser refuses to save (for example, storage is full), a banner tells you so and suggests exporting a backup.
 
 ## Project layout
