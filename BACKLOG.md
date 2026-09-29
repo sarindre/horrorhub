@@ -148,5 +148,97 @@ Acceptance criteria:
 - The app surfaces curated collections in a clean UI
 - No heavy backend or account system is required for the first version
 
+## Technical refresh backlog
+Source: the full code review of 2026-09-28. Steps 1 and 2 of the review (safety net + data layer) are done; see the CHANGELOG. The items below are what remains, in suggested order.
+
+### 8. Split App.jsx into feature folders
+Status: Planned
+Priority: P0 (unblocks everything else)
+
+`src/App.jsx` is ~2,900 lines holding about 20 components, the TMDb calls, audio and overlays. Move it into `features/` (discover, library, watchlist, recs, stats, details, settings), `components/` (MovieCard, StarRating, TagEditor, overlays) and `lib/`. Mechanical moves only, no behavior change, one feature per commit, build + tests green after each.
+
+Acceptance criteria:
+- No file over ~400 lines
+- `App.jsx` only wires tabs, settings and the library
+- Smoke test in `App.test.jsx` still passes after every move
+
+### 9. Fix the recommendation hook (pairs with #2)
+Status: Planned
+Priority: P1
+
+`useHybridRecommendations` calls TMDb `/similar`, which is not horror-filtered, and it refetches whenever any library field changes (each rating click). It only seeds from the first 3 titles rated 4+ and ignores tags, moods and scares. The TMDb "Similar to your favorites" list is also not mood-aware (open from item 1).
+
+Acceptance criteria:
+- Only horror titles are suggested (genre 27)
+- Fetches depend on the seed titles, not the whole library; results are cached
+- Seeds are weighted by rating, recency and tags; the active mood preset applies to TMDb picks too
+- Loading and error states are shown; requests abort on unmount
+
+### 10. Shared TMDb client and error handling
+Status: Planned
+Priority: P1
+
+Fetch calls are scattered through the file with no `res.ok` check, no error state and no request cancellation, so a bad API key or a rate limit just shows nothing and slow responses can land out of order.
+
+Acceptance criteria:
+- One `lib/tmdb.js` client (auth header, `res.ok`, typed errors, abort support, small response cache)
+- Visible "invalid key / rate limited / offline" states
+- Replace `alert()` with non-blocking toasts
+- Clear the 7 remaining `react-hooks/exhaustive-deps` lint warnings (fetch effects in Discover, Rating Roulette, Continuity, MovieCard sync)
+
+### 11. Settings cleanup
+Status: Planned
+Priority: P1
+
+Settings mirrors ~20 pieces of state into local state and pushes them up with one large effect. The `theme` choice is saved but never applied. API keys are stored in plain text and the OMDb/DoesTheDogDie fields aren't masked. Other UI preferences (discover/roulette filters) still use ad hoc `horrorhub.*` keys with no schema version.
+
+Acceptance criteria:
+- Single source of truth for settings (no mirrored state), with a versioned schema and migration
+- `theme` actually switches the app theme (dark / light / system)
+- Key fields masked, with a short note in the README that keys live in this browser only
+- UI preference keys consolidated under one versioned preferences object
+
+### 12. Subgenre Mixer sliders don't update picks live
+Status: Planned
+Priority: P1
+
+The Mixer on the Recommendations tab mutates the `mixer` object directly (`mixer.ghosts = ...`), which doesn't trigger a re-render. Make the sliders controlled and persist them in settings.
+
+### 13. Tab consolidation and responsive layout
+Status: Planned
+Priority: P2
+
+Eight tabs in a fixed `grid-cols-8` won't fit on a phone, and Rating Roulette, Because You Liked… and Recommendations overlap in purpose. Merge or regroup them and make the tab bar scroll or collapse on small screens.
+
+### 14. Performance and motion
+Status: Planned
+Priority: P2
+
+The build is a single ~733 kB bundle: lazy-load Stats (Recharts) and the Details view. The flicker overlay re-renders on scroll and the fog/flicker/audio effects ignore `prefers-reduced-motion`.
+
+### 15. UI primitives cleanup
+Status: Planned
+Priority: P2
+
+`components/ui/*` are hand-rolled stubs (a native date input as "Calendar", a Dialog that ignores `asChild`), while the Radix packages in `package.json` go largely unused. Either adopt the real shadcn/Radix components or drop the unused dependencies.
+
+### 16. Enrich imported titles with TMDb metadata
+Status: Planned
+Priority: P1
+
+CSV imports create ids like `letterboxd:Title:Year` (title + year matching now merges them into existing titles, but new ones have no poster, overview or TMDb id). Add a background "match to TMDb" step so imported films get posters, tags and details, and dedupe against Discover.
+
+### 17. Copy and onboarding cleanup
+Status: Planned
+Priority: P2
+
+Remove leftover scaffolding text ("MVP • Local first", the static "How to use" block), replace it with a proper first-run empty state that walks through adding the TMDb key and importing a library.
+
+### 18. Test coverage for scoring and UI logic
+Status: Planned
+Priority: P2
+
+The pure helpers (`lib/*`) and a render smoke test are covered. Add tests for recommendation scoring, the mood/intensity filters and tag inference once they move out of the components.
+
 ## Notes
 The product should feel like a personal horror curator, not just a database. The strongest differentiator is a recommendation system that understands horror taste, mood, and watch planning.

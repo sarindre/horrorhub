@@ -22,6 +22,7 @@ HorrorHub is a personal horror movie library and discovery app built with React 
 ## Key files
 - `src/App.jsx`: main application logic and UI
 - `src/hooks/useHybridRecommendations.js`: recommendation logic using TMDb similarity data
+- `src/lib/*`: pure, tested logic (storage, library schema/merge/import validation, CSV parsers, ICS, mood presets). New logic should go here, not into `App.jsx`
 - `src/components/SearchBar.jsx`: search input component
 - `src/components/ui/*`: reusable UI primitives
 
@@ -46,6 +47,13 @@ This project should stay local-first, lightweight, and highly personalized. It i
 - `npm run dev`
 - `npm run build`
 - `npm run lint`
+- `npm test`
+
+## Data rules
+- Never write to `localStorage` directly; use `src/lib/storage.js` (`readJSON`/`writeJSON`) or `usePersistentState`.
+- Library items are shaped by `normalizeItem` in `src/lib/library.js`. Imports go through `validateImport` + `mergeLibraries`, which never delete data.
+- When changing the stored library shape, bump `LIBRARY_VERSION`/key and add a migration in `loadLibrary`.
+- Run `npm test`, `npm run lint` and `npm run build` before committing.
 
 ## Notes for future work
 The app already has a strong foundation of library management. The next refresh should emphasize:

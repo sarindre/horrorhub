@@ -23,7 +23,14 @@ export default defineConfig([
       },
     },
     rules: {
-      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      // `motion` is only used as <motion.div>, which core no-unused-vars can't see.
+      'no-unused-vars': ['error', { varsIgnorePattern: '^([A-Z_]|motion$)', argsIgnorePattern: '^_' }],
+      // Failing quietly is intentional for best-effort browser APIs (vibrate, notifications).
+      'no-empty': ['error', { allowEmptyCatch: true }],
     },
+  },
+  {
+    files: ['**/*.test.js'],
+    languageOptions: { globals: { ...globals.node } },
   },
 ])

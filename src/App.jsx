@@ -74,33 +74,30 @@ import { Slider } from "./components/ui/slider.jsx";
 // import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./components/ui/select.jsx";
 import { useHybridRecommendations } from "./hooks/useHybridRecommendations";
 import SearchBar from "./components/SearchBar.jsx";
+import { readJSON, readString, writeJSON, writeString } from "./lib/storage.js";
+import { usePersistentState } from "./lib/usePersistentState.js";
+import { MOOD_PRESETS, matchesMood } from "./lib/moods.js";
+import { parseImdbCSV, parseLetterboxdCSV } from "./lib/csv.js";
+import { createICS } from "./lib/ics.js";
+import { buildExport, loadLibrary, mergeLibraries, normalizeItem, saveLibrary, validateImport } from "./lib/library.js";
 
 // ----------------- utils & constants -----------------
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const TMDB_IMG = (path, size = "w342") => (path ? `https://image.tmdb.org/t/p/${size}${path}` : "");
-const STORAGE_KEY = "horrorhub.library.v2";
 const SETTINGS_KEY = "horrorhub.settings.v1";
 const isoDateOnly = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString();
 
-function loadLibrary() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-  } catch {
-    return [];
-  }
-}
-function saveLibrary(lib) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(lib));
-}
 function loadSettings() {
-  try {
-    return JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
-  } catch {
-    return {};
+  const settings = readJSON(SETTINGS_KEY, {});
+  // longAgoYear used to live in its own key; fold it into settings
+  if (settings.longAgoYear === undefined) {
+    const legacy = Number(readString("horrorhub.longAgoYear"));
+    if (legacy) settings.longAgoYear = legacy;
   }
+  return settings;
 }
 function saveSettings(s) {
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+  writeJSON(SETTINGS_KEY, s);
 }
 
 // ----------------- rating stars -----------------
@@ -170,25 +167,6 @@ const SUGGESTED_TAGS = [
   "classic",
 ];
 
-const MOOD_PRESETS = [
-  { id: "all", label: "All vibes", tags: [] },
-  { id: "atmospheric", label: "Atmospheric", tags: ["slow-burn", "folk-horror", "haunted", "psychological", "arthouse"] },
-  { id: "slasher", label: "Slasher", tags: ["slasher", "home-invasion", "survival", "campy", "classic"] },
-  { id: "found-footage", label: "Found Footage", tags: ["found-footage", "found footage", "survival", "supernatural", "haunted"] },
-  { id: "body-horror", label: "Body Horror", tags: ["gore", "body-horror", "disturbing", "sci-horror"] },
-  { id: "creature", label: "Creature Feature", tags: ["creature", "zombie", "vampire", "sci-horror", "campy"] },
-  { id: "occult", label: "Occult", tags: ["occult", "possession", "vampire", "supernatural", "haunted"] },
-  { id: "cosmic", label: "Cosmic", tags: ["cosmic", "sci-horror", "psychological", "arthouse", "occult"] },
-];
-
-function matchesMood(tags = [], moodId) {
-  if (!moodId || moodId === "all") return true;
-  const preset = MOOD_PRESETS.find((preset) => preset.id === moodId);
-  if (!preset) return true;
-  const lowered = (tags || []).map((tag) => String(tag || "").trim().toLowerCase());
-  return preset.tags.some((tag) => lowered.includes(tag.toLowerCase()));
-}
-
 function TagEditor({ tags = [], onChange }) {
   const [input, setInput] = useState("");
   const add = (t) => {
@@ -235,182 +213,77 @@ function TagEditor({ tags = [], onChange }) {
 
 // ----------------- library hook -----------------
 function useLibrary() {
-  const [library, setLibrary] = useState(loadLibrary());
+  const [library, setLibrary] = useState(loadLibrary);
+  const [saveFailed, setSaveFailed] = useState(false);
   useEffect(() => {
-    saveLibrary(library);
+    setSaveFailed(!saveLibrary(library));
   }, [library]);
 
   const upsert = (item) =>
     setLibrary((prev) => {
       const i = prev.findIndex((x) => x.id === item.id);
       if (i >= 0) {
-        const merged = { ...prev[i], ...item };
+        const merged = normalizeItem({ ...prev[i], ...item });
+        if (!merged) return prev;
         const next = [...prev];
         next[i] = merged;
         return next;
       }
-      return [{ ...item, addedAt: new Date().toISOString(), watchedDates: item.watchedDates || [], watchlist: !!item.watchlist }, ...prev];
+      const fresh = normalizeItem({ ...item, addedAt: new Date().toISOString() });
+      return fresh ? [fresh, ...prev] : prev;
     });
   const remove = (id) => setLibrary((prev) => prev.filter((x) => x.id !== id));
 
-  return { library, upsert, remove };
+  return { library, upsert, remove, replaceLibrary: setLibrary, saveFailed };
 }
 
-// ----------------- export/import & ICS -----------------
-function createICS({ events }) {
-  const pad = (n) => String(n).padStart(2, "0");
-  const fmt = (d) => {
-    const dt = new Date(d);
-    return `${dt.getUTCFullYear()}${pad(dt.getUTCMonth() + 1)}${pad(dt.getUTCDate())}T${pad(dt.getUTCHours())}${pad(
-      dt.getUTCMinutes()
-    )}00Z`;
-  };
-  const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//HorrorHub//EN"];
-  events.forEach((e, i) => {
-    lines.push(
-      "BEGIN:VEVENT",
-      `UID:${i}-${Date.now()}@horrorhub`,
-      `DTSTAMP:${fmt(new Date())}`,
-      `DTSTART:${fmt(e.start)}`,
-      e.end ? `DTEND:${fmt(e.end)}` : `DURATION:PT2H`,
-      `SUMMARY:${(e.title || "Movie").replace(/\n/g, " ")}`,
-      e.description ? `DESCRIPTION:${e.description.replace(/[\n\r]/g, " ")}` : null,
-      "END:VEVENT"
-    );
-  });
-  lines.push("END:VCALENDAR");
-  return lines.filter(Boolean).join("\r\n");
-}
-
+// ----------------- export/import -----------------
 function ExportImport({ data, onImport, watchlist = [] }) {
   const fileRef = useRef(null);
   const lbRef = useRef(null);
   const imdbRef = useRef(null);
-  const downloadJSON = () => {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+
+  const saveBlob = (blob, filename) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `horrorhub-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
   };
-  // Minimal CSV parser supporting quotes and commas
-  const parseCSV = (text) => {
-    const rows = [];
-    let cur = '';
-    let row = [];
-    let q = false;
-    for (let i = 0; i < text.length; i++) {
-      const c = text[i];
-      if (q) {
-        if (c === '"') {
-          if (text[i + 1] === '"') { cur += '"'; i++; } else { q = false; }
-        } else {
-          cur += c;
-        }
-      } else {
-        if (c === '"') q = true;
-        else if (c === ',') { row.push(cur); cur = ''; }
-        else if (c === '\n' || c === '\r') {
-          if (cur !== '' || row.length) { row.push(cur); rows.push(row); row = []; cur = ''; }
-          // swallow consecutive CRLF
-          if (c === '\r' && text[i + 1] === '\n') i++;
-        } else cur += c;
+  const today = () => new Date().toISOString().slice(0, 10);
+
+  const downloadJSON = () => {
+    const blob = new Blob([JSON.stringify(buildExport(data), null, 2)], { type: "application/json" });
+    saveBlob(blob, `horrorhub-${today()}.json`);
+  };
+
+  // Reads a file, turns its text into an import payload, and hands it to the
+  // app, which validates, previews and merges it. Nothing is applied here.
+  const readImport = (file, parse, label) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        onImport?.(parse(String(reader.result || "")), label);
+      } catch (err) {
+        alert(err?.message || `Couldn't read that ${label} file.`);
       }
+    };
+    reader.readAsText(file);
+  };
+  const parseJSONFile = (text) => {
+    try {
+      return JSON.parse(text);
+    } catch {
+      throw new Error("That file isn't valid JSON.");
     }
-    if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
-    return rows;
   };
-  const uploadCSVLetterboxd = (file) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const rows = parseCSV(String(reader.result || ''));
-        if (!rows.length) return alert('Empty CSV');
-        const header = rows[0].map(h => h.trim().toLowerCase());
-        const find = (names) => names.map(n=>n.toLowerCase()).map(n=> header.indexOf(n)).find(idx=> idx>=0);
-        const idxTitle = find(['name','title']);
-        const idxYear = find(['year']);
-        const idxWatched = find(['watched on','watched date','date']);
-        const idxRating = find(['rating','your rating']);
-        const items = rows.slice(1).filter(r=> r.length).map(r => {
-          const title = r[idxTitle] || '';
-          const year = Number(r[idxYear]) || undefined;
-          const watched = r[idxWatched] ? [new Date(r[idxWatched]).toISOString()] : [];
-          const rating = Number(r[idxRating]) || 0;
-          return {
-            id: `letterboxd:${title}:${year||''}`,
-            title,
-            year,
-            watchedDates: watched,
-            rating,
-            scares: 5,
-            tags: [],
-            watchlist: false,
-          };
-        });
-        // merge with existing by id
-        const map = new Map(data.map(i=> [String(i.id), i]));
-        items.forEach(i=> map.set(String(i.id), { ...(map.get(String(i.id))||{}), ...i }));
-        onImport?.(Array.from(map.values()));
-      } catch {
-        alert('Invalid CSV');
-      }
-    };
-    reader.readAsText(file);
+  const pick = (parse, label) => (e) => {
+    const f = e.target.files?.[0];
+    if (f) readImport(f, parse, label);
+    e.target.value = ""; // allow re-picking the same file
   };
-  const uploadCSVImdb = (file) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const rows = parseCSV(String(reader.result || ''));
-        if (!rows.length) return alert('Empty CSV');
-        const header = rows[0].map(h => h.trim().toLowerCase());
-        const col = (name) => header.indexOf(name.toLowerCase());
-        const idxConst = col('const');
-        const idxTitle = col('title');
-        const idxYear = col('year');
-        const idxYourRating = col('your rating');
-        const idxDateRated = col('date rated');
-        const items = rows.slice(1).filter(r=> r.length).map(r => {
-          const imdbid = idxConst>=0 ? r[idxConst] : '';
-          const title = r[idxTitle] || '';
-          const year = Number(r[idxYear]) || undefined;
-          const rating = Number(r[idxYourRating]) || 0;
-          const watched = r[idxDateRated] ? [new Date(r[idxDateRated]).toISOString()] : [];
-          return {
-            id: imdbid ? `imdb:${imdbid}` : `imdb:${title}:${year||''}`,
-            title,
-            year,
-            watchedDates: watched,
-            rating,
-            scares: 5,
-            tags: [],
-            watchlist: false,
-          };
-        });
-        const map = new Map(data.map(i=> [String(i.id), i]));
-        items.forEach(i=> map.set(String(i.id), { ...(map.get(String(i.id))||{}), ...i }));
-        onImport?.(Array.from(map.values()));
-      } catch {
-        alert('Invalid CSV');
-      }
-    };
-    reader.readAsText(file);
-  };
-  const upload = (file) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const parsed = JSON.parse(reader.result);
-        onImport?.(parsed);
-      } catch {
-        alert("Invalid JSON");
-      }
-    };
-    reader.readAsText(file);
-  };
+
   const downloadICS = () => {
     const days = Math.min(30, watchlist.length);
     const start = new Date();
@@ -419,55 +292,28 @@ function ExportImport({ data, onImport, watchlist = [] }) {
       d.setDate(d.getDate() + i);
       d.setHours(20, 0, 0, 0);
       const m = watchlist[i];
-      return { title: `Watch: ${m.title} (${m.year || ""})`, start: d, description: `From your HorrorHub watchlist.` };
+      return { title: `Watch: ${m.title}${m.year ? ` (${m.year})` : ""}`, start: d, description: `From your HorrorHub watchlist.` };
     });
-    const ics = createICS({ events });
-    const blob = new Blob([ics], { type: "text/calendar" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `horrorhub-watchlist-${new Date().toISOString().slice(0, 10)}.ics`;
-    a.click();
-    URL.revokeObjectURL(url);
+    saveBlob(new Blob([createICS({ events })], { type: "text/calendar" }), `horrorhub-watchlist-${today()}.ics`);
   };
+
   return (
     <div className="flex gap-2 flex-wrap">
       <Button onClick={downloadJSON}>
         <Download className="h-4 w-4 mr-2" />
         Export
       </Button>
-      <input
-        ref={fileRef}
-        type="file"
-        accept="application/json"
-        className="hidden"
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) upload(f);
-        }}
-      />
+      <input ref={fileRef} type="file" accept="application/json" className="hidden" onChange={pick(parseJSONFile, "JSON")} />
       <Button variant="secondary" onClick={() => fileRef.current?.click()}>
         <Upload className="h-4 w-4 mr-2" />
         Import
       </Button>
-      <input
-        ref={lbRef}
-        type="file"
-        accept=".csv,text/csv"
-        className="hidden"
-        onChange={(e)=>{ const f = e.target.files?.[0]; if (f) uploadCSVLetterboxd(f); }}
-      />
+      <input ref={lbRef} type="file" accept=".csv,text/csv" className="hidden" onChange={pick(parseLetterboxdCSV, "Letterboxd CSV")} />
       <Button variant="secondary" onClick={() => lbRef.current?.click()}>
         <Upload className="h-4 w-4 mr-2" />
         Import Letterboxd CSV
       </Button>
-      <input
-        ref={imdbRef}
-        type="file"
-        accept=".csv,text/csv"
-        className="hidden"
-        onChange={(e)=>{ const f = e.target.files?.[0]; if (f) uploadCSVImdb(f); }}
-      />
+      <input ref={imdbRef} type="file" accept=".csv,text/csv" className="hidden" onChange={pick(parseImdbCSV, "IMDb CSV")} />
       <Button variant="secondary" onClick={() => imdbRef.current?.click()}>
         <Upload className="h-4 w-4 mr-2" />
         Import IMDb CSV
@@ -514,7 +360,7 @@ function MovieCard({ item, onAdd, onUpdate, onRemove, showWatchlist = true, comp
     const watchedDates = Array.from(new Set([...(item.watchedDates || []), iso]));
     onUpdate?.({ ...item, watchedDates, watchlist: false });
     setWatchOpen(false);
-    try { localStorage.setItem('horrorhub.lastWatch', iso); } catch {}
+    writeString('horrorhub.lastWatch', iso);
   };
   const addWatchToday = () => {
     const today = new Date();
@@ -522,15 +368,11 @@ function MovieCard({ item, onAdd, onUpdate, onRemove, showWatchlist = true, comp
     const watchedDates = Array.from(new Set([...(item.watchedDates || []), iso]));
     onUpdate?.({ ...item, watchedDates, watchlist: false });
     setWatchOpen(false);
-    try { localStorage.setItem('horrorhub.lastWatch', iso); } catch {}
+    writeString('horrorhub.lastWatch', iso);
   };
   const addWatchLongAgo = () => {
-    let y = 1900;
-    try {
-      const s = JSON.parse(localStorage.getItem('horrorhub.settings.v1') || '{}');
-      y = Number(s.longAgoYear ?? localStorage.getItem('horrorhub.longAgoYear') ?? 1900);
-      if (!Number.isFinite(y)) y = 1900;
-    } catch { try { y = Number(localStorage.getItem('horrorhub.longAgoYear') || 1900); } catch { y = 1900; } }
+    const stored = Number(loadSettings().longAgoYear);
+    const y = Number.isFinite(stored) && stored > 0 ? stored : 1900;
     const old = new Date(y, 0, 1);
     const iso = isoDateOnly(old);
     const watchedDates = Array.from(new Set([...(item.watchedDates || []), iso]));
@@ -959,16 +801,12 @@ function Discover({ apiKey, onAdd, onRemove, inLibraryIds, onToggleWatchlist, on
   const [sort, setSort] = useState("popularity.desc");
   const [upcoming, setUpcoming] = useState([]);
   const [showUpcoming, setShowUpcoming] = useState(false);
-  const [hideWatchlisted, setHideWatchlisted] = useState(() => { try{ return !!JSON.parse(localStorage.getItem('horrorhub.discover.hideWatchlisted')||'false'); }catch{return false;} });
-  const [hideInLibrary, setHideInLibrary] = useState(() => { try{ return !!JSON.parse(localStorage.getItem('horrorhub.discover.hideInLibrary')||'false'); }catch{return false;} });
-  const [providersSel, setProvidersSel] = useState(() => { try{ return JSON.parse(localStorage.getItem('horrorhub.discover.providers')||'[]'); }catch{return [];} });
+  const [hideWatchlisted, setHideWatchlisted] = usePersistentState('horrorhub.discover.hideWatchlisted', false);
+  const [hideInLibrary, setHideInLibrary] = usePersistentState('horrorhub.discover.hideInLibrary', false);
+  const [providersSel, setProvidersSel] = usePersistentState('horrorhub.discover.providers', []);
   const providersRef = useRef(new Map()); // id -> [slugs]
 
   const authHeader = apiKey ? { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json;charset=utf-8" } : undefined;
-
-  useEffect(()=>{ try{ localStorage.setItem('horrorhub.discover.hideWatchlisted', JSON.stringify(hideWatchlisted)); }catch{} },[hideWatchlisted]);
-  useEffect(()=>{ try{ localStorage.setItem('horrorhub.discover.hideInLibrary', JSON.stringify(hideInLibrary)); }catch{} },[hideInLibrary]);
-  useEffect(()=>{ try{ localStorage.setItem('horrorhub.discover.providers', JSON.stringify(providersSel||[])); }catch{} },[providersSel]);
 
   const buildDiscoverUrl = (sortKey) => {
     const base = `${TMDB_BASE}/discover/movie?include_adult=false&language=en-US&with_genres=27&region=US`;
@@ -1235,7 +1073,7 @@ function Discover({ apiKey, onAdd, onRemove, inLibraryIds, onToggleWatchlist, on
 }
 
 // ----------------- Library View -----------------
-function LibraryView({ items, onUpdate, onRemove, apiKey, onOpenDetails }) {
+function LibraryView({ items, onUpdate, onRemove, onOpenDetails }) {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [tagFilter, setTagFilter] = useState("");
@@ -1324,24 +1162,6 @@ function LibraryView({ items, onUpdate, onRemove, apiKey, onOpenDetails }) {
   }, [items, debouncedQuery, tagFilter, moodFilter, minRating, maxScares, sort]);
 
   const watchlist = items.filter((i) => i.watchlist);
-  const { existingTop, similarPicks } = useHybridRecommendations(items, apiKey);
-
-  const tonightPick = useMemo(() => {
-    const currentYear = new Date().getFullYear();
-    const today = new Date().toISOString().slice(0, 10);
-    const isReleased = (i) => (typeof i.year === 'undefined' || Number(i.year) <= currentYear) && (!i.releaseDate || i.releaseDate <= today);
-    const base = watchlist.length ? watchlist : items.filter((i) => (i.rating || 0) < 3);
-    const pool = base.filter(isReleased);
-    if (!pool.length) return null;
-    const weights = pool.map((i) => 1 + (i.scares || 0) / 10 + ((i.tags || []).length ? 0.5 : 0));
-    const sum = weights.reduce((a, b) => a + b, 0);
-    let r = Math.random() * sum;
-    for (let idx = 0; idx < pool.length; idx++) {
-      if (r < weights[idx]) return pool[idx];
-      r -= weights[idx];
-    }
-    return pool[0];
-  }, [items, watchlist]);
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto px-3 sm:px-4 md:px-6">
@@ -1495,10 +1315,10 @@ export { LibraryView }; // keep as a named module export too if you prefer
 
 // ----------------- Watchlist View -----------------
 function WatchlistView({ items, onUpdate, onRemove, onOpenDetails, planDays = [], planTime = '20:00' }) {
-  const currentYear = new Date().getFullYear();
-  const today = new Date().toISOString().slice(0,10);
-  const isReleased = (i) => (typeof i.year === 'undefined' || Number(i.year) <= currentYear) && (!i.releaseDate || i.releaseDate <= today);
   const tonightPick = React.useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const today = new Date().toISOString().slice(0,10);
+    const isReleased = (i) => (typeof i.year === 'undefined' || Number(i.year) <= currentYear) && (!i.releaseDate || i.releaseDate <= today);
     const pool = items.filter(isReleased);
     if (!pool.length) return null;
     const weights = pool.map((i) => 1 + (i.scares || 0) / 10 + ((i.tags || []).length ? 0.5 : 0));
@@ -1575,8 +1395,8 @@ function RecommendationsView({ items, apiKey, onAdd, onUpdate, onRemove, onOpenD
   const [mood, setMood] = useState(5); // 0 = spooky, 10 = traumatizing
   const [moodPreset, setMoodPreset] = useState("all");
 
-  const currentYear = new Date().getFullYear();
   const pool = useMemo(() => {
+    const currentYear = new Date().getFullYear();
     const isReleased = (i) => typeof i.year === "undefined" || Number(i.year) <= currentYear;
     const unwatched = (items || []).filter((i) => (i.watchedDates?.length || 0) === 0 && isReleased(i));
     if (unwatched.length) return unwatched;
@@ -1877,11 +1697,6 @@ function ContinuityNavigator({ items, apiKey, onOpenDetails }){
 }
 
 // ----------------- stats -----------------
-function monthKey(d) {
-  const dt = new Date(d);
-  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;
-}
-
 function StatsView({ items, longAgoYear = 1900 }) {
   const [affOpen, setAffOpen] = useState(false);
   const total = items.length;
@@ -2180,12 +1995,11 @@ function StatsView({ items, longAgoYear = 1900 }) {
 }
 
 // ----------------- details page -----------------
-function MovieDetails({ item, localItem, onBack, onUpdate, onAdd, apiKey, omdbKey, dddKey, externalOff = false }) {
+function MovieDetails({ item, localItem, onUpdate, onAdd, apiKey, omdbKey, dddKey, externalOff = false }) {
   const [details, setDetails] = useState(null);
   const [videos, setVideos] = useState([]);
   const [cert, setCert] = useState("");
   const [cast, setCast] = useState([]);
-  const [providers, setProviders] = useState([]);
   const [imdbRating, setImdbRating] = useState(null);
   const [imdbVotes, setImdbVotes] = useState(null);
   const [rtScore, setRtScore] = useState(null);
@@ -2202,14 +2016,6 @@ function MovieDetails({ item, localItem, onBack, onUpdate, onAdd, apiKey, omdbKe
     const controller = new AbortController();
     const signal = controller.signal;
     const headers = { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json;charset=utf-8" };
-    const providerSlug = (name='')=>{
-      const n = String(name).toLowerCase();
-      if (n.includes('netflix')) return 'netflix';
-      if (n.includes('prime')) return 'prime';
-      if (n.includes('hulu')) return 'hulu';
-      if (n.includes('disney')) return 'disney';
-      return null;
-    };
     async function load() {
       try {
         const [dres, vres, rres, cres] = await Promise.all([
@@ -2232,16 +2038,6 @@ function MovieDetails({ item, localItem, onBack, onUpdate, onAdd, apiKey, omdbKe
           const pick = (us?.release_dates || []).find((x) => x.certification) ||
             rels.flatMap((r) => r.release_dates || []).find((x) => x.certification);
           setCert(pick?.certification || "");
-          // Fetch providers for badges
-          try {
-            const pres = await fetch(`${TMDB_BASE}/movie/${item.id}/watch/providers`, { headers, signal });
-            const pdata = await pres.json();
-            const us = pdata?.results?.US || {};
-            const flatrate = Array.isArray(us.flatrate)? us.flatrate : [];
-            const ads = Array.isArray(us.ads)? us.ads : [];
-            const arr = [...flatrate, ...ads].map(p=> providerSlug(p.provider_name)).filter(Boolean);
-            setProviders(Array.from(new Set(arr)));
-          } catch {}
         }
 
         // Optional: fetch external ratings via OMDb if omdbKey provided
@@ -2321,6 +2117,8 @@ function MovieDetails({ item, localItem, onBack, onUpdate, onAdd, apiKey, omdbKe
     }
     load();
     return () => controller.abort();
+    // Deliberately keyed on the title/keys only: onUpdate/localItem change on every save and would refetch in a loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item?.id, apiKey, omdbKey]);
 
   // keep counts in sync when switching items
@@ -2328,6 +2126,8 @@ function MovieDetails({ item, localItem, onBack, onUpdate, onAdd, apiKey, omdbKe
     setJumpScares(localItem?.jumpScares ?? 0);
     setGoreCount(localItem?.goreCount ?? 0);
     setDisturbCount(localItem?.disturbCount ?? 0);
+    // Only resync when switching titles, not on every edit to the same one.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localItem?.id]);
 
 
@@ -2603,28 +2403,10 @@ function Settings({ settings, onChange, onImport, watchlist, data }) {
   const [longAgoYear, setLongAgoYear] = useState(settings.longAgoYear ?? 1900);
   useEffect(() => {
     onChange?.({ apiKey, omdbKey, dddKey, theme, flicker, fog, ambientAudio, lightsOut, seasonal, releaseRadar, nudgeDays, mixerGhosts: mGhosts, mixerOccult: mOccult, mixerSlasher: mSlasher, mixerFolk: mFolk, highContrast, dyslexic, planDays, planTime, externalOff, spookyFont, longAgoYear });
-    try { localStorage.setItem('horrorhub.longAgoYear', String(longAgoYear)); } catch {}
   }, [apiKey, omdbKey, dddKey, theme, flicker, fog, ambientAudio, lightsOut, seasonal, releaseRadar, nudgeDays, mGhosts, mOccult, mSlasher, mFolk, highContrast, dyslexic, planDays, planTime, externalOff, spookyFont, longAgoYear]);
 
   return (
     <div className="space-y-6">
-      {false && (
-      <Card className="rounded-2xl">
-        <CardContent className="p-6 space-y-3">
-          <div className="text-lg font-semibold">Connections</div>
-          <Label className="text-sm">TMDb API Access Token (v4)</Label>
-          <Input type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder="Paste your Bearer token here" />
-          <div className="text-sm opacity-70">Get a free account at themoviedb.org → Settings → API → v4 auth. Paste the long token here.</div>
-          <div className="pt-3" />
-          <Label className="text-sm">OMDb API Key (optional, for IMDb/RT ratings)</Label>
-          <Input type="text" value={omdbKey} onChange={(e) => setOmdbKey(e.target.value)} placeholder="If set, details pages show IMDb and Rotten Tomatoes" />
-          <div className="pt-3" />
-          <Label className="text-sm">DoesTheDogDie API Key (optional, for jump scares & content)</Label>
-          <Input type="text" value={dddKey} onChange={(e) => setDddKey(e.target.value)} placeholder="If set, details pages auto-fill jump scares/gore/disturbing" />
-        </CardContent>
-      </Card>
-      )}
-
       <Card className="rounded-2xl">
         <CardContent className="p-6 space-y-4">
           <div className="text-lg font-semibold">Appearance & Data</div>
@@ -2745,8 +2527,8 @@ function Settings({ settings, onChange, onImport, watchlist, data }) {
 
 // ----------------- root -----------------
 export function HorrorHub() {
-  const { library, upsert, remove } = useLibrary();
-  const [settings, setSettings] = useState(loadSettings());
+  const { library, upsert, remove, replaceLibrary, saveFailed } = useLibrary();
+  const [settings, setSettings] = useState(loadSettings);
   const [selected, setSelected] = useState(null); // movie object to show details
   useEffect(() => {
     saveSettings(settings);
@@ -2756,34 +2538,35 @@ export function HorrorHub() {
   const watchlistIds = useMemo(() => new Set(library.filter((i) => i.watchlist).map((i) => i.id)), [library]);
   const ratingById = useMemo(() => Object.fromEntries(library.map(i=> [i.id, i.rating||0])), [library]);
 
+  // Only fields the caller actually provided are sent, so re-adding a title that
+  // is already in the library can't reset its tags, watch dates or rating.
   const addToLibrary = (m) => {
-    const item = {
+    const fields = {
       id: m.id,
       title: m.title,
       year: m.year,
       poster: m.poster,
       overview: m.overview,
-      addedAt: new Date().toISOString(),
-      watchedDates: [],
-      rating: m.rating ?? 0,
-      scares: m.scares ?? 5,
-      tags: [],
-      watchlist: !!m.watchlist,
       releaseDate: m.releaseDate || m.date,
+      rating: m.rating,
+      scares: m.scares,
+      tags: m.tags,
+      watchedDates: m.watchedDates,
+      notes: m.notes,
+      watchlist: m.watchlist === undefined ? undefined : !!m.watchlist,
     };
-    upsert(item);
+    upsert(Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== undefined)));
   };
 
-  const importLib = (arr) => {
-    if (!Array.isArray(arr)) return alert("Bad import file");
-    const clean = arr.map((i) => ({
-      ...i,
-      addedAt: i.addedAt || new Date().toISOString(),
-      watchedDates: i.watchedDates || [],
-      watchlist: !!i.watchlist,
-    }));
-    saveLibrary(clean);
-    window.location.reload();
+  // Validates the file, shows what will change, then merges. Existing titles
+  // are never deleted; a bad file changes nothing.
+  const importLib = (payload, label = "file") => {
+    const { items: incoming, skipped, error } = validateImport(payload);
+    if (error) return alert(error);
+    const { items, added, updated } = mergeLibraries(library, incoming);
+    const summary = `Import from ${label}:\n\n• ${added} new title${added === 1 ? "" : "s"}\n• ${updated} existing title${updated === 1 ? "" : "s"} updated (tags and watch dates are combined)${skipped ? `\n• ${skipped} row${skipped === 1 ? "" : "s"} skipped (missing id or title)` : ""}\n\nNothing in your library is deleted. Continue?`;
+    if (!window.confirm(summary)) return;
+    replaceLibrary(items);
   };
 
   const watchlist = library.filter((i) => i.watchlist);
@@ -2791,14 +2574,13 @@ export function HorrorHub() {
   // Nudge engine: gentle reminder after N days
   const [showNudge, setShowNudge] = useState(false);
   useEffect(() => {
-    const enabled = true; // nudge engine always on; cadence controlled by nudgeDays
-    if (!enabled) return;
+    // nudge engine is always on; cadence is controlled by nudgeDays
     const nudgeDays = Number(settings.nudgeDays || 7);
-    const lastWatch = localStorage.getItem('horrorhub.lastWatch');
+    const lastWatch = readString('horrorhub.lastWatch');
     if (!lastWatch) return;
     const last = new Date(lastWatch);
     const diffDays = Math.floor((Date.now() - last.getTime())/(1000*60*60*24));
-    const lastNudge = Number(localStorage.getItem('horrorhub.lastNudge')||0);
+    const lastNudge = Number(readString('horrorhub.lastNudge', 0));
     const sinceNudge = Math.floor((Date.now() - lastNudge)/(1000*60*60*24));
     if (diffDays >= nudgeDays && sinceNudge >= nudgeDays) setShowNudge(true);
   }, [settings]);
@@ -2807,15 +2589,18 @@ export function HorrorHub() {
     if (!settings.releaseRadar) return;
     if (!("Notification" in window)) return;
     const key = 'horrorhub.notified.v1';
-    const notified = new Set(JSON.parse(localStorage.getItem(key) || '[]'));
+    const notified = new Set(readJSON(key, []));
     const today = new Date().toISOString().slice(0,10);
     const due = watchlist.filter(i => i.releaseDate && i.releaseDate <= today && !notified.has(i.id));
     if (!due.length) return;
     (async ()=>{
       const perm = await Notification.requestPermission();
       if (perm !== 'granted') return;
-      due.slice(0,3).forEach(i=>{ try{ new Notification('Now Released', { body: `${i.title} is out today!` }); }catch{} notified.add(i.id); });
-      localStorage.setItem(key, JSON.stringify(Array.from(notified)));
+      due.slice(0,3).forEach(i=>{
+        try { new Notification('Now Released', { body: `${i.title} is out today!` }); } catch { /* notifications unavailable */ }
+        notified.add(i.id);
+      });
+      writeJSON(key, Array.from(notified));
     })();
   }, [settings.releaseRadar, watchlist]);
 
@@ -2836,6 +2621,12 @@ export function HorrorHub() {
           {/* Export/Import moved to Settings */}
         </div>
       </div>
+      {saveFailed ? (
+        <div role="alert" className="mb-4 rounded-xl border border-red-500/40 bg-red-950/50 px-4 py-3 text-sm">
+          Your browser refused to save your library (storage may be full or blocked). Changes since the last successful save
+          could be lost on reload. Open Settings → Backup &amp; Import and export a backup now.
+        </div>
+      ) : null}
       <Tabs defaultValue="discover" className="w-full">
       <TabsList className="grid w-full grid-cols-8">
         <TabsTrigger value="discover">Discover</TabsTrigger>
@@ -2874,7 +2665,7 @@ export function HorrorHub() {
         </TabsContent>
 
             <TabsContent value="library" className="mt-6">
-              <LibraryView items={library} onUpdate={upsert} onRemove={remove} apiKey={settings.apiKey} onOpenDetails={setSelected} />
+              <LibraryView items={library} onUpdate={upsert} onRemove={remove} onOpenDetails={setSelected} />
             </TabsContent>
 
         <TabsContent value="watchlist" className="mt-6">
@@ -2948,9 +2739,9 @@ export function HorrorHub() {
             <Button size="sm" onClick={()=>{
               const pool = watchlist.length? watchlist : library;
               if (pool.length){ const pick = pool[Math.floor(Math.random()*pool.length)]; setSelected(pick); }
-              setShowNudge(false); localStorage.setItem('horrorhub.lastNudge', String(Date.now()));
+              setShowNudge(false); writeString('horrorhub.lastNudge', Date.now());
             }}>Roll</Button>
-            <Button size="sm" variant="outline" onClick={()=>{ setShowNudge(false); localStorage.setItem('horrorhub.lastNudge', String(Date.now())); }}>Dismiss</Button>
+            <Button size="sm" variant="outline" onClick={()=>{ setShowNudge(false); writeString('horrorhub.lastNudge', Date.now()); }}>Dismiss</Button>
           </div>
         </div>
       ) : null}
@@ -3036,7 +2827,7 @@ function FogOverlay(){
 function AmbientAudio(){
   const startedRef = React.useRef(false);
   React.useEffect(() => {
-    let ctx; let noiseNode; let gain; let kickGain; let interval;
+    let ctx; let noiseNode; let gain; let interval;
     const start = async () => {
       if (startedRef.current) return; startedRef.current = true;
       ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -3081,32 +2872,16 @@ function RatingRoulette({ apiKey, onAdd, onOpenDetails, ratingMap={}, inLibraryI
   const [page, setPage] = useState(1);
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [pageSize, setPageSize] = useState(() => {
-    try { return Number(JSON.parse(localStorage.getItem('horrorhub.roulette.pageSize')||'12')) || 12; } catch { return 12; }
-  });
-  const [hideRated, setHideRated] = useState(() => {
-    try { const v = JSON.parse(localStorage.getItem('horrorhub.roulette.hideRated')||'true'); return !!v; } catch { return true; }
-  });
-  const [hideInLibrary, setHideInLibrary] = useState(() => {
-    try { const v = JSON.parse(localStorage.getItem('horrorhub.roulette.hideInLibrary')||'false'); return !!v; } catch { return false; }
-  });
-  const [hideWatchlisted, setHideWatchlisted] = useState(() => {
-    try { const v = JSON.parse(localStorage.getItem('horrorhub.roulette.hideWatchlisted')||'false'); return !!v; } catch { return false; }
-  });
-  const [providersSel, setProvidersSel] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('horrorhub.roulette.providers')||'[]'); } catch { return []; }
-  });
+  const [pageSize, setPageSize] = usePersistentState('horrorhub.roulette.pageSize', 12);
+  const [hideRated, setHideRated] = usePersistentState('horrorhub.roulette.hideRated', true);
+  const [hideInLibrary, setHideInLibrary] = usePersistentState('horrorhub.roulette.hideInLibrary', false);
+  const [hideWatchlisted, setHideWatchlisted] = usePersistentState('horrorhub.roulette.hideWatchlisted', false);
+  const [providersSel, setProvidersSel] = usePersistentState('horrorhub.roulette.providers', []);
   const [totalPages, setTotalPages] = useState(null);
   const [jumpVal, setJumpVal] = useState(1);
   const cacheRef = useRef(new Map()); // page -> rows
   const providersRef = useRef(new Map()); // id -> [slugs]
   const headers = apiKey ? { Authorization:`Bearer ${apiKey}`, 'Content-Type':'application/json;charset=utf-8' } : undefined;
-
-  useEffect(()=>{ try { localStorage.setItem('horrorhub.roulette.pageSize', JSON.stringify(pageSize)); } catch {} },[pageSize]);
-  useEffect(()=>{ try { localStorage.setItem('horrorhub.roulette.hideRated', JSON.stringify(hideRated)); } catch {} },[hideRated]);
-  useEffect(()=>{ try { localStorage.setItem('horrorhub.roulette.hideInLibrary', JSON.stringify(hideInLibrary)); } catch {} },[hideInLibrary]);
-  useEffect(()=>{ try { localStorage.setItem('horrorhub.roulette.hideWatchlisted', JSON.stringify(hideWatchlisted)); } catch {} },[hideWatchlisted]);
-  useEffect(()=>{ try { localStorage.setItem('horrorhub.roulette.providers', JSON.stringify(providersSel||[])); } catch {} },[providersSel]);
 
   const fetchPage = async (p)=>{
     if (!apiKey) { alert('Enter your TMDb API key in Settings.'); return; }

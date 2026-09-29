@@ -6,7 +6,7 @@ export function Dialog({ open, onOpenChange, children }) {
     return ch;
   });
 }
-export function DialogTrigger({ asChild, onOpenChange, children }) {
+export function DialogTrigger({ asChild: _asChild, onOpenChange, children }) {
   const child = React.Children.only(children);
   return React.cloneElement(child, { onClick:()=>onOpenChange?.(true) });
 }
