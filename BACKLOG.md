@@ -152,15 +152,15 @@ Acceptance criteria:
 Source: the full code review of 2026-09-28. Steps 1 and 2 of the review (safety net + data layer) are done; see the CHANGELOG. The items below are what remains, in suggested order.
 
 ### 8. Split App.jsx into feature folders
-Status: Planned
+Status: Done (one follow-up left)
 Priority: P0 (unblocks everything else)
 
-`src/App.jsx` is ~2,900 lines holding about 20 components, the TMDb calls, audio and overlays. Move it into `features/` (discover, library, watchlist, recs, stats, details, settings), `components/` (MovieCard, StarRating, TagEditor, overlays) and `lib/`. Mechanical moves only, no behavior change, one feature per commit, build + tests green after each.
+`src/App.jsx` was ~3,000 lines holding about 20 components, the TMDb calls, audio and overlays. It is now ~250 lines (root component, tabs, settings wiring) with the rest in `features/` (discover, library, watchlist, recs, stats, details, settings), `components/` (MovieCard, StarRating, TagEditor, ShimmerImage, KnifeIcon, overlays), `hooks/useLibrary.js` and `lib/` (tmdb, dates, settings). Moves only, no behavior change. The unused `ContinuityNavigator` component was dropped.
 
 Acceptance criteria:
-- No file over ~400 lines
-- `App.jsx` only wires tabs, settings and the library
-- Smoke test in `App.test.jsx` still passes after every move
+- ✅ `App.jsx` only wires tabs, settings and the library
+- ✅ Every extracted view is smoke-rendered in `features/views.test.jsx`, plus the app render in `App.test.jsx`
+- ⬜ No file over ~400 lines: `MovieCard.jsx` is still ~485 (it holds both the compact and full card layouts). Split it into `CompactCard` / `FullCard` plus shared actions. `MovieDetails.jsx` (~395) and `StatsView.jsx` (~305) are fine but next in line.
 
 ### 9. Fix the recommendation hook (pairs with #2)
 Status: Planned

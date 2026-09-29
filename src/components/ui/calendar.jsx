@@ -1,4 +1,3 @@
-import React from "react";
 // Minimal date picker built on the native date input.
 export function Calendar({ selected, onSelect }){
   const iso = selected ? new Date(selected).toISOString().slice(0,10) : "";

@@ -22,6 +22,11 @@ All notable changes to this project will be documented in this file.
 - Lint is clean of errors (0 errors, 7 warnings, down from 36 errors and 11 warnings); intentional empty `catch` blocks are allowed, and dead code was removed (unused Library recommendation fetch, a hidden duplicate Connections card, an unused provider lookup on the details page).
 - Removed the stray `tmp.ps1` / `tmp_segment.txt` files and rewrote the README.
 
+### Changed (code review, step 3: split App.jsx)
+- Split the ~3,000-line `App.jsx` into `features/` (discover, library, watchlist, recs, stats, details, settings), `components/`, `hooks/useLibrary.js` and `lib/` (tmdb, dates, settings). `App.jsx` is now ~250 lines. No behavior change.
+- Added render tests for every extracted view (`src/features/views.test.jsx`).
+- Removed the unused `ContinuityNavigator` component and unused imports.
+
 ### Fixed
 - Adding or watchlisting a title that was already in your library from Discover could reset its tags, watch dates, scares and rating to defaults. Only the fields actually provided are updated now.
 - IMDb CSV ratings (out of 10) are converted to the app's 5-star scale instead of being stored as up to 10 stars.

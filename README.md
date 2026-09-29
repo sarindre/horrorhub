@@ -34,10 +34,11 @@ HorrorHub has no backend. Your library, settings and API keys are stored in this
 
 ```
 src/
-  App.jsx                 app shell and most UI (being split up, see BACKLOG.md)
-  lib/                    storage, library schema/merge, CSV parsers, ICS export, mood presets
-  hooks/                  data hooks (TMDb recommendations)
-  components/             SearchBar and UI primitives
+  App.jsx                 app shell: tabs, settings and library wiring
+  features/               one folder per tab: discover, library, watchlist, recs, stats, details, settings
+  components/             shared UI: MovieCard, StarRating, TagEditor, overlays, ui/ primitives
+  hooks/                  useLibrary, useHybridRecommendations
+  lib/                    storage, library schema/merge, CSV parsers, ICS export, mood presets, settings, TMDb constants
 ```
 
 See [CLAUDE.md](CLAUDE.md) for product direction, [BACKLOG.md](BACKLOG.md) for the roadmap and [CHANGELOG.md](CHANGELOG.md) for what changed.

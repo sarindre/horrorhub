@@ -20,7 +20,7 @@ HorrorHub is a personal horror movie library and discovery app built with React 
 - Persistence: browser `localStorage`
 
 ## Key files
-- `src/App.jsx`: main application logic and UI
+- `src/App.jsx`: app shell only (tabs, settings and library wiring); features live in `src/features/<tab>/`, shared UI in `src/components/`, data hooks in `src/hooks/`. Don't grow `App.jsx`; add new UI as a feature or component file
 - `src/hooks/useHybridRecommendations.js`: recommendation logic using TMDb similarity data
 - `src/lib/*`: pure, tested logic (storage, library schema/merge/import validation, CSV parsers, ICS, mood presets). New logic should go here, not into `App.jsx`
 - `src/components/SearchBar.jsx`: search input component

@@ -1,4 +1,3 @@
-import React from "react";
 export function Button({ variant = "default", size = "md", className = "", ...props }) {
   const base = "inline-flex items-center justify-center gap-2 rounded-xl text-sm transition-colors";
   const sizeCls = size === "icon" ? "w-9 h-9 p-0" : size === "sm" ? "px-3 py-1.5" : "px-3.5 py-2";

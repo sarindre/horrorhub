@@ -1,4 +1,3 @@
-import React from "react";
 export function Select({ value, onValueChange, children }) {
   return <div data-value={value} data-onchange={onValueChange}>{children}</div>;
 }
