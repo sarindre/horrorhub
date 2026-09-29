@@ -11,6 +11,7 @@ import { SETTINGS_KEY } from "./lib/settings.js";
 // Real clicks on the real app (jsdom), the first interaction tests in the project.
 
 beforeEach(() => {
+  window.location.hash = ""; // the current view lives in the URL, so start each test at the default
   localStorage.clear();
   // keep the decorative overlays from ticking during tests
   localStorage.setItem(SETTINGS_KEY, JSON.stringify({ version: 2, settings: { flicker: false, fog: false } }));
@@ -150,7 +151,7 @@ describe("navigation", () => {
     fireEvent.click(tab("My Library"));
     fireEvent.click(screen.getAllByText("Detail Film")[0]);
     expect(screen.getByText("← Back")).toBeTruthy();
-    fireEvent.click(tab("Watchlist"));
+    fireEvent.click(tab("Plan"));
     expect(screen.queryByText("← Back")).toBeNull();
     expect(screen.getByText("Your Watchlist")).toBeTruthy();
   });

@@ -1,7 +1,9 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { Button } from "./components/ui/button.jsx";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs.jsx";
+import { Tabs, TabsContent } from "./components/ui/tabs.jsx";
+import { MainNav } from "./components/MainNav.jsx";
+import { useHashTab } from "./hooks/useHashTab.js";
 import { readJSON, readString, writeJSON, writeString } from "./lib/storage.js";
 import { mergeLibraries, validateImport } from "./lib/library.js";
 import { FlickerOverlay, FogOverlay, AmbientAudio, LightsOutOverlay } from "./components/overlays.jsx";
@@ -132,12 +134,16 @@ export function HorrorHub() {
 
   const marathonStore = useMarathons();
 
-  // Tabs are controlled so the checklist can jump to one; opening any tab leaves a film's details.
-  const [tab, setTab] = useState("discover");
+  // The current view lives in the URL hash so Back/Forward move between views. Opening any
+  // view (including the one you're on) leaves a film's details, and so does the browser's Back.
+  const [tab, setTab] = useHashTab();
   const goTab = (next) => {
     setSelected(null);
     setTab(next);
   };
+  useEffect(() => {
+    setSelected(null);
+  }, [tab]);
 
   // First-run checklist
   const [onboardingDismissed, setOnboardingDismissed] = usePersistentState("onboarding.dismissed", false);
@@ -242,17 +248,9 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
         </div>
       ) : null}
       <Tabs value={tab} onValueChange={goTab}>
-      <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 lg:grid-cols-9">
-        <TabsTrigger value="discover">Discover</TabsTrigger>
-        <TabsTrigger value="library">My Library</TabsTrigger>
-        <TabsTrigger value="watchlist">Watchlist</TabsTrigger>
-        <TabsTrigger value="recs" className="text-sm whitespace-nowrap">Recommendations</TabsTrigger>
-        <TabsTrigger value="rate">Rating Roulette</TabsTrigger>
-        <TabsTrigger value="continuity">Because You Liked…</TabsTrigger>
-        <TabsTrigger value="challenges">Challenges</TabsTrigger>
-        <TabsTrigger value="stats">Stats</TabsTrigger>
-        <TabsTrigger value="settings">Settings</TabsTrigger>
-      </TabsList>
+      <MainNav view={tab} onChange={goTab} />
+
+      <div className="mt-6" />
 
         {selected ? (
           <div className="mt-6">

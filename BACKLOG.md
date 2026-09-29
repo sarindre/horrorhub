@@ -249,10 +249,22 @@ Priority: P1
 The Mixer on the Recommendations tab mutated the `mixer` object directly, which doesn't trigger a re-render. The sliders are now controlled from settings (`onMixerChange` → `updateSettings`), so they update the picks live and stay in sync with the Settings page.
 
 ### 13. Tab consolidation and responsive layout
-Status: Planned
+Status: Done
 Priority: P2
 
-There are now nine tabs (Challenges was added). The tab bar wraps to 3/5/9 columns by screen width as a stopgap, but Rating Roulette, Because You Liked… and Recommendations still overlap in purpose. Merge or regroup them (Challenges could sit with planning) and make the tab bar scroll or collapse on small screens.
+Nine tabs in a fixed grid didn't fit on a phone, several overlapped in purpose, the browser's Back button left the app instead of moving between views, and the tab buttons weren't keyboard-friendly (the Recommendations tab also passed a `className` that the component silently ignored).
+
+Implementation notes (`lib/nav.js`, `components/MainNav.jsx`, `hooks/useHashTab.js`):
+- The nine views are regrouped into six sections: Discover (Browse, Rate films), My Library, For You (Picks for tonight, Because you liked…), Plan (Watchlist & plans, Challenges), Stats and Settings. A second row of pills appears only in sections that hold more than one view, and choosing a section returns you to the view you last used in it
+- Responsive: the section bar scrolls sideways on a phone and becomes an even six-column row from small screens up
+- The current view lives in the URL hash (`#library`, `#challenges`...), so Back and Forward move between views, a view can be bookmarked, and an unknown hash falls back to Discover. Clicking the view you're already on doesn't add history entries, and any view change (including Back) closes an open film's details
+- Accessibility: proper `tablist`/`tab`/`tabpanel` roles, `aria-selected`, a roving tab index, and Arrow/Home/End keys (wrapping) in both rows
+- Every view id is unchanged, so saved state and the first-run checklist keep working
+
+Follow-ups:
+- The layout hasn't been checked on a real phone or with a screen reader, only through DOM tests
+- Views inside a section aren't remembered across visits (only within a session)
+- `TabsList`/`TabsTrigger` in `components/ui/tabs.jsx` are no longer used by the app (see #15)
 
 ### 14. Performance and motion
 Status: Done

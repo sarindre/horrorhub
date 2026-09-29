@@ -50,6 +50,13 @@ All notable changes to this project will be documented in this file.
 - Number inputs (nudge cadence, "long ago" year) accept typing freely and clamp on blur instead of snapping after the first keystroke.
 - Removed the dead "October theme" toggle and the unused Tailwind config and `tailwindcss-animate` dependency. `npm run lint` now reports nothing.
 
+### Changed (navigation)
+- Nine tabs became six sections: Discover (Browse, Rate films), My Library, For You (Picks for tonight, Because you liked…), Plan (Watchlist & plans, Challenges), Stats and Settings. Sections with several views get a second row of pills, and choosing a section takes you back to the view you last used in it.
+- The bar scrolls sideways on a phone instead of cramming nine buttons into a grid.
+- The current view is in the URL (`#library`, `#challenges`, ...), so the browser's Back and Forward buttons move between views instead of leaving the app, and a view can be bookmarked. Any view change, including Back, closes an open film's details.
+- Keyboard and screen-reader support: Arrow, Home and End keys move between tabs, only the selected tab is in the tab order, and the tabs have proper roles.
+- Navigation tests (280 tests).
+
 ### Changed (performance and motion)
 - The first page load now downloads 337 kB of JavaScript (104 kB gzipped) instead of 790 kB (250 kB gzipped). Stats, film details, Challenges, Because You Liked… and Rating Roulette load on demand (all but Stats are fetched while the browser is idle), and the charting library only loads when you open Stats.
 - Removed the `framer-motion` dependency; the fade-in on Discover results is now a small CSS animation.

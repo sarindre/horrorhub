@@ -31,6 +31,7 @@ const seed = (items) => localStorage.setItem(LIBRARY_KEY, JSON.stringify({ versi
 const tab = (name) => screen.getByRole("tab", { name });
 
 beforeEach(() => {
+  window.location.hash = ""; // the current view lives in the URL, so start each test at the default
   localStorage.clear();
   // jsdom has no ResizeObserver, which the charting library (Stats) uses
   vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} });
