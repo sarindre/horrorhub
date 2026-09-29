@@ -166,8 +166,26 @@ Follow-ups:
 - The tab bar now has nine tabs; see #13
 
 ### 7. Curation layer without full social networking
-Status: Planned
+Status: Done (v1: file and text sharing; see follow-ups)
 Priority: P2
+
+Implementation notes (`lib/shelves.js`, `hooks/useShelves.js`, `features/shelves/`, `components/AddToShelfDialog.jsx`):
+- **Shelves:** a new Shelves view under My Library. Make named, described, ordered lists of films ("Halloween marathon", "Comfort horror", "Films to show a friend"); reorder them, rename them, add films from your library or by searching TMDb (so a shelf can hold films you don't own yet, with one-click "Add to library" / "Watchlist" for those), add a whole shelf to your watchlist, and see each film's rating, watched status and content warnings. A "Shelves" button on every film's page files it on one or more shelves and shows how many it's on
+- **Curated for you:** collections HorrorHub builds from your taste profile and library, never stored, and always within your content limits: "Top picks for your <mood> mood" (unwatched films that fit the mood you love most, with reasons), "Your best <subgenre>" for up to three subgenres you clearly love, and "Time for a rewatch" (favorites you haven't seen in over a year). Each can be saved as an editable shelf or sent to the watchlist in one click
+- **Sharing without accounts or servers:** export a shelf as a small JSON file or copy it as a plain-text list; import a friend's shelf file (imports never replace an existing shelf). Shelves are included in your full JSON backup and restored with it, and a shelf-only file also imports through Settings
+- Each shelf entry keeps a snapshot (id, title, year, poster), so a shelf still reads correctly if a film later leaves your library and an exported shelf makes sense on another machine. When an imported Letterboxd/IMDb film is matched to TMDb (its id changes), shelves follow it
+- Saved locally (`horrorhub.shelves.v1`), versioned like everything else; shelves are lazy-loaded so the first page load didn't grow
+
+Acceptance criteria:
+- ✅ Users can organize films into personal collections or shelves
+- ✅ The app surfaces curated collections in a clean UI
+- ✅ No heavy backend or account system is required
+
+Follow-ups:
+- "Shared watchlist themes" is covered by file and text sharing only. A link that carries a shelf in its URL (no upload) would be a natural next step, and importing from a pasted text list, by matching titles against TMDb
+- Shelves are lists of films only; there's no cover image choice, drag-to-reorder or per-film notes yet (reordering is up/down buttons, which are also keyboard-friendly)
+- Curated collections are library-based and don't fetch anything; "recommended by subgenre" from TMDb (films you don't own) still lives in For You
+- Deleting a film from your library leaves it on its shelves on purpose; there's no cleanup for shelf entries you no longer want
 
 Add lightweight social-style curation features without turning the app into a full social network.
 

@@ -50,6 +50,12 @@ All notable changes to this project will be documented in this file.
 - Number inputs (nudge cadence, "long ago" year) accept typing freely and clamp on blur instead of snapping after the first keystroke.
 - Removed the dead "October theme" toggle and the unused Tailwind config and `tailwindcss-animate` dependency. `npm run lint` now reports nothing.
 
+### Added (shelves and curated collections)
+- A Shelves view under My Library: make named, ordered lists of films ("Halloween marathon", "Comfort horror"), add films from your library or by searching TMDb, reorder them, rename them, and add a whole shelf to your watchlist. Films that aren't in your library are marked, with one-click add. Every film's page has a Shelves button to file it on one or more shelves.
+- "Curated for you" collections built from your taste: top picks in the mood you love most, your best of each subgenre you clearly love, and favorites due for a rewatch. They respect your content limits, and each can be saved as an editable shelf or sent to the watchlist.
+- Share shelves without accounts: export one as a file or copy it as a plain-text list, and import a friend's shelf file. Shelves are part of your full JSON backup, and matching an imported film to TMDb keeps it on its shelves.
+- My Library now has two views (All films, Shelves); tests for the shelf logic, the whole flow, sharing, and the match-keeps-shelves integration (355 tests).
+
 ### Changed (UI primitives)
 - Dialogs now use the browser's native `<dialog>`: focus stays inside, Escape closes, focus returns to what opened it, and they're labelled for screen readers. No library involved.
 - Removed six dependencies nothing used (four Radix packages, `class-variance-authority`, `tailwind-merge`) plus the fake `Select`, `Popover` and `Calendar` components. The app now depends only on React, React DOM, Recharts and lucide-react, and a test keeps it that way.

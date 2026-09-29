@@ -8,6 +8,8 @@ import { StarRating } from "../../components/StarRating.jsx";
 import { TagEditor } from "../../components/TagEditor.jsx";
 import { TMDB_IMG, describeError, isAbort, tmdbGet } from "../../lib/tmdb.js";
 import { WatchDialog } from "../../components/WatchDialog.jsx";
+import { AddToShelfDialog } from "../../components/AddToShelfDialog.jsx";
+import { snapshotFilm } from "../../lib/shelves.js";
 import { watchPatch } from "../../lib/watch.js";
 import { useToast } from "../../lib/toastContext.js";
 import { useContentPrefs } from "../../lib/contentContext.js";
@@ -18,7 +20,7 @@ import { analysisPatch, analyzeMeta, fetchFilmMeta } from "../../lib/filmMeta.js
 
 const DETAILS_CACHE_MS = 5 * 60 * 1000;
 
-export function MovieDetails({ item, localItem, onUpdate, onAdd, apiKey, omdbKey, dddKey, externalOff = false }) {
+export function MovieDetails({ item, localItem, onUpdate, onAdd, apiKey, omdbKey, dddKey, externalOff = false, shelfStore }) {
   const toast = useToast();
   const prefs = useContentPrefs();
   const [details, setDetails] = useState(null);
@@ -344,6 +346,8 @@ export function MovieDetails({ item, localItem, onUpdate, onAdd, apiKey, omdbKey
 
             {/* Watched logging */}
             <WatchDialog label="Watched" onLog={(iso) => onUpdate?.({ ...(localItem || item), ...watchPatch(localItem || item, iso) })} />
+
+            {shelfStore ? <AddToShelfDialog film={snapshotFilm({ ...base, poster: base.poster || details?.poster_path })} store={shelfStore} /> : null}
 
             {/* Shareable poster card */}
             <Button size="sm" variant="outline" onClick={async ()=>{

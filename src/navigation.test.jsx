@@ -31,6 +31,8 @@ describe("main navigation", () => {
     // Discover has two views, so its sub-tabs are showing
     expect(screen.getByRole("tablist", { name: "Discover views" })).toBeTruthy();
     fireEvent.click(tab("My Library"));
+    expect(screen.getByRole("tablist", { name: "My Library views" })).toBeTruthy(); // All films + Shelves
+    fireEvent.click(tab("Stats"));
     expect(screen.queryByRole("tablist", { name: /views$/ })).toBeNull();
   });
 

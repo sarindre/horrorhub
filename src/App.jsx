@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { Button } from "./components/ui/button.jsx";
 import { Tabs, TabsContent } from "./components/ui/tabs.jsx";
@@ -13,7 +13,7 @@ import { useAutoTagger } from "./hooks/useAutoTagger.js";
 import { useChallenges } from "./hooks/useChallenges.js";
 import { useMarathons } from "./hooks/useMarathons.js";
 import { useImportMatcher } from "./hooks/useImportMatcher.js";
-import { isUnmatched } from "./lib/tmdbMatch.js";
+import { isUnmatched, matchFields } from "./lib/tmdbMatch.js";
 import { GettingStarted } from "./components/GettingStarted.jsx";
 import { isOnboardingDone, onboardingSteps } from "./lib/onboarding.js";
 import { buildTasteProfile } from "./lib/taste.js";
@@ -27,7 +27,9 @@ import { LibraryView } from "./features/library/LibraryView.jsx";
 import { Discover } from "./features/discover/Discover.jsx";
 import { WatchlistView } from "./features/watchlist/WatchlistView.jsx";
 import { RecommendationsView } from "./features/recs/RecommendationsView.jsx";
-import { ChallengesView, ContinuityGraph, MovieDetails, RatingRoulette, StatsView, preloadLazyViews } from "./lazyViews.js";
+import { ChallengesView, ContinuityGraph, MovieDetails, RatingRoulette, ShelvesView, StatsView, preloadLazyViews } from "./lazyViews.js";
+import { useShelves } from "./hooks/useShelves.js";
+import { parseShelfPayload } from "./lib/shelves.js";
 import { usePrefersReducedMotion } from "./hooks/usePrefersReducedMotion.js";
 import { Settings } from "./features/settings/Settings.jsx";
 import { ToastProvider } from "./components/Toast.jsx";
@@ -96,6 +98,14 @@ export function HorrorHub() {
   // Validates the file, shows what will change, then merges. Existing titles
   // are never deleted; a bad file changes nothing.
   const importLib = (payload, label = "file") => {
+    // a shelf file (one shelf, or shelves without a library) is its own kind of import
+    const hasLibrary = Array.isArray(payload) || Array.isArray(payload?.items);
+    const shelfImport = parseShelfPayload(payload);
+    if (!hasLibrary && shelfImport.shelves.length) {
+      const addedShelves = shelfStore.merge(shelfImport.shelves);
+      toast(addedShelves ? `Imported ${addedShelves} shelf${addedShelves === 1 ? "" : "s"} from ${label}.` : "You already have that shelf.", { kind: addedShelves ? "success" : "info" });
+      return;
+    }
     const { items: incoming, skipped, error } = validateImport(payload);
     if (error) return toast(error, { kind: "error" });
     const { items, added, updated } = mergeLibraries(library, incoming);
@@ -104,18 +114,34 @@ export function HorrorHub() {
     replaceLibrary(items);
     const newChallenges = Array.isArray(payload?.challenges) ? challengeStore.merge(payload.challenges) : 0;
     const newPlans = Array.isArray(payload?.marathons) ? marathonStore.merge(payload.marathons) : 0;
-    const extra = [newChallenges && `${newChallenges} challenge${newChallenges === 1 ? "" : "s"}`, newPlans && `${newPlans} saved plan${newPlans === 1 ? "" : "s"}`].filter(Boolean);
+    const newShelves = Array.isArray(payload?.shelves) ? shelfStore.merge(payload.shelves) : 0;
+    const extra = [
+      newChallenges && `${newChallenges} challenge${newChallenges === 1 ? "" : "s"}`,
+      newPlans && `${newPlans} saved plan${newPlans === 1 ? "" : "s"}`,
+      newShelves && `${newShelves} shelf${newShelves === 1 ? "" : "ves"}`,
+    ].filter(Boolean);
     toast(`Imported from ${label}: ${added} new, ${updated} updated${extra.length ? `, ${extra.join(", ")}` : ""}.`, { kind: "success" });
   };
 
   const watchlist = library.filter((i) => i.watchlist);
+
+  const shelfStore = useShelves();
+  const { relink: relinkShelf } = shelfStore;
+  // matching an imported film to TMDb changes its id: keep shelves pointing at it
+  const relinkEverywhere = useCallback(
+    (oldId, movie) => {
+      relink(oldId, movie);
+      relinkShelf(oldId, matchFields(movie));
+    },
+    [relink, relinkShelf]
+  );
 
   // Link Letterboxd/IMDb imports to TMDb (real ids, posters, metadata) in the background.
   // Runs before the tagger's next pass, which then tags the newly linked films.
   const matcher = useImportMatcher({
     library,
     upsert,
-    relink,
+    relink: relinkEverywhere,
     apiKey: settings.apiKey,
     enabled: settings.autoMatch,
     onProblem: (message) => toast(message, { kind: "error" }),
@@ -268,6 +294,7 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
                 omdbKey={settings.omdbKey}
                 dddKey={settings.dddKey}
                 externalOff={!!settings.externalOff}
+                shelfStore={shelfStore}
               />
               </Suspense>
             </div>
@@ -312,6 +339,10 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
           <RatingRoulette apiKey={settings.apiKey} onAdd={addToLibrary} onOpenDetails={setSelected} ratingMap={ratingById} inLibraryIds={inLibraryIds} watchlistIds={watchlistIds} />
         </TabsContent>
 
+            <TabsContent value="shelves" className="mt-6">
+              <ShelvesView library={library} store={shelfStore} apiKey={settings.apiKey} onUpdate={upsert} onAdd={addToLibrary} onOpenDetails={setSelected} />
+            </TabsContent>
+
             <TabsContent value="challenges" className="mt-6">
               <ChallengesView library={library} store={challengeStore} apiKey={settings.apiKey} onUpdate={upsert} onAdd={addToLibrary} onOpenDetails={setSelected} />
             </TabsContent>
@@ -321,7 +352,7 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
             </TabsContent>
 
             <TabsContent value="settings" className="mt-6">
-              <Settings settings={settings} update={updateSettings} onImport={importLib} onRetagAll={retagAll} onCleanupTags={cleanupTags} onRelink={relink} onRetryMatching={retryMatching} extras={{ challenges: challengeStore.challenges, marathons: marathonStore.marathons }} watchlist={watchlist} data={library} />
+              <Settings settings={settings} update={updateSettings} onImport={importLib} onRetagAll={retagAll} onCleanupTags={cleanupTags} onRelink={relinkEverywhere} onRetryMatching={retryMatching} extras={{ challenges: challengeStore.challenges, marathons: marathonStore.marathons, shelves: shelfStore.shelves }} watchlist={watchlist} data={library} />
             </TabsContent>
           </>
           </Suspense>
