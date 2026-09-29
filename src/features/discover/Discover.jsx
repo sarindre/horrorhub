@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
 import { Search as SearchIcon, BellRing, Heart } from "lucide-react";
 import { Card, CardContent } from "../../components/ui/card.jsx";
 import { Button } from "../../components/ui/button.jsx";
@@ -237,7 +236,7 @@ export function Discover({ apiKey, onAdd, onRemove, inLibraryIds, onToggleWatchl
 
       <div className={`grid gap-4 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 ${loading && results.length ? "opacity-60 transition-opacity" : ""}`}>
         {shown.map((r) => (
-          <motion.div key={r.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
+          <div key={r.id} className="fade-in-up">
             <MovieCard
               item={{ ...r, rating: ratingById?.[r.id] ?? 0 }}
               onAdd={(it) => onAdd?.(it)}
@@ -251,7 +250,7 @@ export function Discover({ apiKey, onAdd, onRemove, inLibraryIds, onToggleWatchl
               providers={providerMap[r.id] || []}
               warnings={gate.flagsById[r.id] || []}
             />
-          </motion.div>
+          </div>
         ))}
       </div>
     </div>

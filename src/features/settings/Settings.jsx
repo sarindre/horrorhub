@@ -5,6 +5,7 @@ import { Input } from "../../components/ui/input.jsx";
 import { Label } from "../../components/ui/label.jsx";
 import { ExportImport } from "./ExportImport.jsx";
 import { ImportedFilms } from "./ImportedFilms.jsx";
+import { usePrefersReducedMotion } from "../../hooks/usePrefersReducedMotion.js";
 import { THEMES } from "../../lib/settings.js";
 import { CONTENT_FLAGS } from "../../lib/contentFlags.js";
 
@@ -74,6 +75,7 @@ function SecretInput({ value, onChange, placeholder }) {
 // change goes through `update({ key: value })`, which validates and persists.
 export function Settings({ settings, update, onImport, onRetagAll, onCleanupTags, onRelink, onRetryMatching, watchlist, data, extras = {} }) {
   const thisYear = new Date().getFullYear();
+  const reducedMotion = usePrefersReducedMotion();
   return (
     <div className="space-y-6">
       <Card className="rounded-2xl">
@@ -88,6 +90,9 @@ export function Settings({ settings, update, onImport, onRetagAll, onCleanupTags
           </div>
           <div className="text-sm opacity-70">Dark is the default. System follows your device's light/dark setting.</div>
           <Toggle id="spookyfont-toggle" label="Spooky header font" checked={settings.spookyFont} onChange={(v) => update({ spookyFont: v })} />
+          {reducedMotion ? (
+            <div role="note" className="text-xs opacity-70">Your device asks for reduced motion, so the flicker and fog effects are paused whatever these switches say.</div>
+          ) : null}
           <Toggle id="flicker-toggle" label="Ambient edge flicker" checked={settings.flicker} onChange={(v) => update({ flicker: v })} />
           <Toggle id="fog-toggle" label="Fog overlay" checked={settings.fog} onChange={(v) => update({ fog: v })} />
           <Toggle id="audio-toggle" label="Ambient whispers/heartbeat" checked={settings.ambientAudio} onChange={(v) => update({ ambientAudio: v })} />

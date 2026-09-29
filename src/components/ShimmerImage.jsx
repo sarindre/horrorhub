@@ -9,7 +9,7 @@ export function ShimmerImage({ src, alt, className }){
     <div className="relative">
       {!loaded && !error && <div className="absolute inset-0 animate-pulse bg-muted" />}
       {src && !error ? (
-        <img src={src} alt={alt} className={className} onLoad={()=> setLoaded(true)} onError={()=> setError(true)} />
+        <img src={src} alt={alt} className={className} loading="lazy" decoding="async" onLoad={()=> setLoaded(true)} onError={()=> setError(true)} />
       ) : (
         <div className={`flex items-center justify-center ${className}`}>
           <Film className="h-6 w-6 opacity-60" />

@@ -2,7 +2,7 @@
 
 A dark, local-first horror movie library and discovery app. Search films, rate them, tag them by mood and subgenre, log watches, plan what to watch next, and bring your history over from Letterboxd or IMDb.
 
-Built with React 19, Vite, Tailwind CSS and Framer Motion. Movie data and posters come from [The Movie Database (TMDb)](https://www.themoviedb.org/).
+Built with React 19, Vite, Tailwind CSS and Recharts. Movie data and posters come from [The Movie Database (TMDb)](https://www.themoviedb.org/).
 
 ## Getting started
 

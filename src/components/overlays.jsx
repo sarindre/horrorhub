@@ -31,11 +31,17 @@ export function FlickerOverlay() {
       });
     }, 3000 + Math.random() * 2000);
 
+    // at most one state update per frame, however fast the page scrolls
+    let frame = 0;
     const onScroll = () => {
-      setSpots((prev) => prev.map((s) => ({ ...s, y: (s.y + 5) % 100 })));
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        setSpots((prev) => prev.map((s) => ({ ...s, y: (s.y + 5) % 100 })));
+      });
     };
     window.addEventListener('scroll', onScroll, { passive: true });
-    return () => { clearInterval(iv); window.removeEventListener('scroll', onScroll); };
+    return () => { clearInterval(iv); cancelAnimationFrame(frame); window.removeEventListener('scroll', onScroll); };
   }, []);
 
   return (

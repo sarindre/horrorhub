@@ -50,6 +50,14 @@ All notable changes to this project will be documented in this file.
 - Number inputs (nudge cadence, "long ago" year) accept typing freely and clamp on blur instead of snapping after the first keystroke.
 - Removed the dead "October theme" toggle and the unused Tailwind config and `tailwindcss-animate` dependency. `npm run lint` now reports nothing.
 
+### Changed (performance and motion)
+- The first page load now downloads 337 kB of JavaScript (104 kB gzipped) instead of 790 kB (250 kB gzipped). Stats, film details, Challenges, Because You Liked… and Rating Roulette load on demand (all but Stats are fetched while the browser is idle), and the charting library only loads when you open Stats.
+- Removed the `framer-motion` dependency; the fade-in on Discover results is now a small CSS animation.
+- Devices that ask for reduced motion no longer run the flicker and fog effects at all (they aren't mounted), the candle and fade animations stop, and Settings explains why the switches aren't doing anything.
+- The flicker overlay updates at most once per frame while scrolling. Poster images are lazy-loaded.
+- The library shows 48 films at a time with a "Show more" button, resetting when filters change, so large libraries stay responsive.
+- Tests for paging, lazy screens (including the Back button staying visible while details load), reduced motion and image loading: 259 tests.
+
 ### Added (first-run experience)
 - A "Welcome to HorrorHub" checklist for new users: add your TMDb token (with instructions for where to find it), add some films or import your Letterboxd/IMDb history, rate 3 films so recommendations can learn your taste, and optionally set comfort limits. Each step has a button that jumps to the right tab, steps tick off as you go, and the card goes away when you're done or hide it.
 - Empty states for an empty library and for filters that match nothing.

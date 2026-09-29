@@ -255,10 +255,25 @@ Priority: P2
 There are now nine tabs (Challenges was added). The tab bar wraps to 3/5/9 columns by screen width as a stopgap, but Rating Roulette, Because You Liked… and Recommendations still overlap in purpose. Merge or regroup them (Challenges could sit with planning) and make the tab bar scroll or collapse on small screens.
 
 ### 14. Performance and motion
-Status: Planned
+Status: Done
 Priority: P2
 
-The build is a single ~733 kB bundle: lazy-load Stats (Recharts) and the Details view. The flicker overlay re-renders on scroll and the fog/flicker/audio effects ignore `prefers-reduced-motion`.
+The build was a single 790 kB bundle (250 kB gzipped) and the ambient effects ignored `prefers-reduced-motion`.
+
+Results and implementation notes:
+- Initial JavaScript is now 337 kB (104 kB gzipped), down 58%. Stats (which carries the Recharts charting library, 316 kB) plus Movie Details, Challenges, Because You Liked… and Rating Roulette load on demand behind a loading state; everything except Stats is prefetched while the browser is idle, so switching tabs stays instant. Only the lazy content suspends, so the Back button on a film's details never disappears while it loads
+- Dropped the `framer-motion` dependency: it was only used for a 6px fade-in on Discover results, now a CSS animation
+- Reduced motion: when the device asks for it, the flicker and fog overlays aren't mounted at all (not just hidden, so no timers or scroll listeners run), the candle and result fade animations stop, and Settings says why the switches aren't doing anything. It follows the setting live
+- The flicker overlay now updates at most once per frame while scrolling instead of on every scroll event
+- Poster images are lazy-loaded and decoded off the main thread
+- The library renders 48 cards at a time with "Show more" (resetting when a filter changes), so a library of hundreds no longer mounts hundreds of cards at once
+
+Follow-ups:
+- The library grid pages rather than virtualizes; a windowing library would keep memory flat for very large libraries but adds a dependency
+- Watchlist, Discover and Recommendations grids are small enough not to need paging; revisit if that changes
+- Images have no fixed width/height yet, so the page can still shift slightly as posters load
+- The heavy work in the taste engine and auto-tagger runs on the main thread; a Web Worker would help for very large libraries
+- Ambient audio isn't tied to reduced motion (it's an explicit opt-in)
 
 ### 15. UI primitives cleanup
 Status: Planned

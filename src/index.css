@@ -29,6 +29,16 @@
   background-color: #242424;
 }
 
+/* Cards fade up as results arrive (replaces a JS animation library) */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.fade-in-up { animation: fadeInUp 0.25s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .fade-in-up { animation: none; }
+}
+
 /* Subtle edge flicker overlay */
 @keyframes flickerPulse {
   0%, 100% { opacity: 0; }
@@ -99,6 +109,9 @@
   background: radial-gradient(circle at 50% 50%, rgba(255,210,140,0.22), rgba(255,210,140,0.0) 65%);
   animation: candleFlicker 6s ease-in-out infinite;
   filter: blur(12px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .candle-spot { animation: none; opacity: 0.2; }
 }
 @keyframes candleFlicker {
   0%,100% { opacity: 0.18; }

@@ -14,7 +14,8 @@ HorrorHub is a personal horror movie library and discovery app built with React 
 - Frontend: React 19, Vite
 - Styling: Tailwind CSS
 - UI primitives: shadcn-style component patterns in `src/components/ui`
-- Animation: Framer Motion
+- Animation: small CSS animations in `src/index.css` (no animation library). Anything that moves must respect `prefers-reduced-motion`
+- Heavier screens are lazy-loaded from `src/lazyViews.js`; add new heavy screens there and keep the initial bundle small
 - Charts: Recharts
 - Data source: The Movie Database (TMDb) for metadata and poster images
 - Persistence: browser `localStorage`

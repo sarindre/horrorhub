@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { Button } from "./components/ui/button.jsx";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs.jsx";
@@ -16,7 +16,6 @@ import { GettingStarted } from "./components/GettingStarted.jsx";
 import { isOnboardingDone, onboardingSteps } from "./lib/onboarding.js";
 import { buildTasteProfile } from "./lib/taste.js";
 import { usePersistentState } from "./lib/usePersistentState.js";
-import { ChallengesView } from "./features/challenges/ChallengesView.jsx";
 import { analyzeLocal } from "./lib/filmMeta.js";
 import { cleanupLegacyKeywordTags, mergeInferred, tagState } from "./lib/tagging.js";
 import { useSettings } from "./hooks/useSettings.js";
@@ -26,10 +25,8 @@ import { LibraryView } from "./features/library/LibraryView.jsx";
 import { Discover } from "./features/discover/Discover.jsx";
 import { WatchlistView } from "./features/watchlist/WatchlistView.jsx";
 import { RecommendationsView } from "./features/recs/RecommendationsView.jsx";
-import { ContinuityGraph } from "./features/recs/ContinuityGraph.jsx";
-import { RatingRoulette } from "./features/recs/RatingRoulette.jsx";
-import { StatsView } from "./features/stats/StatsView.jsx";
-import { MovieDetails } from "./features/details/MovieDetails.jsx";
+import { ChallengesView, ContinuityGraph, MovieDetails, RatingRoulette, StatsView, preloadLazyViews } from "./lazyViews.js";
+import { usePrefersReducedMotion } from "./hooks/usePrefersReducedMotion.js";
 import { Settings } from "./features/settings/Settings.jsx";
 import { ToastProvider } from "./components/Toast.jsx";
 import { useToast } from "./lib/toastContext.js";
@@ -39,6 +36,15 @@ export function HorrorHub() {
   const { library, upsert, remove, relink, replaceLibrary, saveFailed } = useLibrary();
   const [settings, updateSettings] = useSettings();
   useTheme(settings.theme);
+  const reducedMotion = usePrefersReducedMotion();
+
+  // While the browser is idle, fetch the screens that load on demand so tab switches feel instant.
+  useEffect(() => {
+    const idle = window.requestIdleCallback || ((cb) => window.setTimeout(cb, 2000));
+    const cancel = window.cancelIdleCallback || window.clearTimeout;
+    const handle = idle(preloadLazyViews);
+    return () => cancel(handle);
+  }, []);
   const mixer = useMemo(() => getMixer(settings), [settings]);
   const [selected, setSelected] = useState(null); // movie object to show details
   const contentPrefs = useMemo(
@@ -254,6 +260,7 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
               ← Back
             </Button>
           <div className="mt-4">
+              <Suspense fallback={<div role="status" className="mt-6 text-sm opacity-70">Loading…</div>}>
               <MovieDetails
                 item={selected}
                 localItem={library.find((i) => i.id === selected.id)}
@@ -264,9 +271,11 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
                 dddKey={settings.dddKey}
                 externalOff={!!settings.externalOff}
               />
+              </Suspense>
             </div>
           </div>
         ) : (
+          <Suspense fallback={<div role="status" className="mt-6 text-sm opacity-70">Loading…</div>}>
           <>
         <TabsContent value="discover" className="mt-6">
           <Discover apiKey={settings.apiKey} onAdd={addToLibrary} onRemove={remove} inLibraryIds={inLibraryIds} onToggleWatchlist={addToLibrary} onOpenDetails={setSelected} watchlistIds={watchlistIds} ratingById={ratingById} />
@@ -317,14 +326,15 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
               <Settings settings={settings} update={updateSettings} onImport={importLib} onRetagAll={retagAll} onCleanupTags={cleanupTags} onRelink={relink} onRetryMatching={retryMatching} extras={{ challenges: challengeStore.challenges, marathons: marathonStore.marathons }} watchlist={watchlist} data={library} />
             </TabsContent>
           </>
+          </Suspense>
         )}
       </Tabs>
 
       <p className="mt-10 text-sm opacity-60">
         Your library lives in this browser. Back it up any time in Settings → Backup &amp; Import.
       </p>
-      {settings.flicker && <FlickerOverlay />}
-      {settings.fog && <FogOverlay />}
+      {settings.flicker && !reducedMotion && <FlickerOverlay />}
+      {settings.fog && !reducedMotion && <FogOverlay />}
       {settings.ambientAudio ? <AmbientAudio /> : null}
       {settings.lightsOut ? <LightsOutOverlay /> : null}
       {showNudge ? (

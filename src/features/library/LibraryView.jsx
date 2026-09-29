@@ -10,12 +10,15 @@ import { HiddenNotice } from "../../components/HiddenNotice.jsx";
 import { useContentPrefs } from "../../lib/contentContext.js";
 import { filterByContent } from "../../lib/contentFlags.js";
 
+const PAGE_SIZE = 48; // cards rendered at a time; a big library would otherwise mount hundreds
+
 export function LibraryView({ items, onUpdate, onRemove, onOpenDetails }) {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [tagFilters, setTagFilters] = useState([]); // films must have ALL of these
   const [untagged, setUntagged] = useState(false);
   const [revealHidden, setRevealHidden] = useState(false);
+  const [limit, setLimit] = useState(PAGE_SIZE);
   const prefs = useContentPrefs();
   const [moodFilter, setMoodFilter] = useState("all");
   const [minRating, setMinRating] = useState(0);
@@ -107,6 +110,11 @@ export function LibraryView({ items, onUpdate, onRemove, onOpenDetails }) {
   const hiding = prefs.contentMode === "hide" && !revealHidden;
   const shown = hiding ? visible : filtered;
   const hiddenCount = hiding ? hidden.length : 0;
+
+  // back to the first page whenever the filters change
+  useEffect(() => {
+    setLimit(PAGE_SIZE);
+  }, [debouncedQuery, tagFilters, untagged, moodFilter, minRating, maxScares, sort]);
 
   const toggleTag = (t) => {
     setUntagged(false);
@@ -244,10 +252,16 @@ export function LibraryView({ items, onUpdate, onRemove, onOpenDetails }) {
       ) : null}
       <HiddenNotice count={hiddenCount} onReveal={() => setRevealHidden(true)} />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
-        {shown.map((i) => (
+        {shown.slice(0, limit).map((i) => (
           <MovieCard key={i.id} item={i} onUpdate={onUpdate} onRemove={onRemove} compact onOpenDetails={onOpenDetails} isInLibrary={true} />
         ))}
       </div>
+      {shown.length > limit ? (
+        <div className="flex items-center justify-center gap-3 text-sm">
+          <span className="opacity-70">Showing {limit} of {shown.length}</span>
+          <Button size="sm" variant="outline" onClick={() => setLimit((n) => n + PAGE_SIZE)}>Show more</Button>
+        </div>
+      ) : null}
 
       {/* Watchlist */}
       {watchlist.length ? (
