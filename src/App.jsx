@@ -12,6 +12,10 @@ import { useChallenges } from "./hooks/useChallenges.js";
 import { useMarathons } from "./hooks/useMarathons.js";
 import { useImportMatcher } from "./hooks/useImportMatcher.js";
 import { isUnmatched } from "./lib/tmdbMatch.js";
+import { GettingStarted } from "./components/GettingStarted.jsx";
+import { isOnboardingDone, onboardingSteps } from "./lib/onboarding.js";
+import { buildTasteProfile } from "./lib/taste.js";
+import { usePersistentState } from "./lib/usePersistentState.js";
 import { ChallengesView } from "./features/challenges/ChallengesView.jsx";
 import { analyzeLocal } from "./lib/filmMeta.js";
 import { cleanupLegacyKeywordTags, mergeInferred, tagState } from "./lib/tagging.js";
@@ -122,6 +126,18 @@ export function HorrorHub() {
 
   const marathonStore = useMarathons();
 
+  // Tabs are controlled so the checklist can jump to one; opening any tab leaves a film's details.
+  const [tab, setTab] = useState("discover");
+  const goTab = (next) => {
+    setSelected(null);
+    setTab(next);
+  };
+
+  // First-run checklist
+  const [onboardingDismissed, setOnboardingDismissed] = usePersistentState("onboarding.dismissed", false);
+  const signalCount = useMemo(() => buildTasteProfile(library).signalCount, [library]);
+  const steps = onboardingSteps({ settings, library, signalCount });
+
   // Re-run auto-tagging on everything (your edits and removals are still respected).
   const retagAll = () => {
     if (!settings.apiKey) return toast("Add your TMDb API token first.", { kind: "error" });
@@ -187,11 +203,11 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
     <div className={`p-4 md:p-8 max-w-7xl mx-auto ${settings.highContrast ? 'hc' : ''} ${settings.dyslexic ? 'dyslexic' : ''}`}>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <div className="text-xs uppercase tracking-wider opacity-70">MVP • Local first</div>
+          <div className="text-xs uppercase tracking-wider opacity-70">Your personal horror library</div>
           <h1 className={`text-3xl md:text-4xl font-bold flex items-center gap-2 ${settings.spookyFont ? 'font-spooky' : ''}`}>
             HorrorHub <Sparkles className="h-6 w-6" />
           </h1>
-          <div className="opacity-80">Find horror movies, rate them, tag vibes, log watches, manage a watchlist, and get smarter picks.</div>
+          <div className="opacity-80">Track what you've watched, find what to watch next, and plan the perfect night.</div>
         </div>
         <div className="flex gap-2">
           <Button variant={settings.lightsOut ? "default" : "outline"} onClick={() => updateSettings({ lightsOut: !settings.lightsOut })}>
@@ -200,6 +216,9 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
           {/* Export/Import moved to Settings */}
         </div>
       </div>
+      {!onboardingDismissed && !isOnboardingDone(steps) && !selected ? (
+        <GettingStarted steps={steps} onGo={goTab} onDismiss={() => setOnboardingDismissed(true)} />
+      ) : null}
       {saveFailed ? (
         <div role="alert" className="mb-4 rounded-xl border border-red-500/40 bg-red-950/50 px-4 py-3 text-sm">
           Your browser refused to save your library (storage may be full or blocked). Changes since the last successful save
@@ -216,7 +235,7 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
           Auto-tagging your library from TMDb data… {tagger.pending} film{tagger.pending === 1 ? "" : "s"} left
         </div>
       ) : null}
-      <Tabs defaultValue="discover" className="w-full">
+      <Tabs value={tab} onValueChange={goTab}>
       <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 lg:grid-cols-9">
         <TabsTrigger value="discover">Discover</TabsTrigger>
         <TabsTrigger value="library">My Library</TabsTrigger>
@@ -301,27 +320,9 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
         )}
       </Tabs>
 
-      <div className="mt-10 text-sm opacity-70">
-        <p className="mb-2 font-medium">How to use</p>
-        <ol className="list-decimal pl-5 space-y-1">
-          <li>
-            Go to <span className="font-semibold">Settings</span> and paste your TMDb v4 <em>Bearer</em> token.
-          </li>
-          <li>
-            Search or browse in <span className="font-semibold">Discover</span>. Add titles or upcoming releases to your <em>Watchlist</em>.
-          </li>
-          <li>
-            In <span className="font-semibold">My Library</span>, rate, tag, and log watch dates; heart to manage watchlist; use <em>Tonight's pick</em> when indecisive.
-          </li>
-          <li>
-            Check <span className="font-semibold">Stats</span> for heatmap, scare↔rating scatter, and tag affinities.
-          </li>
-          <li>
-            Use <span className="font-semibold">Export</span>/<span className="font-semibold">Import</span> to back up your library; <em>Export ICS</em> creates a calendar file for your watchlist.
-          </li>
-        </ol>
-        <p className="mt-3">Data is stored in your browser. Later you can sync to Supabase/SQLite or add push notifications via a backend.</p>
-      </div>
+      <p className="mt-10 text-sm opacity-60">
+        Your library lives in this browser. Back it up any time in Settings → Backup &amp; Import.
+      </p>
       {settings.flicker && <FlickerOverlay />}
       {settings.fog && <FogOverlay />}
       {settings.ambientAudio ? <AmbientAudio /> : null}

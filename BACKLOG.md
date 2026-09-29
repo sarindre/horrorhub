@@ -290,16 +290,26 @@ Follow-ups:
 - A manual match doesn't check the year, so you can link any film; it's your call by design
 
 ### 17. Copy and onboarding cleanup
-Status: Planned
+Status: Done
 Priority: P2
 
-Remove leftover scaffolding text ("MVP • Local first", the static "How to use" block), replace it with a proper first-run empty state that walks through adding the TMDb key and importing a library.
+Removed the leftover scaffolding text ("MVP • Local first", the static "How to use" block and its "later you can sync to Supabase" aside) and replaced it with a real first-run experience.
+
+Implementation notes (`lib/onboarding.js`, `components/GettingStarted.jsx`):
+- A "Welcome to HorrorHub" checklist: add your TMDb token (with plain instructions for where to find it), add some films (Discover, or import from Letterboxd/IMDb), rate 3 films so it can learn your taste, and optionally set comfort limits. Each unfinished step has a button that jumps to the right tab, the next step is highlighted, steps tick off as they're completed, and the card disappears once everything is done or you hide it (remembered)
+- To make that possible `Tabs` can now be controlled (uncontrolled use still works) and has proper `tab`/`tablist`/`tabpanel` roles. Clicking any tab now also leaves a film's details page; before, the details stayed on screen
+- Empty states: an empty library says how to fill it; filters that match nothing say so
+- Header copy tightened, a short footer about backups replaces the how-to block, and the browser tab gets a proper title and icon instead of the Vite default
+
+Follow-ups:
+- No sample library to explore without a token, by design (local-first, no fake data); a demo mode could be considered
+- The checklist doesn't yet detect whether the DoesTheDogDie/OMDb keys (optional) are set
 
 ### 18. Test coverage for scoring and UI logic
 Status: Planned
 Priority: P2
 
-Progress: 231 tests. The pure logic in `lib/*` (recommendation scoring, taste, tagging, content flags, challenges, planning, matching, storage, settings) is covered, every view is smoke-rendered, and the background hooks (`useAutoTagger`, `useImportMatcher`) are tested running for real in jsdom against a stubbed TMDb, which caught restart-on-every-render and dropped-completion bugs. Still open: interaction tests for the UI (clicking, typing, tab changes; the render tests are server-side), tests for `useChallenges`/`useMarathons`/`useContentGate`/`useProviders`, and a coverage report in CI.
+Progress: 231 tests. The pure logic in `lib/*` (recommendation scoring, taste, tagging, content flags, challenges, planning, matching, storage, settings) is covered, every view is smoke-rendered, and the background hooks (`useAutoTagger`, `useImportMatcher`) are tested running for real in jsdom against a stubbed TMDb, which caught restart-on-every-render and dropped-completion bugs. The whole app now also has real click-through tests in jsdom (`App.interaction.test.jsx`: first-run checklist, tab switching, library tag filters, settings persistence). Still open: interaction tests for Discover/Details/Challenges/Planner flows, tests for `useChallenges`/`useMarathons`/`useContentGate`/`useProviders`, and a coverage report in CI.
 
 ## Notes
 The product should feel like a personal horror curator, not just a database. The strongest differentiator is a recommendation system that understands horror taste, mood, and watch planning.

@@ -234,6 +234,14 @@ export function LibraryView({ items, onUpdate, onRemove, onOpenDetails }) {
         <span className="inline-block text-[9px] leading-3 px-1 rounded text-white bg-[#113ccf]" title="Disney+">D</span>
         <span>provider legends</span>
       </div>
+      {!items.length ? (
+        <div className="rounded-2xl border p-6 text-center text-sm">
+          <div className="mb-1 text-base font-medium">Your library is empty</div>
+          <div className="opacity-70">Search for horror in Discover, or import your Letterboxd or IMDb history from Settings → Backup &amp; Import.</div>
+        </div>
+      ) : !filtered.length ? (
+        <div className="text-sm opacity-70">No films match these filters. Try clearing some.</div>
+      ) : null}
       <HiddenNotice count={hiddenCount} onReveal={() => setRevealHidden(true)} />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
         {shown.map((i) => (

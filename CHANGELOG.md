@@ -50,6 +50,16 @@ All notable changes to this project will be documented in this file.
 - Number inputs (nudge cadence, "long ago" year) accept typing freely and clamp on blur instead of snapping after the first keystroke.
 - Removed the dead "October theme" toggle and the unused Tailwind config and `tailwindcss-animate` dependency. `npm run lint` now reports nothing.
 
+### Added (first-run experience)
+- A "Welcome to HorrorHub" checklist for new users: add your TMDb token (with instructions for where to find it), add some films or import your Letterboxd/IMDb history, rate 3 films so recommendations can learn your taste, and optionally set comfort limits. Each step has a button that jumps to the right tab, steps tick off as you go, and the card goes away when you're done or hide it.
+- Empty states for an empty library and for filters that match nothing.
+- Removed the "MVP" label, the static "How to use" block and its outdated sync note; new header and footer copy; a proper browser tab title and icon.
+
+### Fixed (navigation)
+- Clicking a tab while a film's details page was open left you on the details. Any tab now takes you out of them.
+- Tabs are keyboard/screen-reader friendly (`tablist`/`tab`/`tabpanel` roles, `aria-selected`).
+- First interaction tests: real clicks through the whole app in jsdom (248 tests).
+
 ### Added (matching imported films to TMDb)
 - Films imported from Letterboxd or IMDb are now linked to TMDb in the background: the real TMDb id, poster, overview and release date are filled in while your ratings, watch dates, tags and notes are kept. IMDb ids resolve exactly; Letterboxd rows are matched by exact title and a release year within one, and anything doubtful is left for you rather than guessed.
 - If you already have the film (for example from Discover), the two are merged instead of duplicated: tags and watch dates are combined and it stays on your watchlist.
