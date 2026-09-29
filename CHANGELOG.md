@@ -50,7 +50,15 @@ All notable changes to this project will be documented in this file.
 - Number inputs (nudge cadence, "long ago" year) accept typing freely and clamp on blur instead of snapping after the first keystroke.
 - Removed the dead "October theme" toggle and the unused Tailwind config and `tailwindcss-animate` dependency. `npm run lint` now reports nothing.
 
+### Added (smart recommendation engine)
+- A taste engine (`lib/taste.js`) that learns from your ratings, watches, tags and scare levels which tags and moods you love, which you don't, and what scare level you usually enjoy. It gets more confident as you add data and says when it's still learning.
+- A "Your taste" card on Recommendations showing what was learned and how many films it's based on, with a button to set tonight's scare slider to your usual level.
+- Every recommendation now shows why it was suggested, for both your own library ("You tend to enjoy #folk-horror", "Right at your usual scare level", "Matches your Occult vibe", "On your watchlist") and TMDb picks ("Because you liked X and 2 other favorites", "Leans Occult, like your favorites").
+- Library picks are now ranked from the learned profile plus the scare slider, night vibe, mixer and watchlist (a tagged film you tend to enjoy beats an untagged one; tags you rate low are penalized). The section is now called "From your library, for tonight", since it was never just your watchlist.
+- TMDb suggestions seed from favorites that match your taste and are spread across subgenres, so five slasher favorites don't produce five slasher lists.
+
 ### Fixed
+- TMDb suggestions could include films you'd already logged: a title imported from Letterboxd or IMDb has a text id, so the id check missed it. It's now matched by title and year too, and the same film listed under two TMDb ids only appears once.
 - The "Spooky header font" setting never worked: the Tailwind v4 build didn't load `tailwind.config.js`, so `font-spooky` was never generated. The font is now defined in the CSS.
 - Opening the details page of a film that wasn't in your library silently added it (through the automatic keyword tagging). Auto-tagging and DoesTheDogDie counts now only apply to films you already own.
 - Toggling the watchlist on a Discover / Rating Roulette card for a film you already own could wipe its watch dates, because those cards carried an empty `watchedDates` list. Result cards no longer carry library-owned fields.

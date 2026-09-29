@@ -3,7 +3,9 @@ import { Wand2, AlarmClock } from "lucide-react";
 import { Card, CardContent } from "../../components/ui/card.jsx";
 import { Button } from "../../components/ui/button.jsx";
 import { Slider } from "../../components/ui/slider.jsx";
-import { MOOD_PRESETS, matchesMood } from "../../lib/moods.js";
+import { MOOD_PRESETS } from "../../lib/moods.js";
+import { buildTasteProfile, rankLibrary } from "../../lib/taste.js";
+import { TasteSummary } from "./TasteSummary.jsx";
 import { useHybridRecommendations } from "../../hooks/useHybridRecommendations";
 import { MovieCard } from "../../components/MovieCard.jsx";
 import { useToast } from "../../lib/toastContext.js";
@@ -14,41 +16,17 @@ export function RecommendationsView({ items, apiKey, onAdd, onUpdate, onRemove, 
   const [mood, setMood] = useState(5); // 0 = spooky, 10 = traumatizing
   const [moodPreset, setMoodPreset] = useState("all");
 
-  const pool = useMemo(() => {
-    const currentYear = new Date().getFullYear();
-    const isReleased = (i) => typeof i.year === "undefined" || Number(i.year) <= currentYear;
-    const unwatched = (items || []).filter((i) => (i.watchedDates?.length || 0) === 0 && isReleased(i));
-    if (unwatched.length) return unwatched;
-    return (items || []).filter(isReleased);
-  }, [items]);
-
   // Subgenre Mixer from settings (fallback to 1s)
   mixer = mixer || { ghosts: 1, occult: 1, slasher: 1, folk: 1 };
 
-  const recs = useMemo(() => {
-    const scored = pool.map((i) => {
-      const s = i.scares ?? 5;
-      const proximity = 1 - Math.min(1, Math.abs(mood - s) / 10); // 0..1
-      const ratingBoost = ((i.rating || 0) / 5) * 0.3;
-      const wlBoost = i.watchlist ? 0.2 : 0;
-      const tags = (i.tags || []).map(t=>String(t).toLowerCase());
-      const has = (arr)=>arr.some(t=>tags.includes(t));
-      const ghostScore = has(['supernatural','haunted','possession']) ? mixer.ghosts : 0;
-      const occultScore = has(['occult']) ? mixer.occult : 0;
-      const slasherScore = has(['slasher','home-invasion']) ? mixer.slasher : 0;
-      const folkScore = has(['folk-horror']) ? mixer.folk : 0;
-      const presetBoost = moodPreset !== 'all' && matchesMood(i.tags || [], moodPreset) ? 0.65 : 0;
-      const tagBoost = (ghostScore + occultScore + slasherScore + folkScore) * 0.15; // scaled
-      const score = proximity * 0.6 + ratingBoost + wlBoost + tagBoost + presetBoost;
-      return { item: i, score };
-    });
-    return scored
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 12)
-      .map((x) => x.item);
-  }, [pool, mood, moodPreset, mixer]);
+  // One taste profile feeds both lists: your own library and TMDb suggestions.
+  const profile = useMemo(() => buildTasteProfile(items), [items]);
+  const recs = useMemo(
+    () => rankLibrary(items, profile, { moodId: moodPreset, scare: mood, mixer }, { limit: 12 }),
+    [items, profile, moodPreset, mood, mixer]
+  );
 
-  const { similarPicks, status, error, seedTitles } = useHybridRecommendations(items, apiKey, { moodId: moodPreset });
+  const { similarPicks, status, error, seedTitles } = useHybridRecommendations(items, apiKey, { moodId: moodPreset, profile });
   const external = (similarPicks || [])
     .filter((r) => !inLibraryIds?.has(r.id))
     .slice(0, 12);
@@ -71,6 +49,8 @@ export function RecommendationsView({ items, apiKey, onAdd, onUpdate, onRemove, 
           <span className="text-sm opacity-80 w-28">{mood <= 3 ? "Spooky" : mood <= 6 ? "Intense" : "Traumatizing"}</span>
         </CardContent>
       </Card>
+
+      <TasteSummary profile={profile} onUseScare={setMood} />
 
       <Card className="rounded-2xl">
         <CardContent className="p-4 space-y-3">
@@ -171,7 +151,7 @@ export function RecommendationsView({ items, apiKey, onAdd, onUpdate, onRemove, 
                     isInLibrary={inLibraryIds?.has(r.id)}
                     isWatchlisted={watchlistIds?.has(r.id)}
                   />
-                  <div className="px-1 text-xs opacity-60">{r.reason}</div>
+                  <div className="px-1 text-xs opacity-60">{(r.reasons || [r.reason]).join(" · ")}</div>
                 </div>
               ))}
             </div>
@@ -181,7 +161,7 @@ export function RecommendationsView({ items, apiKey, onAdd, onUpdate, onRemove, 
 
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-sm uppercase tracking-wide opacity-80">
-          <Wand2 className="h-4 w-4" /> Mood-based picks (your watchlist)
+          <Wand2 className="h-4 w-4" /> From your library, for tonight
           {moodPreset !== "all" ? (
             <span className="normal-case tracking-normal opacity-70">
               · {MOOD_PRESETS.find((p) => p.id === moodPreset)?.label}, scare level {mood}/10
@@ -190,12 +170,15 @@ export function RecommendationsView({ items, apiKey, onAdd, onUpdate, onRemove, 
         </div>
         {recs.length ? (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
-            {recs.map((i) => (
-              <MovieCard key={i.id} item={i} onUpdate={onUpdate} onRemove={onRemove} compact onOpenDetails={onOpenDetails} />
+            {recs.map(({ item, reasons }) => (
+              <div key={item.id} className="space-y-1">
+                <MovieCard item={item} onUpdate={onUpdate} onRemove={onRemove} compact onOpenDetails={onOpenDetails} />
+                <div className="px-1 text-xs opacity-60">{reasons.join(" · ")}</div>
+              </div>
             ))}
           </div>
         ) : (
-          <div className="opacity-70">Add a few movies to your library to enable mood‑based picks.</div>
+          <div className="opacity-70">Add a few movies to your library to get picks for tonight.</div>
         )}
       </div>
 

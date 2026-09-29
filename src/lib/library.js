@@ -75,8 +75,21 @@ export function normalizeLibrary(items) {
   return items.map(normalizeItem).filter(Boolean);
 }
 
-const titleKey = (item) =>
-  `${String(item.title || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim()}|${item.year || ""}`;
+const normTitle = (title) => String(title || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+export const titleKey = (item) => `${normTitle(item.title)}|${item.year || ""}`;
+
+// Recognize films you already have even when the ids differ (a Letterboxd/IMDb
+// import has string ids, TMDb has numbers). A library entry without a year
+// matches on title alone.
+export function ownedTitleKeys(items) {
+  const keys = new Set();
+  for (const item of items || []) {
+    keys.add(titleKey(item));
+    if (!item.year) keys.add(`${normTitle(item.title)}|`);
+  }
+  return keys;
+}
+export const isOwnedTitle = (keys, candidate) => keys.has(titleKey(candidate)) || keys.has(`${normTitle(candidate.title)}|`);
 
 // An unrated import row must not wipe an existing rating; other zeroes (e.g. scares 0) are real values.
 const isEmpty = (field, v) =>

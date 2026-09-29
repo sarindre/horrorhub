@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { loadSeedResults, pickSeeds, rankCandidates, slimResult } from "./recommend.js";
 import { TmdbError, tmdbGet } from "./tmdb.js";
 import { moodTextHits } from "./moods.js";
+import { ownedTitleKeys } from "./library.js";
+import { buildTasteProfile } from "./taste.js";
 
 const NOW = new Date("2025-10-15T12:00:00Z").getTime();
 
@@ -30,6 +32,22 @@ describe("pickSeeds", () => {
     expect(pickSeeds([item(1, 2)], { now: NOW })).toEqual([]);
   });
 
+  it("uses tags: a favorite that matches your taste beats an equally rated one that doesn't, and seeds are spread", () => {
+    const profile = buildTasteProfile(
+      [1, 2, 3].map((i) => item(100 + i, 5, { tags: ["occult"], watchedDates: ["2025-09-01T00:00:00.000Z"] })),
+      { now: NOW }
+    );
+    const items = [
+      item(1, 4.5, { tags: ["occult"] }),
+      item(2, 4.5, { tags: ["occult"] }),
+      item(3, 4.5, { tags: ["comedy"] }),
+    ];
+    // without taste they tie on rating; with it the occult ones lead, but the third slot still differs
+    expect(pickSeeds(items, { now: NOW, profile, max: 1 }).map((s) => s.id)).toEqual([1]);
+    const two = pickSeeds(items, { now: NOW, profile, max: 2 }).map((s) => s.id);
+    expect(two).toContain(3); // diversity: not two occult films when a different subgenre is close
+  });
+
   it("gives a recent watch a small edge over an old one at the same rating", () => {
     const recent = item(1, 4, { watchedDates: ["2025-10-01T00:00:00.000Z"] });
     const old = item(2, 4, { watchedDates: ["2019-01-01T00:00:00.000Z"] });
@@ -52,7 +70,40 @@ describe("rankCandidates", () => {
     const resultsBySeed = { 10: [cand(1), cand(2)], 20: [cand(2), cand(3)] };
     const picks = rankCandidates({ seeds, resultsBySeed, libraryIds: [], now: NOW });
     expect(picks[0].id).toBe(2);
-    expect(picks.find((p) => p.id === 2).reason).toBe("Because you liked Hereditary");
+    expect(picks.find((p) => p.id === 2).reason).toBe("Because you liked Hereditary and 1 other favorite");
+    expect(picks.find((p) => p.id === 1).reason).toBe("Because you liked Hereditary");
+  });
+
+  it("treats a film you imported from Letterboxd/IMDb (string id) as already seen", () => {
+    const resultsBySeed = { 10: [cand(1, { title: "Hereditary", year: "2018" }), cand(2, { title: "Other", year: "2020" })] };
+    const libraryKeys = ownedTitleKeys([{ id: "letterboxd:Hereditary:2018", title: "Hereditary", year: 2018 }]);
+    const picks = rankCandidates({ seeds, resultsBySeed, libraryIds: [], libraryKeys, now: NOW });
+    expect(picks.map((p) => p.id)).toEqual([2]);
+  });
+
+  it("drops the same film listed under two TMDb ids", () => {
+    const resultsBySeed = { 10: [cand(1, { title: "Twin", year: "2019" }), cand(2, { title: "Twin", year: "2019" }), cand(3)] };
+    const picks = rankCandidates({ seeds, resultsBySeed, libraryIds: [], now: NOW });
+    expect(picks.filter((p) => p.title === "Twin")).toHaveLength(1);
+  });
+
+  it("leans toward the moods you love and says so, without hiding other films", () => {
+    const profile = { lovedMoods: [{ id: "occult", label: "Occult", score: 0.6 }] };
+    const resultsBySeed = {
+      10: [cand(1, { overview: "A quiet family drama." }), cand(2, { overview: "A cult performs a ritual to summon a demon." })],
+    };
+    const neutral = rankCandidates({ seeds, resultsBySeed, libraryIds: [], now: NOW });
+    expect(neutral[0].id).toBe(1);
+    const tasted = rankCandidates({ seeds, resultsBySeed, libraryIds: [], profile, now: NOW });
+    expect(tasted.map((p) => p.id)).toEqual([2, 1]);
+    expect(tasted[0].reasons).toContain("Leans Occult, like your favorites");
+    expect(tasted[1].reasons).toEqual(["Because you liked Hereditary"]);
+  });
+
+  it("explains a mood match", () => {
+    const resultsBySeed = { 10: [cand(2, { overview: "A masked killer stalks the campers." })] };
+    const [pick] = rankCandidates({ seeds, resultsBySeed, libraryIds: [], moodId: "slasher", now: NOW });
+    expect(pick.reasons).toContain("Matches your Slasher vibe");
   });
 
   it("boosts films matching the chosen mood without hiding others", () => {

@@ -1,18 +1,23 @@
 import { useEffect, useMemo, useState } from "react";
 import { loadSeedResults, pickSeeds, rankCandidates } from "../lib/recommend.js";
+import { ownedTitleKeys } from "../lib/library.js";
+import { buildTasteProfile } from "../lib/taste.js";
 
-// TMDb-backed picks based on the titles you loved, re-ranked for the chosen
-// mood. Network work is keyed on which titles seed the list (not on every
-// library edit) and cached for a day, so rating a film or switching moods
-// doesn't refetch. status: "idle" | "loading" | "ready" | "error".
-export function useHybridRecommendations(items, apiKey, { moodId = "all" } = {}) {
+// TMDb-backed picks based on the titles you loved, re-ranked for your learned
+// taste and the chosen mood. Network work is keyed on which titles seed the
+// list (not on every library edit) and cached for a day, so rating a film or
+// switching moods doesn't refetch. status: "idle" | "loading" | "ready" | "error".
+// Pass `profile` to reuse one you've already built; otherwise it's built here.
+export function useHybridRecommendations(items, apiKey, { moodId = "all", profile: givenProfile = null } = {}) {
   const [resultsBySeed, setResultsBySeed] = useState({});
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState(null);
 
-  const seeds = useMemo(() => pickSeeds(items), [items]);
+  const profile = useMemo(() => givenProfile || buildTasteProfile(items), [givenProfile, items]);
+  const seeds = useMemo(() => pickSeeds(items, { profile }), [items, profile]);
   const seedKey = seeds.map((s) => s.id).join(",");
   const libraryIds = useMemo(() => (items || []).map((i) => i.id), [items]);
+  const libraryKeys = useMemo(() => ownedTitleKeys(items), [items]);
 
   useEffect(() => {
     if (!apiKey || !seedKey) {
@@ -43,9 +48,9 @@ export function useHybridRecommendations(items, apiKey, { moodId = "all" } = {})
   }, [seedKey, apiKey]);
 
   const similarPicks = useMemo(
-    () => rankCandidates({ seeds, resultsBySeed, libraryIds, moodId }),
-    [seeds, resultsBySeed, libraryIds, moodId]
+    () => rankCandidates({ seeds, resultsBySeed, libraryIds, libraryKeys, profile, moodId }),
+    [seeds, resultsBySeed, libraryIds, libraryKeys, profile, moodId]
   );
 
-  return { similarPicks, status, error, seedTitles: seeds.map((s) => s.title) };
+  return { similarPicks, status, error, seedTitles: seeds.map((s) => s.title), profile };
 }

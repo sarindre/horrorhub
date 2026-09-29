@@ -27,6 +27,12 @@ describe("feature views render", () => {
   it("WatchlistView", () => expect(render(<WatchlistView items={[items[1]]} onUpdate={noop} onRemove={noop} onOpenDetails={noop} />)).toContain("The Thing"));
   it("RecommendationsView", () =>
     expect(render(<RecommendationsView items={items} onAdd={noop} onUpdate={noop} onRemove={noop} onOpenDetails={noop} inLibraryIds={new Set([1, 2])} watchlistIds={new Set([2])} ratingById={{}} mixer={getMixer(DEFAULT_SETTINGS)} onMixerChange={noop} />)).toContain("Night vibe"));
+  it("RecommendationsView explains its picks and shows what it learned", () => {
+    const html = render(<RecommendationsView items={items} onAdd={noop} onUpdate={noop} onRemove={noop} onOpenDetails={noop} inLibraryIds={new Set([1, 2])} watchlistIds={new Set([2])} ratingById={{}} mixer={getMixer(DEFAULT_SETTINGS)} onMixerChange={noop} />);
+    expect(html).toContain("Your taste");
+    expect(html).toMatch(/Learned from\s*(<!-- -->)?\s*2/); // SSR splits text nodes with comment markers
+    expect(html).toContain("On your watchlist"); // reason under a library pick
+  });
   it("ContinuityGraph", () => expect(() => render(<ContinuityGraph items={items} onOpenDetails={noop} />)).not.toThrow());
   it("RatingRoulette", () => expect(() => render(<RatingRoulette onAdd={noop} onOpenDetails={noop} />)).not.toThrow());
   it("StatsView", () => expect(() => render(<StatsView items={items} />)).not.toThrow());

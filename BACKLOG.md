@@ -42,21 +42,27 @@ Implementation notes:
 - Remaining: TMDb "similar" picks are not yet mood-aware; add a found-footage-style dread/cosmic tuning pass once tag data is richer
 
 ### 2. Smart recommendation engine
-Status: Planned
+Status: Done (v1: local and heuristic; see follow-ups)
 Priority: P1
 
 Expand the current hybrid recommendation approach into a more robust taste engine that learns from the user's horror preferences.
 
-Ideas:
-- weighted recommendations from ratings and watch history
-- score based on tags, scares, mood, and subgenre
-- suppress already-seen titles and avoid duplicates
-- show “because you liked X” explanations
+Implementation notes (`lib/taste.js`, `lib/recommend.js`, `RecommendationsView`):
+- A taste profile is built from your library: per-tag and per-mood affinity from ratings (a 5★ is +1, 3★ neutral, 1★ −1; an unrated watch is a mild positive; a saved-only film counts for nothing), weighted a little toward recent watches, shrunk toward zero until there's enough evidence, plus the scare level of the films you enjoy
+- Your own library is ranked for tonight from that profile plus the scare slider, night vibe, subgenre mixer and watchlist. Watched and unreleased films are suppressed and duplicates dropped
+- The TMDb list picks seeds by rating, recency and tag match, spread across subgenres, then leans toward the moods your favorites share. A film you logged via Letterboxd/IMDb import now counts as seen (matched by title + year), where before only an id match did
+- Every pick shows why ("You tend to enjoy #folk-horror", "Because you liked X and 2 other favorites", "Leans Occult, like your favorites", "Matches your Slasher vibe", "On your watchlist"), and a "Your taste" card shows what was learned, how many films it's based on, and a "still learning" hint until there are about 8 (with a button to match your usual scare level)
 
 Acceptance criteria:
-- Similar titles are generated using the user's watched + rated library
-- Recommendations improve over time as more data is added
-- The app explains why a suggestion is being made
+- ✅ Similar titles are generated using the user's watched + rated library
+- ✅ Recommendations improve over time as more data is added (confidence grows with evidence; covered by tests that add data and compare)
+- ✅ The app explains why a suggestion is being made
+
+Follow-ups:
+- Taste is learned from your tags only. Auto-tags come from TMDb keywords, so they're a bit noisy (e.g. "based-on-novel"); a curated tag vocabulary (see #4) would sharpen it
+- No negative signal from "not interested"/dismissed picks yet; add a dismiss action and feed it into the profile
+- The TMDb side matches taste through overview keywords, not real tags. Fetching TMDb keywords per candidate would be more accurate but costs extra requests
+- Scoring weights are hand-tuned constants. Once there's real usage data, revisit them (they're all in `taste.js` / `recommend.js` and tested)
 
 ### 3. Horror-specific watch planning
 Status: Planned
@@ -175,7 +181,7 @@ Acceptance criteria:
 - ✅ The active mood preset applies to TMDb picks: films whose title/overview hit the preset's keywords are boosted (a heuristic, nothing is hidden)
 - ✅ Loading, error (bad token / rate limit / offline), empty and no-token states; requests abort on unmount; one failing seed doesn't hide the rest
 - ✅ "Because you liked X" shown under each pick
-- ⬜ Tags and scare levels don't yet influence which titles seed the list, only rating and recency. Fold that into #2 (taste engine).
+- ✅ Tags now influence which titles seed the list (taste profile from #2, with seeds spread across subgenres)
 - ⬜ Mood matching for unowned films is keyword-based on TMDb overviews; a TMDb-keywords lookup per candidate would be more accurate (extra requests, so weigh it against rate limits).
 
 ### 10. Shared TMDb client and error handling
