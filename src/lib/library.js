@@ -1,4 +1,5 @@
 import { readJSON, writeJSON } from "./storage.js";
+import { canonicalTag } from "./tagging.js";
 
 // Library schema versions
 //   v2 (legacy): bare array of items under "horrorhub.library.v2"
@@ -14,15 +15,33 @@ export const DEFAULT_SCARES = 5;
 const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
 const isValidDate = (v) => typeof v === "string" && !Number.isNaN(new Date(v).getTime());
 
+// One spelling per tag ("Folk Horror" -> "folk-horror"), no blanks or duplicates.
 function normalizeTags(tags) {
   if (!Array.isArray(tags)) return [];
   const out = [];
   for (const t of tags) {
-    const v = String(t ?? "").trim().toLowerCase();
+    const v = canonicalTag(t);
     if (v && !out.includes(v)) out.push(v);
   }
   return out;
 }
+
+// Raw TMDb keyword names are kept as-is (lowercase, spaces) for search only.
+const MAX_KEYWORDS = 60;
+function normalizeKeywords(list) {
+  if (!Array.isArray(list)) return [];
+  const out = [];
+  for (const k of list) {
+    const v = String(k ?? "").trim().toLowerCase();
+    if (v && !out.includes(v)) out.push(v);
+    if (out.length >= MAX_KEYWORDS) break;
+  }
+  return out;
+}
+
+// Fields that carry provenance for inferred values (see lib/tagging.js).
+// They are combined, not overwritten, when merging an import.
+const UNION_FIELDS = ["tags", "autoTags", "removedTags", "keywords", "contentFlags", "autoFlags", "removedFlags"];
 
 // Drops junk and exact duplicates only; a deliberate same-day rewatch is kept.
 function normalizeWatchedDates(dates) {
@@ -54,6 +73,9 @@ export function normalizeItem(raw) {
   const year = Number(raw.year);
   const rating = Number(raw.rating);
   const scares = Number(raw.scares);
+  const runtime = Number(raw.runtime);
+  const tags = normalizeTags(raw.tags);
+  const contentFlags = normalizeTags(raw.contentFlags);
 
   return {
     ...raw,
@@ -62,7 +84,16 @@ export function normalizeItem(raw) {
     year: Number.isFinite(year) && year > 0 ? year : undefined,
     rating: Number.isFinite(rating) ? clamp(Math.round(rating * 2) / 2, 0, 5) : 0,
     scares: Number.isFinite(scares) ? clamp(Math.round(scares), 0, 10) : DEFAULT_SCARES,
-    tags: normalizeTags(raw.tags),
+    tags,
+    // provenance can only refer to values that exist / were removed
+    autoTags: normalizeTags(raw.autoTags).filter((t) => tags.includes(t)),
+    removedTags: normalizeTags(raw.removedTags).filter((t) => !tags.includes(t)),
+    keywords: normalizeKeywords(raw.keywords),
+    contentFlags,
+    autoFlags: normalizeTags(raw.autoFlags).filter((t) => contentFlags.includes(t)),
+    removedFlags: normalizeTags(raw.removedFlags).filter((t) => !contentFlags.includes(t)),
+    runtime: Number.isFinite(runtime) && runtime > 0 ? Math.round(runtime) : undefined,
+    taggedAt: isValidDate(raw.taggedAt) ? raw.taggedAt : undefined,
     watchedDates: normalizeWatchedDates(raw.watchedDates),
     watchlist: !!raw.watchlist,
     notes: typeof raw.notes === "string" ? raw.notes : "",
@@ -132,10 +163,12 @@ export function mergeLibraries(existing, incoming) {
     const current = result[idx];
     const merged = { ...current };
     for (const [field, value] of Object.entries(raw)) {
-      if (field === "id" || field === "addedAt" || field === "tags" || field === "watchedDates" || isEmpty(field, value)) continue;
+      if (field === "id" || field === "addedAt" || field === "watchedDates" || UNION_FIELDS.includes(field) || isEmpty(field, value)) continue;
       merged[field] = value;
     }
-    merged.tags = [...(current.tags || []), ...(Array.isArray(raw.tags) ? raw.tags : [])];
+    for (const field of UNION_FIELDS) {
+      merged[field] = [...(current[field] || []), ...(Array.isArray(raw[field]) ? raw[field] : [])];
+    }
     merged.watchedDates = dedupeByDay(
       normalizeWatchedDates([...(current.watchedDates || []), ...(Array.isArray(raw.watchedDates) ? raw.watchedDates : [])]).sort()
     );
@@ -171,6 +204,7 @@ export function saveLibrary(items) {
   return writeJSON(LIBRARY_KEY, { version: LIBRARY_VERSION, items });
 }
 
-export function buildExport(items) {
-  return { app: "horrorhub", version: LIBRARY_VERSION, exportedAt: new Date().toISOString(), items };
+// `extras` are other things worth backing up alongside the library (e.g. { challenges }).
+export function buildExport(items, extras = {}) {
+  return { app: "horrorhub", version: LIBRARY_VERSION, exportedAt: new Date().toISOString(), ...extras, items };
 }

@@ -16,8 +16,12 @@ import { ShimmerImage } from "./ShimmerImage.jsx";
 import { TMDB_IMG } from "../lib/tmdb.js";
 import { isoDateOnly } from "../lib/dates.js";
 import { loadSettings } from "../lib/settings.js";
+import { ContentWarnings } from "./ContentWarnings.jsx";
+import { useContentPrefs } from "../lib/contentContext.js";
+import { evaluateContent, itemFlags } from "../lib/contentFlags.js";
+import { editTags } from "../lib/tagging.js";
 
-export function MovieCard({ item, onAdd, onUpdate, onRemove, showWatchlist = true, compact = false, onOpenDetails, isInLibrary = false, isWatchlisted = false, providers = [] }) {
+export function MovieCard({ item, onAdd, onUpdate, onRemove, showWatchlist = true, compact = false, onOpenDetails, isInLibrary = false, isWatchlisted = false, providers = [], warnings }) {
   const [open, setOpen] = useState(false);
   const [watchOpen, setWatchOpen] = useState(false);
   const [date, setDate] = useState(new Date());
@@ -29,6 +33,16 @@ export function MovieCard({ item, onAdd, onUpdate, onRemove, showWatchlist = tru
   const [watchlistedUI, setWatchlistedUI] = useState(!!item.watchlist || isWatchlisted);
   const isWatched = isInLibrary || (item.watchedDates?.length || 0) > 0;
   const [tagsExpanded, setTagsExpanded] = useState(false);
+
+  // Content warnings: stored/inferred flags (or a caller-supplied list for TMDb
+  // results), checked against your limits. Your own scare rating only counts
+  // for films you own.
+  const prefs = useContentPrefs();
+  const flags = warnings ?? itemFlags(item);
+  const verdict = evaluateContent({ flags, scares: isInLibrary ? item.scares : undefined }, prefs);
+  const warningsEl = (
+    <ContentWarnings flags={flags} avoid={prefs.avoidFlags} reasons={verdict.blocked ? verdict.reasons : []} showFlags={prefs.showWarnings} />
+  );
 
   useEffect(() => {
     setNotes(item.notes || "");
@@ -46,7 +60,7 @@ export function MovieCard({ item, onAdd, onUpdate, onRemove, showWatchlist = tru
   const poster = item.poster ? TMDB_IMG(item.poster, "w342") : "";
 
   const saveDetails = () => {
-    onUpdate?.({ ...item, notes, tags, rating, scares });
+    onUpdate?.({ ...item, notes, ...editTags(item, tags), rating, scares });
     setOpen(false);
   };
   const addWatch = () => {
@@ -150,6 +164,7 @@ export function MovieCard({ item, onAdd, onUpdate, onRemove, showWatchlist = tru
                 ) : null}
               </div>
               <div className="text-sm opacity-80 line-clamp-2">{item.overview}</div>
+              {warningsEl}
               {typeof item.voteAvg === "number" ? (
                 <div className="text-xs opacity-80 mt-1">TMDb {item.voteAvg.toFixed(1)}/10</div>
               ) : null}
@@ -354,6 +369,7 @@ export function MovieCard({ item, onAdd, onUpdate, onRemove, showWatchlist = tru
                   ) : null}
                 </h3>
                 <div className="text-sm opacity-80 line-clamp-2">{item.overview}</div>
+              {warningsEl}
               </div>
               <div className="flex gap-1">
                 {onAdd && (
@@ -448,7 +464,7 @@ export function MovieCard({ item, onAdd, onUpdate, onRemove, showWatchlist = tru
                       </div>
                       <div className="grid gap-2">
                         <Label>Tags</Label>
-                        <TagEditor tags={tags} onChange={setTags} />
+                        <TagEditor tags={tags} autoTags={item.autoTags} onChange={setTags} />
                       </div>
                       <div className="grid gap-2">
                         <Label>Scare intensity (0–10)</Label>

@@ -6,6 +6,8 @@ import { Button } from "../../components/ui/button.jsx";
 import { Input } from "../../components/ui/input.jsx";
 import { usePersistentState } from "../../lib/usePersistentState.js";
 import { useProviders } from "../../hooks/useProviders.js";
+import { useContentGate } from "../../hooks/useContentGate.js";
+import { HiddenNotice } from "../../components/HiddenNotice.jsx";
 import { useToast } from "../../lib/toastContext.js";
 import { MovieCard } from "../../components/MovieCard.jsx";
 import { TMDB_IMG, describeError, isAbort, mapMovie, tmdbGet } from "../../lib/tmdb.js";
@@ -40,6 +42,7 @@ export function Discover({ apiKey, onAdd, onRemove, inLibraryIds, onToggleWatchl
   const [hideInLibrary, setHideInLibrary] = usePersistentState('discover.hideInLibrary', false);
   const [providersSel, setProvidersSel] = usePersistentState('discover.providers', []);
   const providerMap = useProviders(results.map((r) => r.id), apiKey, (providersSel || []).length > 0);
+  const gate = useContentGate(results, apiKey);
 
   // Every list request goes through here. Starting a new one cancels the previous,
   // so a slow earlier response can never overwrite a newer one.
@@ -103,7 +106,7 @@ export function Discover({ apiKey, onAdd, onRemove, inLibraryIds, onToggleWatchl
     setShowUpcoming((v) => !v);
   };
 
-  const shown = results
+  const shown = gate.visible
     .filter((r) => (hideWatchlisted ? !watchlistIds?.has(r.id) : true))
     .filter((r) => (hideInLibrary ? !inLibraryIds?.has(r.id) : true))
     .filter((r) => {
@@ -230,6 +233,8 @@ export function Discover({ apiKey, onAdd, onRemove, inLibraryIds, onToggleWatchl
         <div className="text-sm opacity-70">No films match. Try another search or loosen the filters.</div>
       ) : null}
 
+      <HiddenNotice count={gate.hiddenCount} onReveal={gate.reveal} />
+
       <div className={`grid gap-4 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 ${loading && results.length ? "opacity-60 transition-opacity" : ""}`}>
         {shown.map((r) => (
           <motion.div key={r.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
@@ -244,6 +249,7 @@ export function Discover({ apiKey, onAdd, onRemove, inLibraryIds, onToggleWatchl
               isInLibrary={inLibraryIds.has(r.id)}
               isWatchlisted={watchlistIds ? watchlistIds.has(r.id) : false}
               providers={providerMap[r.id] || []}
+              warnings={gate.flagsById[r.id] || []}
             />
           </motion.div>
         ))}

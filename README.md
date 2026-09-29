@@ -13,6 +13,15 @@ npm run dev
 
 Then open **Settings**, paste your TMDb v4 *Read Access Token* (free at themoviedb.org → Settings → API) and start exploring in **Discover**. Optional OMDb and DoesTheDogDie keys add IMDb/Rotten Tomatoes scores and content counts to the details page.
 
+## What it does
+
+- **Library:** rate, review, tag and log watches; import from Letterboxd/IMDb; filter by mood, several tags at once, or "untagged".
+- **Recommendations:** learns your taste from your ratings, watches and tags, and explains every suggestion ("You tend to enjoy #folk-horror", "Because you liked Hereditary").
+- **Auto-tagging:** reads TMDb keywords, genres and descriptions and tags films for you (marked ✦). Your own edits always win.
+- **Content warnings:** category warnings (gore, animal harm, and so on) on cards and details, plus limits you set: warn or hide films over them. Warnings are inferred from TMDb keywords, so an absent warning is not a guarantee.
+- **Planning:** a weekly watch plan with warnings shown up front, tonight's pick, and calendar export.
+- **Challenges:** 30 Days of Horror, Halloween, Found-Footage Week and more, tracked from your watch dates, with generated watch lists.
+
 ## Scripts
 
 | Command | What it does |

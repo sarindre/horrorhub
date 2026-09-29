@@ -6,7 +6,7 @@ import { createICS } from "../../lib/ics.js";
 import { buildExport } from "../../lib/library.js";
 import { useToast } from "../../lib/toastContext.js";
 
-export function ExportImport({ data, onImport, watchlist = [] }) {
+export function ExportImport({ data, onImport, watchlist = [], extras = {} }) {
   const toast = useToast();
   const fileRef = useRef(null);
   const lbRef = useRef(null);
@@ -23,7 +23,7 @@ export function ExportImport({ data, onImport, watchlist = [] }) {
   const today = () => new Date().toISOString().slice(0, 10);
 
   const downloadJSON = () => {
-    const blob = new Blob([JSON.stringify(buildExport(data), null, 2)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify(buildExport(data, extras), null, 2)], { type: "application/json" });
     saveBlob(blob, `horrorhub-${today()}.json`);
   };
 

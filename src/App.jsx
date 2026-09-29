@@ -6,6 +6,12 @@ import { readJSON, readString, writeJSON, writeString } from "./lib/storage.js";
 import { mergeLibraries, validateImport } from "./lib/library.js";
 import { FlickerOverlay, FogOverlay, AmbientAudio, LightsOutOverlay } from "./components/overlays.jsx";
 import { getMixer } from "./lib/settings.js";
+import { ContentPrefsContext } from "./lib/contentContext.js";
+import { useAutoTagger } from "./hooks/useAutoTagger.js";
+import { useChallenges } from "./hooks/useChallenges.js";
+import { ChallengesView } from "./features/challenges/ChallengesView.jsx";
+import { analyzeLocal } from "./lib/filmMeta.js";
+import { cleanupLegacyKeywordTags, mergeInferred, tagState } from "./lib/tagging.js";
 import { useSettings } from "./hooks/useSettings.js";
 import { useTheme } from "./hooks/useTheme.js";
 import { useLibrary } from "./hooks/useLibrary.js";
@@ -28,6 +34,10 @@ export function HorrorHub() {
   useTheme(settings.theme);
   const mixer = useMemo(() => getMixer(settings), [settings]);
   const [selected, setSelected] = useState(null); // movie object to show details
+  const contentPrefs = useMemo(
+    () => ({ showWarnings: settings.showWarnings, avoidFlags: settings.avoidFlags, maxScares: settings.maxScares, contentMode: settings.contentMode }),
+    [settings.showWarnings, settings.avoidFlags, settings.maxScares, settings.contentMode]
+  );
 
   const inLibraryIds = useMemo(() => new Set(library.map((i) => i.id)), [library]);
   const watchlistIds = useMemo(() => new Set(library.filter((i) => i.watchlist).map((i) => i.id)), [library]);
@@ -35,6 +45,8 @@ export function HorrorHub() {
 
   // Only fields the caller actually provided are sent, so re-adding a title that
   // is already in the library can't reset its tags, watch dates or rating.
+  // A film that is new to the library gets starter tags inferred from what we
+  // already know about it (the background tagger enriches them from TMDb).
   const addToLibrary = (m) => {
     const fields = {
       id: m.id,
@@ -46,10 +58,23 @@ export function HorrorHub() {
       rating: m.rating,
       scares: m.scares,
       tags: m.tags,
+      autoTags: m.autoTags,
+      removedTags: m.removedTags,
+      contentFlags: m.contentFlags,
+      autoFlags: m.autoFlags,
+      removedFlags: m.removedFlags,
+      keywords: m.keywords,
+      runtime: m.runtime,
+      taggedAt: m.taggedAt,
       watchedDates: m.watchedDates,
       notes: m.notes,
       watchlist: m.watchlist === undefined ? undefined : !!m.watchlist,
     };
+    if (!inLibraryIds.has(m.id) && m.tags === undefined) {
+      const starter = mergeInferred(tagState({}), analyzeLocal(m).tags);
+      fields.tags = starter.list;
+      fields.autoTags = starter.auto;
+    }
     upsert(Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== undefined)));
   };
 
@@ -62,10 +87,43 @@ export function HorrorHub() {
     const summary = `Import from ${label}:\n\n• ${added} new title${added === 1 ? "" : "s"}\n• ${updated} existing title${updated === 1 ? "" : "s"} updated (tags and watch dates are combined)${skipped ? `\n• ${skipped} row${skipped === 1 ? "" : "s"} skipped (missing id or title)` : ""}\n\nNothing in your library is deleted. Continue?`;
     if (!window.confirm(summary)) return;
     replaceLibrary(items);
-    toast(`Imported from ${label}: ${added} new, ${updated} updated.`, { kind: "success" });
+    const newChallenges = Array.isArray(payload?.challenges) ? challengeStore.merge(payload.challenges) : 0;
+    toast(`Imported from ${label}: ${added} new, ${updated} updated${newChallenges ? `, ${newChallenges} challenge${newChallenges === 1 ? "" : "s"}` : ""}.`, { kind: "success" });
   };
 
   const watchlist = library.filter((i) => i.watchlist);
+
+  const challengeStore = useChallenges({
+    library,
+    onComplete: (c) => toast(`Challenge complete: ${c.title} 🎉`, { kind: "success" }),
+  });
+
+  // Re-run auto-tagging on everything (your edits and removals are still respected).
+  const retagAll = () => {
+    if (!settings.apiKey) return toast("Add your TMDb API token first.", { kind: "error" });
+    if (!settings.autoTag) return toast("Turn on auto-tagging first.", { kind: "error" });
+    replaceLibrary(library.map((i) => ({ ...i, taggedAt: undefined })));
+    toast("Re-tagging your library from TMDb data…");
+  };
+  // Old versions copied every TMDb keyword into tags; move those out of tags (search still finds them).
+  const cleanupTags = () => {
+    const { items, films, tags } = cleanupLegacyKeywordTags(library);
+    if (!tags) return toast("No old keyword tags found. (This only looks at films that have already been auto-tagged.)");
+    if (!window.confirm(`Move ${tags} old keyword tag${tags === 1 ? "" : "s"} on ${films} film${films === 1 ? "" : "s"} out of your tags?
+
+They came from TMDb keywords (like "based-on-novel"). Your own tags and the curated ones stay, and the words remain searchable.`)) return;
+    replaceLibrary(items);
+    toast(`Cleaned up ${tags} tag${tags === 1 ? "" : "s"}.`, { kind: "success" });
+  };
+
+  // Background catalog intelligence: tag + flag untagged films from TMDb data.
+  const tagger = useAutoTagger({
+    library,
+    upsert,
+    apiKey: settings.apiKey,
+    enabled: settings.autoTag,
+    onProblem: (message) => toast(message, { kind: "error" }),
+  });
 
   // Nudge engine: gentle reminder after N days
   const [showNudge, setShowNudge] = useState(false);
@@ -101,6 +159,7 @@ export function HorrorHub() {
   }, [settings.releaseRadar, watchlist]);
 
   return (
+    <ContentPrefsContext.Provider value={contentPrefs}>
     <div className={`p-4 md:p-8 max-w-7xl mx-auto ${settings.highContrast ? 'hc' : ''} ${settings.dyslexic ? 'dyslexic' : ''}`}>
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -123,14 +182,20 @@ export function HorrorHub() {
           could be lost on reload. Open Settings → Backup &amp; Import and export a backup now.
         </div>
       ) : null}
+      {tagger.running ? (
+        <div role="status" className="mb-3 text-xs opacity-70">
+          Auto-tagging your library from TMDb data… {tagger.pending} film{tagger.pending === 1 ? "" : "s"} left
+        </div>
+      ) : null}
       <Tabs defaultValue="discover" className="w-full">
-      <TabsList className="grid w-full grid-cols-8">
+      <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 lg:grid-cols-9">
         <TabsTrigger value="discover">Discover</TabsTrigger>
         <TabsTrigger value="library">My Library</TabsTrigger>
         <TabsTrigger value="watchlist">Watchlist</TabsTrigger>
         <TabsTrigger value="recs" className="text-sm whitespace-nowrap">Recommendations</TabsTrigger>
         <TabsTrigger value="rate">Rating Roulette</TabsTrigger>
         <TabsTrigger value="continuity">Because You Liked…</TabsTrigger>
+        <TabsTrigger value="challenges">Challenges</TabsTrigger>
         <TabsTrigger value="stats">Stats</TabsTrigger>
         <TabsTrigger value="settings">Settings</TabsTrigger>
       </TabsList>
@@ -192,12 +257,16 @@ export function HorrorHub() {
           <RatingRoulette apiKey={settings.apiKey} onAdd={addToLibrary} onOpenDetails={setSelected} ratingMap={ratingById} inLibraryIds={inLibraryIds} watchlistIds={watchlistIds} />
         </TabsContent>
 
+            <TabsContent value="challenges" className="mt-6">
+              <ChallengesView library={library} store={challengeStore} apiKey={settings.apiKey} onUpdate={upsert} onAdd={addToLibrary} onOpenDetails={setSelected} />
+            </TabsContent>
+
             <TabsContent value="stats" className="mt-6">
               <StatsView items={library} longAgoYear={settings.longAgoYear} />
             </TabsContent>
 
             <TabsContent value="settings" className="mt-6">
-              <Settings settings={settings} update={updateSettings} onImport={importLib} watchlist={watchlist} data={library} />
+              <Settings settings={settings} update={updateSettings} onImport={importLib} onRetagAll={retagAll} onCleanupTags={cleanupTags} challenges={challengeStore.challenges} watchlist={watchlist} data={library} />
             </TabsContent>
           </>
         )}
@@ -242,6 +311,7 @@ export function HorrorHub() {
         </div>
       ) : null}
     </div>
+    </ContentPrefsContext.Provider>
   );
 }
 

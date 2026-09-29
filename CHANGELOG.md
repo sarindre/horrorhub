@@ -50,6 +50,26 @@ All notable changes to this project will be documented in this file.
 - Number inputs (nudge cadence, "long ago" year) accept typing freely and clamp on blur instead of snapping after the first keystroke.
 - Removed the dead "October theme" toggle and the unused Tailwind config and `tailwindcss-animate` dependency. `npm run lint` now reports nothing.
 
+### Added (auto-tagging and catalog intelligence)
+- Films are tagged automatically from TMDb data. One request per film supplies genres, runtime, overview and keywords, and a rule table maps them onto the curated tag vocabulary (slasher, found-footage, folk-horror, occult, creature, cosmic, ...). New films get starter tags when added, and a background tagger enriches the whole library (and backfills existing libraries) a film at a time. It's switchable in Settings, and "Re-tag my whole library" reruns it.
+- Your edits always win: inferred tags are marked ✦, a tag you remove is remembered and never re-added, and tags you typed are never touched. The same tag now has one spelling ("Folk Horror" and "#folk_horror" both become `folk-horror`).
+- Raw TMDb keywords are stored for search only instead of being copied into your tags (the old behaviour added up to 32 per film). An opt-in "Clean up old keyword tags" tidies what that left behind.
+- Library filtering: select several tags at once (films must have all of them), see a count on each tag, filter to "Untagged", and search matches TMDb keywords.
+
+### Added (content warnings and trigger filters)
+- Content warnings on film cards, the details page and the weekly plan, inferred from TMDb keywords across ten categories (graphic gore, body horror, torture, animal harm, sexual violence, harm to children, suicide/self-harm, extreme violence, plus disturbing content and jump scares from DoesTheDogDie counts). Warnings name a category, not a plot point. On films you own they're editable, with a "Refresh from TMDb" action.
+- Settings → Catalog & Content: choose the categories you want to avoid (shown in red), set a scare-level limit, and pick "Warn me" or "Hide them" for films over your limits. In hide mode a notice says how many are hidden, with "Show anyway".
+- The weekly plan now previews the upcoming schedule with each film's warnings, and asks what to do with planned films that trip your limits before you download the calendar. "Tonight's pick" and generated challenge lists respect your limits too.
+
+### Added (challenges and seasonal discovery)
+- A Challenges tab with eight templates (30 Days of Horror, 31 Nights of Halloween, Cult Classic Month, Found-Footage Week, Late-Night Creature Feature, Summer Slashers, Holiday Horror, Friday the 13th Marathon). Seasonal ones appear "in season" and use their calendar window.
+- Progress is derived from your watch dates, so logging a watch anywhere moves every challenge: a day-by-day tracker and current/best streak for daily challenges, distinct matching films for count challenges, pace and days left, and a one-time completion toast. A running watch streak shows at the top.
+- "Build my watch list" picks unwatched library films that count toward a challenge, ranked by your taste, within your content limits, with one-click add to watchlist. "Find ideas on TMDb" suggests films you don't own yet.
+- Challenges are saved locally and included in JSON export and import.
+
+### Fixed (weekly plan)
+- A watch-plan time of 00:00 was treated as 20:00, and a slot earlier than the current time on today's date could still be scheduled. The plan is now built by a tested `buildWeeklyPlan`.
+
 ### Added (smart recommendation engine)
 - A taste engine (`lib/taste.js`) that learns from your ratings, watches, tags and scare levels which tags and moods you love, which you don't, and what scare level you usually enjoy. It gets more confident as you add data and says when it's still learning.
 - A "Your taste" card on Recommendations showing what was learned and how many films it's based on, with a button to set tonight's scare slider to your usual level.

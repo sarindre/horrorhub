@@ -6,11 +6,17 @@ import { Label } from "../../components/ui/label.jsx";
 import { Slider } from "../../components/ui/slider.jsx";
 import { MOOD_PRESETS, matchesMood } from "../../lib/moods.js";
 import { MovieCard } from "../../components/MovieCard.jsx";
+import { HiddenNotice } from "../../components/HiddenNotice.jsx";
+import { useContentPrefs } from "../../lib/contentContext.js";
+import { filterByContent } from "../../lib/contentFlags.js";
 
 export function LibraryView({ items, onUpdate, onRemove, onOpenDetails }) {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [tagFilter, setTagFilter] = useState("");
+  const [tagFilters, setTagFilters] = useState([]); // films must have ALL of these
+  const [untagged, setUntagged] = useState(false);
+  const [revealHidden, setRevealHidden] = useState(false);
+  const prefs = useContentPrefs();
   const [moodFilter, setMoodFilter] = useState("all");
   const [minRating, setMinRating] = useState(0);
   const [maxScares, setMaxScares] = useState(10);
@@ -26,10 +32,9 @@ export function LibraryView({ items, onUpdate, onRemove, onOpenDetails }) {
   const allTags = useMemo(() => {
     const counts = new Map();
     items.forEach((i) => (i.tags || []).forEach((t) => counts.set(t, (counts.get(t) || 0) + 1)));
-    return Array.from(counts.entries())
-      .sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0])))
-      .map(([t]) => t);
+    return Array.from(counts.entries()).sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0])));
   }, [items]);
+  const untaggedCount = useMemo(() => items.filter((i) => !(i.tags || []).length).length, [items]);
 
   const filtered = useMemo(() => {
     const q = debouncedQuery.trim().toLowerCase();
@@ -40,13 +45,15 @@ export function LibraryView({ items, onUpdate, onRemove, onOpenDetails }) {
         const title = (i.title || "").toLowerCase();
         const notes = (i.notes || "").toLowerCase();
         const tags = (i.tags || []).map((t) => (t || "").toLowerCase());
-        return title.includes(q) || notes.includes(q) || tags.some((t) => t.includes(q));
+        const keywords = i.keywords || []; // TMDb keywords: searchable, but not shown as tags
+        return title.includes(q) || notes.includes(q) || tags.some((t) => t.includes(q)) || keywords.some((k) => k.includes(q));
       });
     }
 
-    if (tagFilter) {
-      const tf = tagFilter.toLowerCase();
-      arr = arr.filter((i) => (i.tags || []).some((t) => (t || "").toLowerCase() === tf));
+    if (untagged) {
+      arr = arr.filter((i) => !(i.tags || []).length);
+    } else if (tagFilters.length) {
+      arr = arr.filter((i) => tagFilters.every((tf) => (i.tags || []).includes(tf)));
     }
 
     if (moodFilter !== "all") {
@@ -93,7 +100,18 @@ export function LibraryView({ items, onUpdate, onRemove, onOpenDetails }) {
     }
 
     return arr;
-  }, [items, debouncedQuery, tagFilter, moodFilter, minRating, maxScares, sort]);
+  }, [items, debouncedQuery, tagFilters, untagged, moodFilter, minRating, maxScares, sort]);
+
+  // content limits: in "hide" mode films over your limits stay out until revealed
+  const { visible, hidden } = useMemo(() => filterByContent(filtered, prefs), [filtered, prefs]);
+  const hiding = prefs.contentMode === "hide" && !revealHidden;
+  const shown = hiding ? visible : filtered;
+  const hiddenCount = hiding ? hidden.length : 0;
+
+  const toggleTag = (t) => {
+    setUntagged(false);
+    setTagFilters((cur) => (cur.includes(t) ? cur.filter((x) => x !== t) : [...cur, t]));
+  };
 
   const watchlist = items.filter((i) => i.watchlist);
 
@@ -126,16 +144,21 @@ export function LibraryView({ items, onUpdate, onRemove, onOpenDetails }) {
 
           {/* Tag filter */}
           <div className="flex gap-2 flex-wrap">
-            <Button size="sm" variant={tagFilter === "" ? "default" : "outline"} onClick={() => setTagFilter("")}>
+            <Button size="sm" variant={!tagFilters.length && !untagged ? "default" : "outline"} onClick={() => { setTagFilters([]); setUntagged(false); }}>
               All tags
             </Button>
-            {(allTags.slice(0, tagsExpanded ? allTags.length : 5)).map((t) => (
-              <Button key={t} size="sm" variant={tagFilter === t ? "default" : "outline"} onClick={() => setTagFilter(t)}>
-                #{t}
+            {untaggedCount ? (
+              <Button size="sm" variant={untagged ? "default" : "outline"} onClick={() => { setUntagged((v) => !v); setTagFilters([]); }} title="Films with no tags yet">
+                Untagged ({untaggedCount})
+              </Button>
+            ) : null}
+            {allTags.slice(0, tagsExpanded ? allTags.length : 8).map(([t, n]) => (
+              <Button key={t} size="sm" variant={tagFilters.includes(t) ? "default" : "outline"} onClick={() => toggleTag(t)} title="Click several to require all of them">
+                #{t} <span className="opacity-60">{n}</span>
               </Button>
             ))}
-            {allTags.length > 5 ? (
-              <Button size="sm" variant="ghost" onClick={()=> setTagsExpanded(v=>!v)}>{tagsExpanded? 'Show fewer' : 'Show more'}</Button>
+            {allTags.length > 8 ? (
+              <Button size="sm" variant="ghost" onClick={() => setTagsExpanded((v) => !v)}>{tagsExpanded ? "Show fewer" : `Show all ${allTags.length}`}</Button>
             ) : null}
           </div>
 
@@ -179,7 +202,9 @@ export function LibraryView({ items, onUpdate, onRemove, onOpenDetails }) {
               size="sm"
               onClick={() => {
                 setQuery("");
-                setTagFilter("");
+                setTagFilters([]);
+                setUntagged(false);
+                setRevealHidden(false);
                 setMoodFilter("all");
                 setMinRating(0);
                 setMaxScares(10);
@@ -209,8 +234,9 @@ export function LibraryView({ items, onUpdate, onRemove, onOpenDetails }) {
         <span className="inline-block text-[9px] leading-3 px-1 rounded text-white bg-[#113ccf]" title="Disney+">D</span>
         <span>provider legends</span>
       </div>
+      <HiddenNotice count={hiddenCount} onReveal={() => setRevealHidden(true)} />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
-        {filtered.map((i) => (
+        {shown.map((i) => (
           <MovieCard key={i.id} item={i} onUpdate={onUpdate} onRemove={onRemove} compact onOpenDetails={onOpenDetails} isInLibrary={true} />
         ))}
       </div>

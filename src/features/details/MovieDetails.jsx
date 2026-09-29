@@ -11,10 +11,18 @@ import { StarRating } from "../../components/StarRating.jsx";
 import { TagEditor } from "../../components/TagEditor.jsx";
 import { TMDB_IMG, describeError, isAbort, tmdbGet } from "../../lib/tmdb.js";
 import { isoDateOnly } from "../../lib/dates.js";
+import { useToast } from "../../lib/toastContext.js";
+import { useContentPrefs } from "../../lib/contentContext.js";
+import { useContentFlags } from "../../hooks/useContentFlags.js";
+import { CONTENT_FLAGS, evaluateContent, flagLabel, itemFlags } from "../../lib/contentFlags.js";
+import { editFlags, editTags } from "../../lib/tagging.js";
+import { analysisPatch, analyzeMeta, fetchFilmMeta } from "../../lib/filmMeta.js";
 
 const DETAILS_CACHE_MS = 5 * 60 * 1000;
 
 export function MovieDetails({ item, localItem, onUpdate, onAdd, apiKey, omdbKey, dddKey, externalOff = false }) {
+  const toast = useToast();
+  const prefs = useContentPrefs();
   const [details, setDetails] = useState(null);
   const [videos, setVideos] = useState([]);
   const [cert, setCert] = useState("");
@@ -121,22 +129,6 @@ export function MovieDetails({ item, localItem, onUpdate, onAdd, apiKey, omdbKey
           }
         } catch { /* optional enrichment; ignore failures */ }
       }
-
-      // Auto-pull TMDb keywords into tags. Only for films already in your library:
-      // upserting here would otherwise add a film just because you looked at it.
-      if (localItem) {
-        try {
-          const kdata = await tmdbGet(`/movie/${item.id}/keywords`, opts);
-          const kws = (kdata?.keywords || []).map(k => k.name.toLowerCase().replace(/\s+/g,'-'));
-          if (kws.length && !signal.aborted) {
-            const existing = (localItem.tags || []);
-            const next = Array.from(new Set([ ...existing, ...kws ])).slice(0, 32);
-            if (JSON.stringify(existing.slice().sort()) !== JSON.stringify(next.slice().sort())) {
-              onUpdate?.({ ...localItem, tags: next });
-            }
-          }
-        } catch { /* optional enrichment; ignore failures */ }
-      }
     }
     load();
     return () => controller.abort();
@@ -157,6 +149,25 @@ export function MovieDetails({ item, localItem, onUpdate, onAdd, apiKey, omdbKey
   const poster = item.poster ? TMDB_IMG(item.poster, "w500") : details?.poster_path ? TMDB_IMG(details.poster_path, "w500") : "";
   const backdrop = details?.backdrop_path ? TMDB_IMG(details.backdrop_path, "w780") : "";
   const trailer = videos.find((v) => v.site === "YouTube" && v.type === "Trailer");
+
+  // Content warnings: editable for films you own, looked up read-only otherwise
+  const base = localItem || item;
+  const remoteFlags = useContentFlags(localItem ? [] : [item], apiKey, !localItem && (prefs.showWarnings || (prefs.avoidFlags || []).length > 0));
+  const flagsNow = localItem ? itemFlags(localItem) : remoteFlags[item.id] || [];
+  const verdict = evaluateContent({ flags: flagsNow, scares: localItem ? localItem.scares : undefined }, prefs);
+  const toggleFlag = (id) => {
+    const current = localItem.contentFlags || [];
+    onUpdate?.({ ...localItem, ...editFlags(localItem, current.includes(id) ? current.filter((f) => f !== id) : [...current, id]) });
+  };
+  const refreshCatalog = async () => {
+    try {
+      const analysis = analyzeMeta(await fetchFilmMeta(item.id, { apiKey }));
+      onUpdate?.({ id: localItem.id, ...analysisPatch(localItem, analysis) });
+      toast("Tags and warnings refreshed from TMDb.", { kind: "success" });
+    } catch (err) {
+      toast(describeError(err), { kind: "error" });
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -203,6 +214,52 @@ export function MovieDetails({ item, localItem, onUpdate, onAdd, apiKey, omdbKey
 
           {/* Behind the Screams removed as requested */}
 
+          <div className="pt-2 space-y-1" aria-label="Content warnings">
+            <div className="flex items-center gap-2">
+              <div className="text-sm font-semibold">Content warnings</div>
+              {localItem && apiKey ? (
+                <Button size="sm" variant="ghost" onClick={refreshCatalog} title="Re-read TMDb keywords for tags and warnings">Refresh from TMDb</Button>
+              ) : null}
+            </div>
+            {verdict.blocked ? (
+              <div role="alert" className="rounded-lg border border-red-500/40 bg-red-950/40 px-3 py-2 text-sm">
+                Heads up, this trips your limits: {verdict.reasons.join(" · ")}.
+              </div>
+            ) : null}
+            {localItem ? (
+              <div className="flex flex-wrap gap-2">
+                {CONTENT_FLAGS.map((f) => {
+                  const on = flagsNow.includes(f.id);
+                  const avoided = (prefs.avoidFlags || []).includes(f.id);
+                  return (
+                    <button
+                      key={f.id}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => toggleFlag(f.id)}
+                      title={on ? "Click to remove this warning" : "Click to add this warning"}
+                      className={`rounded-full border px-2 py-1 text-xs ${
+                        on ? (avoided ? "border-red-500/60 bg-red-500/15 text-red-300" : "border-amber-500/40 bg-amber-500/10 text-amber-300") : "opacity-60 hover:opacity-100"
+                      }`}
+                    >
+                      {on ? "⚠ " : "+ "}
+                      {f.label}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : flagsNow.length ? (
+              <div className="flex flex-wrap gap-2 text-xs">
+                {flagsNow.map((f) => (
+                  <span key={f} className="rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-amber-300">⚠ {flagLabel(f)}</span>
+                ))}
+              </div>
+            ) : (
+              <div className="text-xs opacity-70">No warnings found in TMDb's data. That isn't a guarantee, so check reviews if something would bother you.</div>
+            )}
+            {!localItem && flagsNow.length ? <div className="text-xs opacity-70">Add this film to your library to edit its warnings.</div> : null}
+          </div>
+
           {cast.length ? (
             <div className="pt-2 space-y-2">
               <div className="text-sm font-semibold">Cast</div>
@@ -247,7 +304,7 @@ export function MovieDetails({ item, localItem, onUpdate, onAdd, apiKey, omdbKey
             </div>
             <div className="w-full">
               <Label className="text-xs opacity-80">Tags</Label>
-              <TagEditor tags={localItem?.tags || []} onChange={(t)=> onUpdate?.({ ...(localItem||item), tags: t })} />
+              <TagEditor tags={localItem?.tags || []} autoTags={localItem?.autoTags || []} onChange={(t) => onUpdate?.({ ...base, ...editTags(base, t) })} />
             </div>
 
             {/* Smart Tagging Assist removed; TMDb keywords auto-pulled */}

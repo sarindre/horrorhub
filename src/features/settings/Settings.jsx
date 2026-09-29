@@ -5,6 +5,7 @@ import { Input } from "../../components/ui/input.jsx";
 import { Label } from "../../components/ui/label.jsx";
 import { ExportImport } from "./ExportImport.jsx";
 import { THEMES } from "../../lib/settings.js";
+import { CONTENT_FLAGS } from "../../lib/contentFlags.js";
 
 const THEME_LABELS = { dark: "Dark", light: "Light", system: "System" };
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -70,7 +71,7 @@ function SecretInput({ value, onChange, placeholder }) {
 
 // Controlled by the app: `settings` is the single source of truth and every
 // change goes through `update({ key: value })`, which validates and persists.
-export function Settings({ settings, update, onImport, watchlist, data }) {
+export function Settings({ settings, update, onImport, onRetagAll, onCleanupTags, watchlist, data, challenges = [] }) {
   const thisYear = new Date().getFullYear();
   return (
     <div className="space-y-6">
@@ -136,9 +137,56 @@ export function Settings({ settings, update, onImport, watchlist, data }) {
 
       <Card className="rounded-2xl">
         <CardContent className="p-6 space-y-4">
+          <div className="text-lg font-semibold">Catalog & Content</div>
+
+          <div className="text-sm font-semibold">Auto-tagging</div>
+          <div className="text-sm opacity-70">
+            HorrorHub reads each film's TMDb keywords, genres and description and adds matching tags (marked ✦) and content warnings. Anything you add or remove
+            yourself is respected.
+          </div>
+          <Toggle id="autotag-toggle" label="Auto-tag films from TMDb data (needs your TMDb token)" checked={settings.autoTag} onChange={(v) => update({ autoTag: v })} />
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={onRetagAll}>Re-tag my whole library</Button>
+            <Button variant="outline" size="sm" onClick={onCleanupTags}>Clean up old keyword tags</Button>
+          </div>
+
+          <div className="pt-4 text-sm font-semibold">Content warnings & limits</div>
+          <div className="text-sm opacity-70">
+            Warnings come from TMDb keywords and your own scare ratings, so an absent warning is not a guarantee. They name a category, never a plot point.
+          </div>
+          <Toggle id="warnings-toggle" label="Show content warnings on films" checked={settings.showWarnings} onChange={(v) => update({ showWarnings: v })} />
+          <div className="text-xs opacity-80">Warn me about (highlighted in red, and used by the limits below):</div>
+          <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+            {CONTENT_FLAGS.map((f) => (
+              <label key={f.id} className="inline-flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  checked={settings.avoidFlags.includes(f.id)}
+                  onChange={(e) => update({ avoidFlags: e.target.checked ? [...settings.avoidFlags, f.id] : settings.avoidFlags.filter((x) => x !== f.id) })}
+                />
+                {f.label}
+              </label>
+            ))}
+          </div>
+          <div className="flex items-center gap-3 text-sm">
+            <Label className="text-sm">Scare level limit</Label>
+            <input type="range" min="0" max="10" step="1" value={settings.maxScares} onChange={(e) => update({ maxScares: Number(e.target.value) })} />
+            <span className="tabular-nums">{settings.maxScares === 10 ? "no limit" : `${settings.maxScares}/10`}</span>
+          </div>
+          <div className="text-xs opacity-70">Uses your own scare ratings. Films you haven't scored count as 5.</div>
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <span>Films over my limits:</span>
+            <Button size="sm" variant={settings.contentMode === "warn" ? "default" : "outline"} onClick={() => update({ contentMode: "warn" })}>Warn me</Button>
+            <Button size="sm" variant={settings.contentMode === "hide" ? "default" : "outline"} onClick={() => update({ contentMode: "hide" })}>Hide them</Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-2xl">
+        <CardContent className="p-6 space-y-4">
           <div className="text-lg font-semibold">Backup & Import</div>
           <div className="text-sm opacity-70">Export your library to JSON, import from JSON/CSV, or export a watchlist calendar.</div>
-          <ExportImport data={data || []} onImport={onImport} watchlist={watchlist || []} />
+          <ExportImport data={data || []} onImport={onImport} watchlist={watchlist || []} extras={{ challenges }} />
         </CardContent>
       </Card>
 

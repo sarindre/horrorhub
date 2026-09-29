@@ -6,6 +6,10 @@ import { Slider } from "../../components/ui/slider.jsx";
 import { MOOD_PRESETS } from "../../lib/moods.js";
 import { buildTasteProfile, rankLibrary } from "../../lib/taste.js";
 import { TasteSummary } from "./TasteSummary.jsx";
+import { useContentGate } from "../../hooks/useContentGate.js";
+import { useContentPrefs } from "../../lib/contentContext.js";
+import { filterByContent } from "../../lib/contentFlags.js";
+import { HiddenNotice } from "../../components/HiddenNotice.jsx";
 import { useHybridRecommendations } from "../../hooks/useHybridRecommendations";
 import { MovieCard } from "../../components/MovieCard.jsx";
 import { useToast } from "../../lib/toastContext.js";
@@ -27,9 +31,17 @@ export function RecommendationsView({ items, apiKey, onAdd, onUpdate, onRemove, 
   );
 
   const { similarPicks, status, error, seedTitles } = useHybridRecommendations(items, apiKey, { moodId: moodPreset, profile });
-  const external = (similarPicks || [])
+  const contentPrefs = useContentPrefs();
+  const gate = useContentGate(similarPicks, apiKey);
+  const external = gate.visible
     .filter((r) => !inLibraryIds?.has(r.id))
     .slice(0, 12);
+
+  // your own library picks: hide films over your limits (in hide mode), otherwise the card warns
+  const [showAllLibrary, setShowAllLibrary] = useState(false);
+  const libraryLimited = contentPrefs.contentMode === "hide" && !showAllLibrary ? filterByContent(recs.map((r) => r.item), contentPrefs) : null;
+  const libraryPicks = libraryLimited ? recs.filter((r) => !libraryLimited.hidden.includes(r.item)) : recs;
+  const libraryHidden = recs.length - libraryPicks.length;
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto px-3 sm:px-4 md:px-6">
@@ -138,6 +150,7 @@ export function RecommendationsView({ items, apiKey, onAdd, onUpdate, onRemove, 
           <div className="text-sm opacity-70">No new horror suggestions right now from {seedTitles.slice(0, 3).join(", ")}.</div>
         ) : (
           <>
+            <HiddenNotice count={gate.hiddenCount} onReveal={gate.reveal} />
             <div className="text-xs opacity-60">Based on {seedTitles.slice(0, 3).join(", ")}{seedTitles.length > 3 ? ` and ${seedTitles.length - 3} more` : ""}.</div>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
               {external.map((r) => (
@@ -150,6 +163,7 @@ export function RecommendationsView({ items, apiKey, onAdd, onUpdate, onRemove, 
                     onOpenDetails={onOpenDetails}
                     isInLibrary={inLibraryIds?.has(r.id)}
                     isWatchlisted={watchlistIds?.has(r.id)}
+                    warnings={gate.flagsById[r.id] || []}
                   />
                   <div className="px-1 text-xs opacity-60">{(r.reasons || [r.reason]).join(" · ")}</div>
                 </div>
@@ -168,9 +182,10 @@ export function RecommendationsView({ items, apiKey, onAdd, onUpdate, onRemove, 
             </span>
           ) : null}
         </div>
-        {recs.length ? (
+        <HiddenNotice count={libraryHidden} onReveal={() => setShowAllLibrary(true)} />
+        {libraryPicks.length ? (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
-            {recs.map(({ item, reasons }) => (
+            {libraryPicks.map(({ item, reasons }) => (
               <div key={item.id} className="space-y-1">
                 <MovieCard item={item} onUpdate={onUpdate} onRemove={onRemove} compact onOpenDetails={onOpenDetails} />
                 <div className="px-1 text-xs opacity-60">{reasons.join(" · ")}</div>

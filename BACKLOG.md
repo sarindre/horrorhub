@@ -14,7 +14,7 @@ Transform HorrorHub from a solid horror movie tracker into a more compelling, pe
 ## Backlog items
 
 ### 1. Mood-based horror matching
-Status: In Progress
+Status: Done
 Priority: P1
 
 Create a feature that lets users discover horror based on emotional vibe and intensity rather than just title or genre.
@@ -83,59 +83,75 @@ Acceptance criteria:
 - A watch plan can be exported or saved locally
 
 ### 4. Auto-tagging and catalog intelligence
-Status: Planned
+Status: Done (v1: rule-based; see follow-ups)
 Priority: P1
 
 Use movie metadata, user notes, and behavior to automatically infer tags instead of requiring manual entry for every movie.
 
-Examples:
-- folk horror
-- body horror
-- possession
-- home invasion
-- found footage
-- occult
-- slow-burn
+Implementation notes (`lib/tagging.js`, `lib/filmMeta.js`, `hooks/useAutoTagger.js`):
+- One TMDb request per film (`append_to_response=keywords`) gives genres, runtime, overview and keywords. A rule table maps them onto the curated vocabulary (slasher, found-footage, folk-horror, body-horror, haunted, occult, creature, cosmic, sci-horror, gore, campy, classic, ...). Matching is whole-word so "cult" never fires on "cultural"; results are capped at 6 tags per film, strongest evidence first
+- New films get starter tags from what's known when they're added (overview + year); a background tagger then enriches every untagged library film from TMDb, one at a time, pausing with a message on a bad token, rate limit or no connection. It also backfills existing libraries. It can be switched off in Settings, and "Re-tag my whole library" reruns it
+- Your edits always win: inferred tags are marked ✦, a tag you remove is remembered and never re-added, tags you typed are never touched, and the same tag has one spelling ("Folk Horror" and "#folk_horror" become `folk-horror`)
+- The raw TMDb keywords are kept on the film for search only, instead of flooding your tags (the old behaviour copied up to 32 of them into tags). An opt-in "Clean up old keyword tags" moves the leftovers from that era out of your tags
+- Library filtering: pick several tags at once (films must have all of them), see a count on each tag, filter to "Untagged", and search matches TMDb keywords too
 
 Acceptance criteria:
-- New titles are automatically assigned useful tags when metadata supports it
-- Users can still refine or remove tags manually
-- The tag system supports better searches and filtering
+- ✅ New titles are automatically assigned useful tags when metadata supports it
+- ✅ Users can still refine or remove tags manually
+- ✅ The tag system supports better searches and filtering
+
+Follow-ups:
+- The rules are hand-written for English TMDb metadata. Expect misses and the odd wrong tag; the rule table in `tagging.js` is the place to tune (it's covered by tests)
+- Only what TMDb knows about a film is used. User notes aren't mined for tags yet
+- `aliases` such as ghost → haunted are deliberately few. Grow them as real tag collisions show up
+- Background tagging makes one request per untagged film, about 5 a second. A 500-film library takes a couple of minutes on first run. Consider batching or a manual "tag now" mode
 
 ### 5. Content warnings and trigger filters
-Status: Planned
+Status: Done (v1: warnings are inferred and best-effort; see follow-ups)
 Priority: P1
 
 Add safer discovery controls for horror content to make the app feel thoughtful and user-friendly.
 
-Examples:
-- gore intensity
-- body horror risk
-- violence level
-- animal harm warnings
-- content advisories and spoiler flags
+Implementation notes (`lib/contentFlags.js`, `hooks/useContentGate.js`, `components/ContentWarnings.jsx`):
+- Eight categories inferred from TMDb keywords and a few unambiguous overview phrases (graphic gore, body horror, torture, animal harm, sexual violence, harm to children, suicide/self-harm, extreme violence), plus disturbing content and frequent jump scares from DoesTheDogDie counts when you use that key. Flags name a category, never a plot point, so they warn without spoiling
+- Warnings appear on every film card (Discover, Rating Roulette, suggestions, library, watchlist), on the details page (editable for films you own, with a "Refresh from TMDb" action), and next to each film in the weekly plan
+- Settings → Catalog & Content: show warnings on/off, pick the categories you want to avoid (shown in red), set a scare-level limit against your own ratings, and choose "Warn me" or "Hide them" for films over your limits. In hide mode a notice says how many are hidden, with a "Show anyway" button
+- Planning: the weekly plan now previews its schedule with each film's warnings before you download it. If planned films trip your limits you're asked whether to keep or drop them (hide mode drops them). "Tonight's pick" respects the same limits
+- Generated challenge lists always leave out films over your limits
 
 Acceptance criteria:
-- Users can filter out titles that exceed preferred intensity limits
-- Content warnings are visible before a title is added to a plan
-- Filters reduce surprise and improve trust
+- ✅ Users can filter out titles that exceed preferred intensity limits
+- ✅ Content warnings are visible before a title is added to a plan
+- ✅ Filters reduce surprise and improve trust
+
+Follow-ups:
+- Inference is keyword-based, so an absent warning means "nothing found in TMDb's data", not "safe". The UI says so, but community sources (DoesTheDogDie topics per film) would be far more reliable. The `dddKey` integration only supplies counts today
+- The scare limit uses your own scare ratings; unscored library films default to 5, so a low limit can catch them. Discover results have no scare rating, so only the category flags apply there
+- Looking up warnings for a page of Discover results costs one request per film (cached for the session)
+- No per-film "I'm okay with this one" override yet
 
 ### 6. Seasonal and challenge-based discovery
-Status: Planned
+Status: Done (v1; see follow-ups)
 Priority: P2
 
 Introduce challenge loops and themed discovery streaks that keep the app engaging over time.
 
-Ideas:
-- 30 days of horror challenge
-- cult classic month
-- found-footage week
-- late-night creature feature challenge
+Implementation notes (`lib/challenges.js`, `hooks/useChallenges.js`, `features/challenges/`):
+- A new Challenges tab with eight templates: 30 Days of Horror, 31 Nights of Halloween, Cult Classic Month, Found-Footage Week, Late-Night Creature Feature, Summer Slashers, Holiday Horror and a Friday the 13th Marathon. Seasonal ones are surfaced "in season" (Halloween from September, Friday the 13th within two weeks, and so on) and use their calendar window
+- Progress is derived from your watch dates, never stored separately, so logging a watch anywhere moves every challenge. Daily challenges track distinct days with a day-by-day strip and current/best streak; count challenges track distinct matching films (by tag, year, keyword and runtime). Each shows pace ("about 1 every 3 days") and days left, and completing one fires a toast once
+- "Build my watch list" picks unwatched films from your library that count toward the challenge, ranked by your taste profile, sized to what's left, respecting your content limits, with one-click "Add all to watchlist". "Find ideas on TMDb" suggests well-known films that fit and that you don't own yet
+- A running watch streak is shown at the top. Challenges are saved locally (`horrorhub.challenges.v1`) and included in JSON export/import
 
 Acceptance criteria:
-- Challenges are tied to user library or discovered titles
-- Users can track completion and streak progress
-- A challenge can generate a short watch list automatically
+- ✅ Challenges are tied to user library or discovered titles
+- ✅ Users can track completion and streak progress
+- ✅ A challenge can generate a short watch list automatically
+
+Follow-ups:
+- Days are local calendar days. A Letterboxd/IMDb import stores dates at UTC midnight, which can land on the previous day in timezones west of UTC
+- Count challenges match on your tags and stored keywords, so films that haven't been auto-tagged yet don't count until they are
+- No custom challenges (pick your own rules and dates) yet, and challenges aren't shared or synced anywhere
+- The tab bar now has nine tabs; see #13
 
 ### 7. Curation layer without full social networking
 Status: Planned
@@ -224,7 +240,7 @@ The Mixer on the Recommendations tab mutated the `mixer` object directly, which 
 Status: Planned
 Priority: P2
 
-Eight tabs in a fixed `grid-cols-8` won't fit on a phone, and Rating Roulette, Because You Liked… and Recommendations overlap in purpose. Merge or regroup them and make the tab bar scroll or collapse on small screens.
+There are now nine tabs (Challenges was added). The tab bar wraps to 3/5/9 columns by screen width as a stopgap, but Rating Roulette, Because You Liked… and Recommendations still overlap in purpose. Merge or regroup them (Challenges could sit with planning) and make the tab bar scroll or collapse on small screens.
 
 ### 14. Performance and motion
 Status: Planned
