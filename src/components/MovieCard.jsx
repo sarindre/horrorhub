@@ -1,21 +1,18 @@
 import { useEffect, useState } from "react";
-import { Film, Calendar as CalIcon, Trash2, Flame, BookmarkPlus, Check, Tags, Save, Heart } from "lucide-react";
+import { Film, Trash2, Flame, BookmarkPlus, Tags, Save, Heart } from "lucide-react";
 import { Card, CardContent } from "./ui/card.jsx";
 import { Button } from "./ui/button.jsx";
 import { Textarea } from "./ui/textarea.jsx";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog.jsx";
 import { Badge } from "./ui/badge.jsx";
-import { Calendar } from "./ui/calendar.jsx";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover.jsx";
 import { Label } from "./ui/label.jsx";
 import { Slider } from "./ui/slider.jsx";
-import { writeString } from "../lib/storage.js";
 import { StarRating } from "./StarRating.jsx";
 import { TagEditor } from "./TagEditor.jsx";
 import { ShimmerImage } from "./ShimmerImage.jsx";
 import { TMDB_IMG } from "../lib/tmdb.js";
-import { isoDateOnly } from "../lib/dates.js";
-import { loadSettings } from "../lib/settings.js";
+import { WatchDialog } from "./WatchDialog.jsx";
+import { watchPatch } from "../lib/watch.js";
 import { ContentWarnings } from "./ContentWarnings.jsx";
 import { useContentPrefs } from "../lib/contentContext.js";
 import { evaluateContent, itemFlags } from "../lib/contentFlags.js";
@@ -23,8 +20,6 @@ import { editTags } from "../lib/tagging.js";
 
 export function MovieCard({ item, onAdd, onUpdate, onRemove, showWatchlist = true, compact = false, onOpenDetails, isInLibrary = false, isWatchlisted = false, providers = [], warnings }) {
   const [open, setOpen] = useState(false);
-  const [watchOpen, setWatchOpen] = useState(false);
-  const [date, setDate] = useState(new Date());
   const [notes, setNotes] = useState(item.notes || "");
   const [tags, setTags] = useState(item.tags || []);
   const [rating, setRating] = useState(item.rating || 0);
@@ -63,30 +58,6 @@ export function MovieCard({ item, onAdd, onUpdate, onRemove, showWatchlist = tru
     onUpdate?.({ ...item, notes, ...editTags(item, tags), rating, scares });
     setOpen(false);
   };
-  const addWatch = () => {
-    const iso = isoDateOnly(date);
-    const watchedDates = Array.from(new Set([...(item.watchedDates || []), iso]));
-    onUpdate?.({ ...item, watchedDates, watchlist: false });
-    setWatchOpen(false);
-    writeString('horrorhub.lastWatch', iso);
-  };
-  const addWatchToday = () => {
-    const today = new Date();
-    const iso = isoDateOnly(today);
-    const watchedDates = Array.from(new Set([...(item.watchedDates || []), iso]));
-    onUpdate?.({ ...item, watchedDates, watchlist: false });
-    setWatchOpen(false);
-    writeString('horrorhub.lastWatch', iso);
-  };
-  const addWatchLongAgo = () => {
-    const stored = Number(loadSettings().longAgoYear);
-    const y = Number.isFinite(stored) && stored > 0 ? stored : 1900;
-    const old = new Date(y, 0, 1);
-    const iso = isoDateOnly(old);
-    const watchedDates = Array.from(new Set([...(item.watchedDates || []), iso]));
-    onUpdate?.({ ...item, watchedDates, watchlist: false });
-    setWatchOpen(false);
-  };
   const toggleWatchlist = () => {
     if (item.watchlist) {
       onRemove?.(item.id);
@@ -124,7 +95,7 @@ export function MovieCard({ item, onAdd, onUpdate, onRemove, showWatchlist = tru
               } else if (key==='d' || key==='D') {
                 e.preventDefault(); onOpenDetails?.(item);
               } else if (key==='Escape') {
-                e.preventDefault(); setOpen(false); setWatchOpen(false);
+                e.preventDefault(); setOpen(false);
               }
             }}
           >
@@ -201,44 +172,7 @@ export function MovieCard({ item, onAdd, onUpdate, onRemove, showWatchlist = tru
                   <span className="tabular-nums">{scares}</span>
                 </div>
                 {onUpdate && (
-                  <Dialog open={watchOpen} onOpenChange={setWatchOpen}>
-                    <DialogTrigger asChild>
-                      <Button variant="secondary" size="sm">
-                        <CalIcon className="h-4 w-4 mr-1" />
-                        Watched
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-md">
-                      <DialogHeader>
-                        <DialogTitle>Log a watch date</DialogTitle>
-                      </DialogHeader>
-                      <div className="flex flex-col gap-4">
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button variant="outline" className="w-full justify-start">
-                              {date.toDateString()}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="p-2" align="start">
-                            <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
-                          </PopoverContent>
-                        </Popover>
-                  <div className="flex gap-2">
-                    <Button onClick={addWatch}>
-                      <Check className="h-4 w-4 mr-2" />
-                      Save date
-                    </Button>
-                    <Button variant="outline" onClick={addWatchToday}>
-                      <CalIcon className="h-4 w-4 mr-2" />
-                      Watched today
-                    </Button>
-                    <Button variant="outline" onClick={addWatchLongAgo}>
-                      <CalIcon className="h-4 w-4 mr-2" /> Watched long ago
-                    </Button>
-                  </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+                  <WatchDialog label="Watched" longAgo onLog={(iso) => onUpdate?.({ ...item, ...watchPatch(item, iso) })} />
                 )}
                 {onAdd && (
                   <>
@@ -326,7 +260,7 @@ export function MovieCard({ item, onAdd, onUpdate, onRemove, showWatchlist = tru
             } else if (key==='d' || key==='D') {
               e.preventDefault(); onOpenDetails?.(item);
             } else if (key==='Escape') {
-              e.preventDefault(); setOpen(false); setWatchOpen(false);
+              e.preventDefault(); setOpen(false);
             }
           }}
         >
@@ -408,43 +342,7 @@ export function MovieCard({ item, onAdd, onUpdate, onRemove, showWatchlist = tru
               </div>
 
               <div className="flex gap-2">
-                <Dialog open={watchOpen} onOpenChange={setWatchOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="secondary" size="sm">
-                      <CalIcon className="h-4 w-4 mr-1" />
-                      Log watch
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Log a watch date</DialogTitle>
-                    </DialogHeader>
-                    <div className="flex flex-col gap-4">
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full justify-start">
-                            {date.toDateString()}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="p-2" align="start">
-                          <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
-                        </PopoverContent>
-                      </Popover>
-                      <div className="flex gap-2">
-                        <Button onClick={addWatch}>
-                          <Check className="h-4 w-4 mr-2" />
-                          Save date
-                        </Button>
-                        <Button variant="outline" onClick={addWatchToday}>
-                          <CalIcon className="h-4 w-4 mr-2" /> Watched today
-                        </Button>
-                        <Button variant="outline" onClick={addWatchLongAgo}>
-                          <CalIcon className="h-4 w-4 mr-2" /> Watched long ago
-                        </Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                <WatchDialog label="Log watch" longAgo onLog={(iso) => onUpdate?.({ ...item, ...watchPatch(item, iso) })} />
 
                 <Dialog open={open} onOpenChange={setOpen}>
                   <DialogTrigger asChild>

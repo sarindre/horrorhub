@@ -4,8 +4,7 @@ import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, Responsive
 import { Card, CardContent } from "../../components/ui/card.jsx";
 import { Button } from "../../components/ui/button.jsx";
 import { Badge } from "../../components/ui/badge.jsx";
-import { Calendar } from "../../components/ui/calendar.jsx";
-import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/popover.jsx";
+import { DateField } from "../../components/ui/date-field.jsx";
 
 export function StatsView({ items, longAgoYear = 1900 }) {
   const [affOpen, setAffOpen] = useState(false);
@@ -179,22 +178,14 @@ export function StatsView({ items, longAgoYear = 1900 }) {
           <div className="flex items-center justify-between">
             <div className="text-lg font-semibold">Watch heatmap</div>
             <div className="flex items-center gap-2 text-sm">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm">From: {rangeStart.toLocaleDateString()}</Button>
-                </PopoverTrigger>
-                <PopoverContent className="p-2" align="end">
-                  <Calendar mode="single" selected={rangeStart} onSelect={setRangeStart} />
-                </PopoverContent>
-              </Popover>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm">To: {rangeEnd.toLocaleDateString()}</Button>
-                </PopoverTrigger>
-                <PopoverContent className="p-2" align="end">
-                  <Calendar mode="single" selected={rangeEnd} onSelect={setRangeEnd} />
-                </PopoverContent>
-              </Popover>
+              <label className="inline-flex items-center gap-2 text-sm">
+                From
+                <DateField value={rangeStart} onChange={setRangeStart} className="py-1" />
+              </label>
+              <label className="inline-flex items-center gap-2 text-sm">
+                To
+                <DateField value={rangeEnd} onChange={setRangeEnd} className="py-1" />
+              </label>
               <Button size="sm" onClick={() => { const t=new Date(); const s=new Date(t); s.setMonth(s.getMonth()-6); setRangeStart(new Date(s.getFullYear(), s.getMonth(), s.getDate())); setRangeEnd(new Date(t.getFullYear(), t.getMonth(), t.getDate())); }}>Last 6 mo</Button>
               <Button size="sm" onClick={() => { const t=new Date(); const s=new Date(t); s.setMonth(s.getMonth()-3); setRangeStart(new Date(s.getFullYear(), s.getMonth(), s.getDate())); setRangeEnd(new Date(t.getFullYear(), t.getMonth(), t.getDate())); }}>Last 3 mo</Button>
               <Button size="sm" onClick={() => { const t=new Date(); const s=new Date(t.getFullYear(), 0, 1); setRangeStart(new Date(s.getFullYear(), s.getMonth(), s.getDate())); setRangeEnd(new Date(t.getFullYear(), t.getMonth(), t.getDate())); }}>This year</Button>

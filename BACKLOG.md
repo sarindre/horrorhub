@@ -194,7 +194,7 @@ Priority: P0 (unblocks everything else)
 Acceptance criteria:
 - ✅ `App.jsx` only wires tabs, settings and the library
 - ✅ Every extracted view is smoke-rendered in `features/views.test.jsx`, plus the app render in `App.test.jsx`
-- ⬜ No file over ~400 lines: `MovieCard.jsx` is still ~485 (it holds both the compact and full card layouts). Split it into `CompactCard` / `FullCard` plus shared actions. `MovieDetails.jsx` (~395) and `StatsView.jsx` (~305) are fine but next in line.
+- ⬜ No file over ~400 lines: `MovieCard.jsx` is now ~403 after #15 removed its duplicated watch dialogs (was ~485) (it holds both the compact and full card layouts). Split it into `CompactCard` / `FullCard` plus shared actions. `MovieDetails.jsx` (~395) and `StatsView.jsx` (~305) are fine but next in line.
 
 ### 9. Fix the recommendation hook (pairs with #2)
 Status: Done (tag-based seeding left for #2)
@@ -288,10 +288,25 @@ Follow-ups:
 - Ambient audio isn't tied to reduced motion (it's an explicit opt-in)
 
 ### 15. UI primitives cleanup
-Status: Planned
+Status: Done
 Priority: P2
 
-`components/ui/*` are hand-rolled stubs (a native date input as "Calendar", a Dialog that ignores `asChild`), while the Radix packages in `package.json` go largely unused. Either adopt the real shadcn/Radix components or drop the unused dependencies.
+`components/ui/*` were hand-rolled stubs: a `Popover` that just rendered its content inline, a `Select` nobody used, a `Calendar` that was really a date input, a `Dialog` with no accessibility behaviour, and six declared dependencies (four Radix packages, `class-variance-authority`, `tailwind-merge`) that nothing imported. I chose to drop the unused packages rather than adopt Radix, to keep the app light (the runtime dependencies are now just React, React DOM, Recharts and lucide-react).
+
+What changed:
+- **Dialog** now uses the browser's native `<dialog>` element: a real modal with an inert background, Escape to close, focus returned to what opened it, `aria-labelledby` from its title, and backdrop-click to close. No library, and it's controlled the same way as before
+- **Date bug fixed:** the old `Calendar` read the picked date with `new Date("YYYY-MM-DD")`, which is UTC midnight. West of UTC (the whole of the Americas) a watch logged for the 15th was saved as the 14th, and the picker showed tomorrow's date in the evening. Watch dates feed streaks and challenges. The new `DateField` works in local days, and the day helpers live in `lib/dates.js`
+- The watch dialog was copy-pasted three times (two card layouts and the details page); it is now one `WatchDialog`, so all three behave the same (the details page now also offers the same "watched today" bookkeeping, and future dates can't be picked)
+- Stats date-range pickers use the same `DateField` (they had the same bug, and used to show two calendars permanently open)
+- Removed `Select`, `Popover` and `Calendar`; `Tabs` is now just the panel container (its buttons live in `MainNav`); `Button` defaults to `type="button"` and looks disabled when it is; `Slider` passes accessibility props through and every slider has a label
+- Removed six unused dependencies. A test now fails if an unused runtime dependency creeps back in, or if the app imports something undeclared
+- `MovieCard` dropped from 485 to 403 lines as a side effect (see #8)
+- The test suite now runs in `America/Los_Angeles` by default (override with `TZ=...`) so date bugs that only show up west of UTC are caught. Two tests are checked to fail against the old date logic
+
+Follow-ups:
+- Native `<dialog>` doesn't lock page scroll behind it; add if it turns out to be annoying on long pages
+- `Card`, `Badge`, `Input`, `Label` and `Textarea` are still small hand-written components; that's fine at this size, but a shared `cn()` class helper would tidy conditional classes if the primitives grow
+- Dialog focus handling relies on the browser; it hasn't been tried in every browser, and jsdom needed a small polyfill for the tests
 
 ### 16. Enrich imported titles with TMDb metadata
 Status: Done (see follow-ups)

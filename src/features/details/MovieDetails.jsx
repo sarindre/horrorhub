@@ -1,16 +1,14 @@
 import { useEffect, useState } from "react";
-import { Film, Calendar as CalIcon, BookmarkPlus, Check, Heart } from "lucide-react";
+import { Film, BookmarkPlus, Heart } from "lucide-react";
 import { Button } from "../../components/ui/button.jsx";
 import { Input } from "../../components/ui/input.jsx";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../../components/ui/dialog.jsx";
-import { Calendar } from "../../components/ui/calendar.jsx";
-import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/popover.jsx";
 import { Label } from "../../components/ui/label.jsx";
 import { Slider } from "../../components/ui/slider.jsx";
 import { StarRating } from "../../components/StarRating.jsx";
 import { TagEditor } from "../../components/TagEditor.jsx";
 import { TMDB_IMG, describeError, isAbort, tmdbGet } from "../../lib/tmdb.js";
-import { isoDateOnly } from "../../lib/dates.js";
+import { WatchDialog } from "../../components/WatchDialog.jsx";
+import { watchPatch } from "../../lib/watch.js";
 import { useToast } from "../../lib/toastContext.js";
 import { useContentPrefs } from "../../lib/contentContext.js";
 import { useContentFlags } from "../../hooks/useContentFlags.js";
@@ -34,8 +32,6 @@ export function MovieDetails({ item, localItem, onUpdate, onAdd, apiKey, omdbKey
   const [jumpScares, setJumpScares] = useState(localItem?.jumpScares ?? 0);
   const [goreCount, setGoreCount] = useState(localItem?.goreCount ?? 0);
   const [disturbCount, setDisturbCount] = useState(localItem?.disturbCount ?? 0);
-  const [date, setDate] = useState(new Date());
-  const [watchOpen, setWatchOpen] = useState(false);
   const rating = localItem?.rating || 0;
   const scares = localItem?.scares ?? 5;
 
@@ -293,6 +289,7 @@ export function MovieDetails({ item, localItem, onUpdate, onAdd, apiKey, omdbKey
             <div className="flex items-center gap-2 text-sm">
               <Label className="text-xs opacity-80">Scare</Label>
               <Slider
+                aria-label="Scare level"
                 value={[scares]}
                 min={0}
                 max={10}
@@ -346,49 +343,7 @@ export function MovieDetails({ item, localItem, onUpdate, onAdd, apiKey, omdbKey
             )}
 
             {/* Watched logging */}
-            <Dialog open={watchOpen} onOpenChange={setWatchOpen}>
-              <DialogTrigger asChild>
-                <Button variant="secondary" size="sm">
-                  <CalIcon className="h-4 w-4 mr-1" /> Watched
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Log a watch date</DialogTitle>
-                </DialogHeader>
-                <div className="flex flex-col gap-4">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start">
-                        {date.toDateString()}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="p-2" align="start">
-                      <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
-                    </PopoverContent>
-                  </Popover>
-                  <div className="flex gap-2">
-                    <Button onClick={() => {
-                      const iso = isoDateOnly(date);
-                      const watchedDates = Array.from(new Set([...(localItem?.watchedDates || []), iso]));
-                      onUpdate?.({ ...(localItem || item), watchedDates, watchlist: false });
-                      setWatchOpen(false);
-                    }}>
-                      <Check className="h-4 w-4 mr-2" /> Save date
-                    </Button>
-                    <Button variant="outline" onClick={() => {
-                      const today = new Date();
-                      const iso = isoDateOnly(today);
-                      const watchedDates = Array.from(new Set([...(localItem?.watchedDates || []), iso]));
-                      onUpdate?.({ ...(localItem || item), watchedDates, watchlist: false });
-                      setWatchOpen(false);
-                    }}>
-                      <CalIcon className="h-4 w-4 mr-2" /> Watched today
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <WatchDialog label="Watched" onLog={(iso) => onUpdate?.({ ...(localItem || item), ...watchPatch(localItem || item, iso) })} />
 
             {/* Shareable poster card */}
             <Button size="sm" variant="outline" onClick={async ()=>{

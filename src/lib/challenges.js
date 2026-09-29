@@ -1,6 +1,10 @@
 import { readJSON, writeJSON } from "./storage.js";
 import { evaluateItem } from "./contentFlags.js";
 import { buildTasteProfile, scoreLibraryItem } from "./taste.js";
+import { addDays, dayKey, daysBetween, parseDay } from "./dates.js";
+
+// day helpers live in ./dates.js; re-exported so existing imports keep working
+export { addDays, dayKey, daysBetween, parseDay };
 
 // Challenges: themed goals ("watch 5 creature features in two weeks") with
 // progress DERIVED from your library's watch dates. Nothing is tracked
@@ -8,20 +12,6 @@ import { buildTasteProfile, scoreLibraryItem } from "./taste.js";
 // Everything here is pure except the load/save helpers at the bottom.
 // Days are local calendar days as "YYYY-MM-DD" strings.
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-const pad = (n) => String(n).padStart(2, "0");
-
-export const dayKey = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-export const parseDay = (key) => {
-  const [y, m, d] = String(key).split("-").map(Number);
-  return new Date(y, m - 1, d);
-};
-export const addDays = (key, n) => {
-  const d = parseDay(key);
-  d.setDate(d.getDate() + n);
-  return dayKey(d);
-};
-export const daysBetween = (from, to) => Math.round((parseDay(to) - parseDay(from)) / DAY_MS);
 const isDayKey = (v) => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(parseDay(v).getTime());
 
 // ---------- templates ----------

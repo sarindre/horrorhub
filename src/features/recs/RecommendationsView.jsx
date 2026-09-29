@@ -49,7 +49,7 @@ export function RecommendationsView({ items, apiKey, onAdd, onUpdate, onRemove, 
         <CardContent className="p-4 flex flex-wrap items-center gap-4">
           <div className="text-sm whitespace-nowrap">How scared do you want to be tonight?</div>
           <div className="relative w-full max-w-3xl">
-            <Slider value={[mood]} min={0} max={10} step={1} onValueChange={(v) => setMood(v[0])} className="w-full" />
+            <Slider aria-label="How scared do you want to be tonight?" value={[mood]} min={0} max={10} step={1} onValueChange={(v) => setMood(v[0])} className="w-full" />
             <div className="pointer-events-none absolute inset-0">
               <div className="flex justify-between text-xl px-1 select-none">
                 <span role="img" aria-label="not scary">🥱</span>

@@ -50,6 +50,17 @@ All notable changes to this project will be documented in this file.
 - Number inputs (nudge cadence, "long ago" year) accept typing freely and clamp on blur instead of snapping after the first keystroke.
 - Removed the dead "October theme" toggle and the unused Tailwind config and `tailwindcss-animate` dependency. `npm run lint` now reports nothing.
 
+### Changed (UI primitives)
+- Dialogs now use the browser's native `<dialog>`: focus stays inside, Escape closes, focus returns to what opened it, and they're labelled for screen readers. No library involved.
+- Removed six dependencies nothing used (four Radix packages, `class-variance-authority`, `tailwind-merge`) plus the fake `Select`, `Popover` and `Calendar` components. The app now depends only on React, React DOM, Recharts and lucide-react, and a test keeps it that way.
+- The "Log a watch date" dialog was copy-pasted in three places; it's now one component, so the card and the details page behave identically.
+- Buttons default to `type="button"` and look disabled when they are; sliders are labelled for screen readers.
+- Tests now run in a timezone west of UTC by default, which is where date bugs hide.
+
+### Fixed (watch dates)
+- **Watch dates were saved a day early for anyone west of UTC.** Picking the 15th in the calendar logged the 14th (the input's text date was read as UTC midnight), and the picker showed tomorrow's date in the evening. Watch dates drive streaks and challenges, so this quietly skewed both. The Stats date-range pickers had the same problem. Dates are now handled as local days throughout. Existing watch dates aren't changed.
+- The Stats date range used to show two calendars permanently open; it's now a labelled "From" and "To" field.
+
 ### Changed (navigation)
 - Nine tabs became six sections: Discover (Browse, Rate films), My Library, For You (Picks for tonight, Because you liked…), Plan (Watchlist & plans, Challenges), Stats and Settings. Sections with several views get a second row of pills, and choosing a section takes you back to the view you last used in it.
 - The bar scrolls sideways on a phone instead of cramming nine buttons into a grid.

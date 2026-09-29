@@ -173,14 +173,14 @@ export function LibraryView({ items, onUpdate, onRemove, onOpenDetails }) {
           {/* Min rating */}
           <div className="flex items-center gap-3">
             <Label className="text-sm">Min rating</Label>
-            <Slider value={[minRating]} min={0} max={5} step={0.5} onValueChange={(v) => setMinRating(v[0])} className="w-[160px]" />
+            <Slider aria-label="Minimum rating" value={[minRating]} min={0} max={5} step={0.5} onValueChange={(v) => setMinRating(v[0])} className="w-[160px]" />
             <span className="text-sm opacity-70 w-6 text-right">{minRating}</span>
           </div>
 
           {/* Max intensity */}
           <div className="flex items-center gap-3">
             <Label className="text-sm">Max scares</Label>
-            <Slider value={[maxScares]} min={0} max={10} step={1} onValueChange={(v) => setMaxScares(v[0])} className="w-[160px]" />
+            <Slider aria-label="Maximum scare level" value={[maxScares]} min={0} max={10} step={1} onValueChange={(v) => setMaxScares(v[0])} className="w-[160px]" />
             <span className="text-sm opacity-70 w-6 text-right">{maxScares}</span>
           </div>
 

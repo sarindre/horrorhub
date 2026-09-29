@@ -3,7 +3,8 @@ import { useState } from "react";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App.jsx";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs.jsx";
+import { Tabs, TabsContent } from "./components/ui/tabs.jsx";
+import { useTabs } from "./components/ui/tabs-context.js";
 import { LIBRARY_KEY } from "./lib/library.js";
 import { PREFS_KEY } from "./lib/prefs.js";
 import { SETTINGS_KEY } from "./lib/settings.js";
@@ -24,6 +25,17 @@ afterEach(() => {
 
 const seedLibrary = (items) => localStorage.setItem(LIBRARY_KEY, JSON.stringify({ version: 3, items }));
 const tab = (name) => screen.getByRole("tab", { name });
+
+// The app's own tab buttons live in MainNav; panels only need the context, so tests use a tiny trigger.
+function TabsTrigger({ value, children }) {
+  const { value: current, setValue } = useTabs();
+  return (
+    <button role="tab" aria-selected={current === value} onClick={() => setValue(value)}>
+      {children}
+    </button>
+  );
+}
+const TabsList = ({ children }) => <div role="tablist">{children}</div>;
 
 describe("Tabs", () => {
   it("works uncontrolled", () => {

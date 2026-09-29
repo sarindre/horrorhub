@@ -25,7 +25,7 @@ HorrorHub is a personal horror movie library and discovery app built with React 
 - `src/hooks/useHybridRecommendations.js`: recommendation logic using TMDb similarity data
 - `src/lib/*`: pure, tested logic (storage, library schema/merge/import validation, CSV parsers, ICS, mood presets). New logic should go here, not into `App.jsx`
 - `src/components/SearchBar.jsx`: search input component
-- `src/components/ui/*`: reusable UI primitives
+- `src/components/ui/*`: small reusable primitives (Button, Card, Dialog on native `<dialog>`, DateField, Slider...). Keep runtime dependencies minimal; a test fails if a declared runtime dependency isn't imported
 
 ## Product direction
 This project should stay local-first, lightweight, and highly personalized. It is not meant to become a generic streaming app or a large social platform. The strongest product identity is a horror-specific personal library with strong curation, mood discovery, and planning tools.
@@ -55,6 +55,7 @@ This project should stay local-first, lightweight, and highly personalized. It i
 - Settings live in `src/lib/settings.js` (`DEFAULT_SETTINGS` + `normalizeSettings`). To add a setting: add a default, validate it in `normalizeSettings`, then read it from `settings` and change it with `update({ key: value })`. Don't keep a local copy in component state.
 - Library items are shaped by `normalizeItem` in `src/lib/library.js`. Imports go through `validateImport` + `mergeLibraries`, which never delete data.
 - When changing the stored library shape, bump `LIBRARY_VERSION`/key and add a migration in `loadLibrary`.
+- Dates: a "day" is a local `YYYY-MM-DD` (see `src/lib/dates.js`). Never pass a `YYYY-MM-DD` string to `new Date(...)` (it's read as UTC, the previous evening west of UTC); use `parseDay`/`dayKey` and `DateField`. Tests run in `America/Los_Angeles` by default (`vite.config.js`) to catch this.
 - Run `npm test`, `npm run lint` and `npm run build` before committing.
 - Tests: pure logic gets plain Vitest tests next to the code; views are smoke-rendered on the server (`renderToString`, so text nodes can be split by `<!-- -->` markers when matching); hooks with effects or async loops are tested in jsdom with `// @vitest-environment jsdom` at the top of the file and a stubbed `fetch`. Background work (auto-tagging, import matching) must depend only on stable callbacks so it doesn't restart on every render.
 
