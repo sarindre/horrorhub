@@ -27,7 +27,15 @@ All notable changes to this project will be documented in this file.
 - Added render tests for every extracted view (`src/features/views.test.jsx`).
 - Removed the unused `ContinuityNavigator` component and unused imports.
 
+### Changed (code review, step 4: recommendations)
+- TMDb suggestions now use `/recommendations`, keep only released horror films you don't own, and rank them from up to 5 of your top-rated titles (rating + recency, with multi-seed agreement). Results are cached for 24 hours and only refetch when the seed titles change, not on every rating click.
+- The selected night vibe now shapes the "Similar to your favorites" list, not just your own library picks.
+- The list shows loading, error (bad token, rate limit, offline), empty and no-token states, and a "Because you liked X" line under each pick.
+- Added `tmdbGet` with typed errors and `lib/recommend.js` (seed picking, ranking, caching) with 21 new tests.
+
 ### Fixed
+- Posters in "Similar to your favorites" never loaded because the URL was built twice.
+- Broken "…" characters in the Because You Liked… tab title and Build Map button label.
 - Adding or watchlisting a title that was already in your library from Discover could reset its tags, watch dates, scares and rating to defaults. Only the fields actually provided are updated now.
 - IMDb CSV ratings (out of 10) are converted to the app's 5-star scale instead of being stored as up to 10 stars.
 - Letterboxd/IMDb CSV imports no longer overwrite existing tags and scare levels with defaults, and one bad date in a row no longer fails the entire import.

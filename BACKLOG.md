@@ -163,16 +163,20 @@ Acceptance criteria:
 - ⬜ No file over ~400 lines: `MovieCard.jsx` is still ~485 (it holds both the compact and full card layouts). Split it into `CompactCard` / `FullCard` plus shared actions. `MovieDetails.jsx` (~395) and `StatsView.jsx` (~305) are fine but next in line.
 
 ### 9. Fix the recommendation hook (pairs with #2)
-Status: Planned
+Status: Done (tag-based seeding left for #2)
 Priority: P1
 
-`useHybridRecommendations` calls TMDb `/similar`, which is not horror-filtered, and it refetches whenever any library field changes (each rating click). It only seeds from the first 3 titles rated 4+ and ignores tags, moods and scares. The TMDb "Similar to your favorites" list is also not mood-aware (open from item 1).
+The hook used TMDb `/similar` (not horror-filtered), refetched on every library edit, seeded from the first 3 titles rated 4+, and ignored moods. It also returned full poster URLs that `MovieCard` prefixed again, so those posters never loaded. Rewritten around `lib/recommend.js`.
 
 Acceptance criteria:
-- Only horror titles are suggested (genre 27)
-- Fetches depend on the seed titles, not the whole library; results are cached
-- Seeds are weighted by rating, recency and tags; the active mood preset applies to TMDb picks too
-- Loading and error states are shown; requests abort on unmount
+- ✅ Only released horror titles (genre 27) that aren't already in your library
+- ✅ Fetches depend on the seed titles, not the whole library; per-seed results are cached for 24h (survives reloads)
+- ✅ Seeds are up to 5 titles rated 4+ (falling back to 3+), weighted by rating plus a recency bonus; a film suggested by several seeds ranks higher
+- ✅ The active mood preset applies to TMDb picks: films whose title/overview hit the preset's keywords are boosted (a heuristic, nothing is hidden)
+- ✅ Loading, error (bad token / rate limit / offline), empty and no-token states; requests abort on unmount; one failing seed doesn't hide the rest
+- ✅ "Because you liked X" shown under each pick
+- ⬜ Tags and scare levels don't yet influence which titles seed the list, only rating and recency. Fold that into #2 (taste engine).
+- ⬜ Mood matching for unowned films is keyword-based on TMDb overviews; a TMDb-keywords lookup per candidate would be more accurate (extra requests, so weigh it against rate limits).
 
 ### 10. Shared TMDb client and error handling
 Status: Planned

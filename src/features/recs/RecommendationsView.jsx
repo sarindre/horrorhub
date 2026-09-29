@@ -46,7 +46,7 @@ export function RecommendationsView({ items, apiKey, onAdd, onUpdate, onRemove, 
       .map((x) => x.item);
   }, [pool, mood, moodPreset, mixer]);
 
-  const { similarPicks } = useHybridRecommendations(items, apiKey);
+  const { similarPicks, status, error, seedTitles } = useHybridRecommendations(items, apiKey, { moodId: moodPreset });
   const external = (similarPicks || [])
     .filter((r) => !inLibraryIds?.has(r.id))
     .slice(0, 12);
@@ -129,27 +129,45 @@ export function RecommendationsView({ items, apiKey, onAdd, onUpdate, onRemove, 
         </Card>
       </div>
 
-      {external.length ? (
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm uppercase tracking-wide opacity-80">
-            <Wand2 className="h-4 w-4" /> Similar to your favorites (from TMDb)
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
-            {external.map((r) => (
-              <MovieCard
-                key={r.id}
-                item={{ id: r.id, title: r.title, year: r.year ? Number(r.year) : undefined, poster: r.poster, overview: "", voteAvg: r.voteAvg, rating: ratingById?.[r.id] || 0 }}
-                onAdd={onAdd}
-                onUpdate={(it) => onAdd?.(it)}
-                compact
-                onOpenDetails={onOpenDetails}
-                isInLibrary={inLibraryIds?.has(r.id)}
-                isWatchlisted={watchlistIds?.has(r.id)}
-              />
-            ))}
-          </div>
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-sm uppercase tracking-wide opacity-80">
+          <Wand2 className="h-4 w-4" /> Similar to your favorites (from TMDb)
+          {moodPreset !== "all" ? (
+            <span className="normal-case tracking-normal opacity-70">· leaning {MOOD_PRESETS.find((p) => p.id === moodPreset)?.label}</span>
+          ) : null}
         </div>
-      ) : null}
+        {!apiKey ? (
+          <div className="text-sm opacity-70">Add your TMDb API token in Settings to get suggestions based on your favorites.</div>
+        ) : status === "error" ? (
+          <div role="alert" className="text-sm text-red-300">{error?.message || "Couldn't load suggestions."}</div>
+        ) : status === "loading" && !external.length ? (
+          <div className="text-sm opacity-70">Finding films like {seedTitles.slice(0, 3).join(", ")}…</div>
+        ) : !seedTitles.length ? (
+          <div className="text-sm opacity-70">Rate a few films 4★ or higher and suggestions will appear here.</div>
+        ) : !external.length ? (
+          <div className="text-sm opacity-70">No new horror suggestions right now from {seedTitles.slice(0, 3).join(", ")}.</div>
+        ) : (
+          <>
+            <div className="text-xs opacity-60">Based on {seedTitles.slice(0, 3).join(", ")}{seedTitles.length > 3 ? ` and ${seedTitles.length - 3} more` : ""}.</div>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
+              {external.map((r) => (
+                <div key={r.id} className="space-y-1">
+                  <MovieCard
+                    item={{ id: r.id, title: r.title, year: r.year ? Number(r.year) : undefined, poster: r.poster, overview: "", voteAvg: r.voteAvg, rating: ratingById?.[r.id] || 0 }}
+                    onAdd={onAdd}
+                    onUpdate={(it) => onAdd?.(it)}
+                    compact
+                    onOpenDetails={onOpenDetails}
+                    isInLibrary={inLibraryIds?.has(r.id)}
+                    isWatchlisted={watchlistIds?.has(r.id)}
+                  />
+                  <div className="px-1 text-xs opacity-60">{r.reason}</div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
 
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-sm uppercase tracking-wide opacity-80">

@@ -1,62 +1,51 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { loadSeedResults, pickSeeds, rankCandidates } from "../lib/recommend.js";
 
-export function useHybridRecommendations(items, apiKey) {
-  const [existingTop, setExistingTop] = useState([]);
-  const [similarPicks, setSimilarPicks] = useState([]);
+// TMDb-backed picks based on the titles you loved, re-ranked for the chosen
+// mood. Network work is keyed on which titles seed the list (not on every
+// library edit) and cached for a day, so rating a film or switching moods
+// doesn't refetch. status: "idle" | "loading" | "ready" | "error".
+export function useHybridRecommendations(items, apiKey, { moodId = "all" } = {}) {
+  const [resultsBySeed, setResultsBySeed] = useState({});
+  const [status, setStatus] = useState("idle");
+  const [error, setError] = useState(null);
+
+  const seeds = useMemo(() => pickSeeds(items), [items]);
+  const seedKey = seeds.map((s) => s.id).join(",");
+  const libraryIds = useMemo(() => (items || []).map((i) => i.id), [items]);
 
   useEffect(() => {
-    if (!apiKey || !items?.length) return;
-
-    const controller = new AbortController();
-    const signal = controller.signal;
-    const headers = {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json;charset=utf-8",
-    };
-
-    const topRated = items.filter((i) => (i.rating || 0) >= 4);
-    setExistingTop(topRated.slice(0, 3));
-
-    async function fetchSimilar() {
-      try {
-        const liked = topRated.slice(0, 3);
-        const requests = liked.map((movie) =>
-          fetch(
-            `https://api.themoviedb.org/3/movie/${movie.id}/similar?language=en-US&page=1`,
-            { headers, signal }
-          ).then((res) => (res.ok ? res.json() : { results: [] }))
-        );
-        const batches = await Promise.all(requests);
-        const combined = batches.flatMap((d) => d?.results ?? []);
-
-        // Dedupe and exclude items already in the local library
-        const existingIds = new Set(items.map((i) => i.id));
-        const seen = new Set();
-        const picks = [];
-        for (const r of combined) {
-          if (!r || seen.has(r.id) || existingIds.has(r.id)) continue;
-          seen.add(r.id);
-          picks.push({
-            id: r.id,
-            title: r.title,
-            year: r.release_date ? r.release_date.slice(0, 4) : "?",
-            poster: r.poster_path ? `https://image.tmdb.org/t/p/w500${r.poster_path}` : null,
-            voteAvg: typeof r.vote_average === "number" ? r.vote_average : null,
-            genre_ids: Array.isArray(r.genre_ids) ? r.genre_ids : [],
-          });
-          if (picks.length >= 15) break; // limit
-        }
-        if (!signal.aborted) setSimilarPicks(picks);
-      } catch (err) {
-        if (err?.name !== "AbortError") {
-          console.error("Failed to fetch similar movies:", err);
-        }
-      }
+    if (!apiKey || !seedKey) {
+      setResultsBySeed({});
+      setStatus("idle");
+      setError(null);
+      return;
     }
+    const controller = new AbortController();
+    const ids = seedKey.split(",").map(Number);
+    setStatus("loading");
+    setError(null);
 
-    fetchSimilar();
+    Promise.allSettled(ids.map((id) => loadSeedResults(id, { apiKey, signal: controller.signal }))).then((settled) => {
+      if (controller.signal.aborted) return;
+      const failures = settled.filter((s) => s.status === "rejected");
+      if (failures.length === settled.length) {
+        setResultsBySeed({});
+        setError(failures[0].reason);
+        setStatus("error");
+        return;
+      }
+      // one bad seed (e.g. a 404 for an obscure title) shouldn't hide the rest
+      setResultsBySeed(Object.fromEntries(ids.map((id, i) => [id, settled[i].status === "fulfilled" ? settled[i].value : []])));
+      setStatus("ready");
+    });
     return () => controller.abort();
-  }, [items, apiKey]);
+  }, [seedKey, apiKey]);
 
-  return { existingTop, similarPicks };
+  const similarPicks = useMemo(
+    () => rankCandidates({ seeds, resultsBySeed, libraryIds, moodId }),
+    [seeds, resultsBySeed, libraryIds, moodId]
+  );
+
+  return { similarPicks, status, error, seedTitles: seeds.map((s) => s.title) };
 }

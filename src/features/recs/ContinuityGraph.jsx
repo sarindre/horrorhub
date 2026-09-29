@@ -58,7 +58,7 @@ export function ContinuityGraph({ items, apiKey, onOpenDetails }){
       <CardContent className="p-4 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm uppercase tracking-wide opacity-80">
-            <Wand2 className="h-4 w-4" /> Because You Liked�
+            <Wand2 className="h-4 w-4" /> Because You Liked…
           </div>
           <div className="flex items-center gap-2">
             <select className="bg-transparent border rounded px-2 py-1 text-sm" value={seedId} onChange={(e)=> setSeedId(isNaN(Number(e.target.value))? e.target.value : Number(e.target.value))}>
@@ -66,7 +66,7 @@ export function ContinuityGraph({ items, apiKey, onOpenDetails }){
                 <option key={i.id} value={i.id}>{i.title}</option>
               ))}
             </select>
-            <Button size="sm" variant="outline" onClick={build} disabled={loading || !apiKey}>{loading? 'Building�':'Build Map'}</Button>
+            <Button size="sm" variant="outline" onClick={build} disabled={loading || !apiKey}>{loading? 'Building…':'Build Map'}</Button>
           </div>
         </div>
         <div className="rounded-2xl border bg-black/20">
