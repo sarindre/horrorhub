@@ -371,5 +371,105 @@ Priority: P2
 
 Progress: 231 tests. The pure logic in `lib/*` (recommendation scoring, taste, tagging, content flags, challenges, planning, matching, storage, settings) is covered, every view is smoke-rendered, and the background hooks (`useAutoTagger`, `useImportMatcher`) are tested running for real in jsdom against a stubbed TMDb, which caught restart-on-every-render and dropped-completion bugs. The whole app now also has real click-through tests in jsdom (`App.interaction.test.jsx`: first-run checklist, tab switching, library tag filters, settings persistence). Still open: interaction tests for Discover/Details/Challenges/Planner flows, tests for `useChallenges`/`useMarathons`/`useContentGate`/`useProviders`, and a coverage report in CI.
 
+## Innovation backlog
+Source: the product review of 2026-09-29. The roadmap above is built; these are the ideas that would make HorrorHub *different* from Letterboxd/Trakt-style trackers, plus a few must-fix items the review turned up. Ordered by value for the effort.
+
+### 19. Must-fix: TMDb attribution and privacy leaks
+Status: Planned
+Priority: P0
+
+- TMDb's API terms require an attribution notice and logo ("This product uses the TMDB API but is not endorsed or certified by TMDB"). There is none anywhere in the app. Add it to the footer and Settings → Connections (also credit OMDb / DoesTheDogDie where their data is shown)
+- The Creepster header font is loaded from Google Fonts on every visit, which sends your IP to Google, at odds with a local-first, private app. Self-host it (the font file ships with the build)
+- Discover and streaming badges are hard-coded to the US (`region=US`, `results.US`, `en-US`). Add a region/language setting so non-US users get their own availability and titles
+
+### 20. "Tonight" home screen (make the core promise the front door)
+Status: Planned
+Priority: P1
+
+The app opens on generic Discover browsing (a commodity), and the For You screen puts four control cards above the actual answer. The differentiator is "what should I watch tonight, and will I be okay with it?". Make a Tonight screen the default landing: one big pick with reasons, warnings and runtime, an accept / reroll (never that one again) / different vibe control, the scare and vibe dials collapsed into a single line, plus what's in progress (streak, active challenge, saved plan for tonight).
+
+Acceptance criteria: a first-time-with-data user reaches a pick with one tap; the pick always shows why and any content flags; rerolling never repeats.
+
+### 21. Taste calibration quiz and estimated scare levels (fix the cold start)
+Status: Planned
+Priority: P1
+
+The taste engine needs rated films and scare scores, and unscored films default to 5/10, so a new user gets weak picks for a long time. Add a 60-second calibration: about a dozen iconic films across subgenres ("seen it and loved it / it was fine / too much / haven't seen it"), seeding the taste profile and scare tolerance immediately. Estimate a scare level for unscored films from TMDb (certification, keywords, genres, vote data) and label it "est.", replacing the flat 5.
+
+### 22. Group Night (find what everyone will actually watch)
+Status: Planned
+Priority: P1
+
+Nothing else does this. Add 2-4 people, each with a quick profile (vibe dials, content limits to avoid, seen-it list), and find films that sit inside everyone's limits and overlap on taste, ranking by the least-happy person's score (min-max, not average) and explaining the compromise ("Sam avoids animal harm, Alex wants slow-burn: this fits both"). Local only; profiles saved as named presets. Pairs with the marathon planner for a whole night.
+
+### 23. Mystery Reel (blind pick)
+Status: Planned
+Priority: P2
+
+Spoiler-free picking: choose a vibe and intensity, then reveal a film from your watchlist showing only its runtime, subgenre tags and a mood line, with the title and poster hidden until you commit. Content limits still apply. Cheap (all data exists) and very on-brand.
+
+### 24. Horror Wrapped and insights that say something
+Status: Planned
+Priority: P1
+
+Stats today are counters, and XP has no levels or meaning. Replace them with narrative insights computed locally ("you rate slow-burn films 1.2★ higher than slashers", "your Friday-night watches average 7.1 scares", "your scare tolerance is up 1.5 since March") and a yearly "Horror Wrapped" card (top subgenres, scariest film, longest streak, marathon count) that exports as a shareable image. Give XP levels or retire it.
+
+### 25. Scare diary and fear calibration
+Status: Planned
+Priority: P2
+
+After a watch, optionally log how scared you actually were, who you watched with, and when. Compare with the predicted scare level to calibrate you personally ("horror hits you harder than average: predictions adjusted +1"), and surface context insights (alone at night vs with friends). Feeds the taste engine and Group Night.
+
+### 26. Double-feature pairing
+Status: Planned
+Priority: P2
+
+A "Pair with…" suggestion on any film that picks a companion by contrast or complement: a palate cleanser after something heavy, a same-subgenre deep cut, or a shorter film to fit the night, using the marathon pacing rules and your limits. One tap opens the planner with both films.
+
+### 27. Ask HorrorHub (natural-language search)
+Status: Planned
+Priority: P2
+
+"Slow-burn folk horror under 100 minutes, no animal harm" typed into one box. Start with a deterministic parser (runtime, decade, moods and tags, exclusions mapped to content flags) over your library and TMDb; optionally use an LLM key for freer phrasing, off by default to keep the app local-first.
+
+### 28. Installable and safe: PWA plus automatic backups
+Status: Planned
+Priority: P1
+
+All data lives in one browser's localStorage, so clearing site data or losing the device loses everything and backups are manual. Make the app an installable PWA (offline library, home-screen icon) and add optional automatic backups to a folder you pick (File System Access API where available, with a "last backed up" reminder elsewhere). Consider an encrypted single-file sync for moving between devices.
+
+### 29. Round-trip with Letterboxd
+Status: Planned
+Priority: P2
+
+Imports work, but you can't get your ratings and watches back out. Add a Letterboxd-compatible CSV export (and IMDb-style ratings), so leaving is as easy as arriving. That's what makes moving in trustworthy.
+
+### 30. Out of scope for now (need a backend)
+Status: Parked
+
+Community "look away" timestamps, shared live watch parties, and crowd-sourced scare ratings. They'd be the biggest differentiator of all but require accounts and moderation, which the product direction rules out for now.
+
+### 31. Feature sprawl: tell people where to start
+Status: Planned
+Priority: P1
+
+There are 10 views in 6 sections and nothing says which to use first. Scope:
+- Tonight (#20) becomes the landing screen, so most sessions start and end there
+- A "next step" card driven by the user's state, replacing the static getting-started list: no key → add a key; empty library → calibrate (#21) or import; few ratings → rate 5 more; ready → Tonight
+- Progressive disclosure: hide or collapse Stats, Challenges and Shelves behind a "More" group until the library has enough films to make them useful (setting to show everything)
+- Every empty state points to the one next action, not a menu
+- Measure by running the audit script from a fresh profile: from a blank start, a pick on screen in three taps
+
+### Weakness coverage (from the review)
+Each weakness the review raised is covered by an item above. Scope decisions so none is dropped:
+
+| Weakness | Item | Scope decision |
+| --- | --- | --- |
+| Generic front door | #20 | Tonight is the default landing; For You's four control cards collapse into one summary line above the pick |
+| Cold start | #21 | Calibration quiz seeds taste + scare tolerance; unscored films get an estimated scare level labelled "est." instead of a flat 5 |
+| Stats are counters | #24 | Promoted to P1: insights first, counters second; XP gets levels with named ranks or is removed |
+| Fragile data | #28 | Promoted: PWA, automatic folder backup, "last backed up" reminder in the header when overdue |
+| Feature sprawl | #31 | Above |
+
 ## Notes
 The product should feel like a personal horror curator, not just a database. The strongest differentiator is a recommendation system that understands horror taste, mood, and watch planning.
