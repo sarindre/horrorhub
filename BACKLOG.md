@@ -441,10 +441,18 @@ Priority: P2
 "Slow-burn folk horror under 100 minutes, no animal harm" typed into one box. Start with a deterministic parser (runtime, decade, moods and tags, exclusions mapped to content flags) over your library and TMDb; optionally use an LLM key for freer phrasing, off by default to keep the app local-first.
 
 ### 28. Installable and safe: PWA plus automatic backups
-Status: Planned
+Status: Done (see leftovers)
 Priority: P1
 
 All data lives in one browser's localStorage, so clearing site data or losing the device loses everything and backups are manual. Make the app an installable PWA (offline library, home-screen icon) and add optional automatic backups to a folder you pick (File System Access API where available, with a "last backed up" reminder elsewhere). Consider an encrypted single-file sync for moving between devices.
+
+Done:
+- **Installable and offline.** Web manifest, icons, and a service worker (`public/sw.js`) that stores every built file (the build writes the list into it, see `vite.config.js`), so the app opens and all screens work with no internet, even ones never opened online. Opening the app tries the network first so updates arrive. TMDb posters are stored as you view them (up to 300). The TMDb API is never intercepted. `npm run audit:offline` builds the app, lets a real browser install it, stops the server, and checks it still works; it also asks the browser whether the app is installable. It caught a real bug (servers that send `Vary: Origin` made every stored-file lookup miss).
+- **Automatic backup to a folder** (Settings → Backup & Import): choose a folder (Chrome, Edge and other Chromium browsers), and a backup is written a few seconds after every change: `horrorhub-backup.json` plus the newest 7 daily copies. If the browser forgets folder access after a restart, a banner and a Reconnect button resume it. A manual export counts as a backup too.
+- **Reminder** for browsers that can't write to a folder, or before you set it up: a banner when a library has never been backed up or the last backup is 14 days old, with Export now, Set up, and Remind me later (snoozes 7 days).
+- **Protect storage**: a button asks the browser not to clear the site's data when space is low, and Settings says whether it agreed.
+
+Left for later: the backup holds your library, shelves, challenges and plans, but not settings (comfort limits, region, taste-quiz answers); an "update available" prompt when a new version is installed; and the folder-picker and permission flow has been tested with simulated folders but not clicked through in a real browser (the browser's own dialogs can't be automated).
 
 ### 29. Round-trip with Letterboxd
 Status: Planned

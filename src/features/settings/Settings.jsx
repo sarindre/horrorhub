@@ -4,6 +4,7 @@ import { Button } from "../../components/ui/button.jsx";
 import { Input } from "../../components/ui/input.jsx";
 import { Label } from "../../components/ui/label.jsx";
 import { ExportImport } from "./ExportImport.jsx";
+import { BackupCard } from "./BackupCard.jsx";
 import { ImportedFilms } from "./ImportedFilms.jsx";
 import { usePrefersReducedMotion } from "../../hooks/usePrefersReducedMotion.js";
 import { THEMES } from "../../lib/settings.js";
@@ -74,7 +75,7 @@ function SecretInput({ value, onChange, placeholder }) {
 
 // Controlled by the app: `settings` is the single source of truth and every
 // change goes through `update({ key: value })`, which validates and persists.
-export function Settings({ settings, update, onImport, onRetagAll, onCleanupTags, onRelink, onRetryMatching, watchlist, data, extras = {} }) {
+export function Settings({ backup, app, onExported, settings, update, onImport, onRetagAll, onCleanupTags, onRelink, onRetryMatching, watchlist, data, extras = {} }) {
   const thisYear = new Date().getFullYear();
   const reducedMotion = usePrefersReducedMotion();
   return (
@@ -195,8 +196,10 @@ export function Settings({ settings, update, onImport, onRetagAll, onCleanupTags
       <Card className="rounded-2xl">
         <CardContent className="p-6 space-y-4">
           <div className="text-lg font-semibold">Backup & Import</div>
+          {backup && app ? <BackupCard backup={backup} app={app} /> : null}
+          <div className="text-sm font-semibold">Export and import</div>
           <div className="text-sm opacity-70">Export your library to JSON, import from JSON/CSV, or export a watchlist calendar.</div>
-          <ExportImport data={data || []} onImport={onImport} watchlist={watchlist || []} extras={extras} />
+          <ExportImport data={data || []} onImport={onImport} watchlist={watchlist || []} extras={extras} onExported={onExported} />
         </CardContent>
       </Card>
 

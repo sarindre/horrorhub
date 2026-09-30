@@ -6,7 +6,7 @@ import { createICS } from "../../lib/ics.js";
 import { buildExport } from "../../lib/library.js";
 import { useToast } from "../../lib/toastContext.js";
 
-export function ExportImport({ data, onImport, watchlist = [], extras = {} }) {
+export function ExportImport({ data, onImport, watchlist = [], extras = {}, onExported }) {
   const toast = useToast();
   const fileRef = useRef(null);
   const lbRef = useRef(null);
@@ -25,6 +25,7 @@ export function ExportImport({ data, onImport, watchlist = [], extras = {} }) {
   const downloadJSON = () => {
     const blob = new Blob([JSON.stringify(buildExport(data, extras), null, 2)], { type: "application/json" });
     saveBlob(blob, `horrorhub-${today()}.json`);
+    onExported?.();
   };
 
   // Reads a file, turns its text into an import payload, and hands it to the

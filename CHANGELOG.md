@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added (innovation review, #28)
+- **Installable, works offline.** HorrorHub can be installed as an app (desktop or phone) and opens and works without internet, including every screen; TMDb searches still need a connection. Settings shows an Install button where the browser allows it.
+- **Automatic backup to a folder** (Chromium browsers): pick a folder and a backup is kept there, updated a few seconds after every change, with the newest 7 daily copies. A banner and Reconnect button resume it if the browser forgets folder access.
+- **Backup reminder** banner when a library has never been backed up, or the last backup is two weeks old (with Export now and Remind me later). Manual exports count.
+- **Protect storage** button that asks the browser not to clear HorrorHub's data, with its answer shown.
+- `npm run audit:offline`: builds, installs in a real browser, stops the server and checks the app still works; also checks installability.
+
 ### Changed (challenges, shorter screens)
 - Challenge suggestions are compact: "From your library" and "Ideas from TMDb" show three rows with "Show all", one reason per film, a one-line button, and a Hide link. TMDb ideas are slim rows instead of full film cards.
 - In the daily plan, a run of empty nights is one line ("24 nights open") with a **Fill from library** button, instead of one row per night.

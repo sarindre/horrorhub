@@ -5,7 +5,7 @@ import { Tabs, TabsContent } from "./components/ui/tabs.jsx";
 import { MainNav } from "./components/MainNav.jsx";
 import { useHashTab } from "./hooks/useHashTab.js";
 import { readJSON, readString, writeJSON, writeString } from "./lib/storage.js";
-import { mergeLibraries, validateImport } from "./lib/library.js";
+import { buildExport, mergeLibraries, validateImport } from "./lib/library.js";
 import { FlickerOverlay, FogOverlay, AmbientAudio, LightsOutOverlay } from "./components/overlays.jsx";
 import { getMixer } from "./lib/settings.js";
 import { ContentPrefsContext } from "./lib/contentContext.js";
@@ -35,6 +35,11 @@ import { Settings } from "./features/settings/Settings.jsx";
 import { Attribution } from "./components/Attribution.jsx";
 import { CalibrationContext } from "./lib/calibrationContext.js";
 import { Tonight } from "./features/tonight/Tonight.jsx";
+import { BackupReminder } from "./components/BackupReminder.jsx";
+import { useAutoBackup } from "./hooks/useAutoBackup.js";
+import { useInstallPrompt } from "./hooks/useInstallPrompt.js";
+import { backupReminder, getSnoozedUntil, snoozeReminder } from "./lib/backup.js";
+import { downloadBlob } from "./lib/download.js";
 import { ToastProvider } from "./components/Toast.jsx";
 import { useToast } from "./lib/toastContext.js";
 
@@ -175,6 +180,26 @@ export function HorrorHub() {
     setSelected(null);
   }, [tab]);
 
+  // Keeping the library safe: automatic folder backup, installing the app, and a reminder
+  const backupData = useMemo(
+    () => ({ items: library, extras: { challenges: challengeStore.challenges, marathons: marathonStore.marathons, shelves: shelfStore.shelves } }),
+    [library, challengeStore.challenges, marathonStore.marathons, shelfStore.shelves]
+  );
+  const backup = useAutoBackup(backupData);
+  const installApp = useInstallPrompt();
+  const [snoozedUntil, setSnoozedUntil] = useState(getSnoozedUntil);
+  const reminder = backupReminder({
+    hasData: library.length > 0,
+    autoActive: backup.status === "ready" || backup.status === "loading", // don't flash the banner while checking
+    lastBackupAt: backup.lastBackupAt,
+    snoozedUntil,
+  });
+  const exportNow = () => {
+    const blob = new Blob([JSON.stringify(buildExport(backupData.items, backupData.extras), null, 2)], { type: "application/json" });
+    downloadBlob(blob, `horrorhub-${new Date().toISOString().slice(0, 10)}.json`);
+    backup.recordManual();
+  };
+
   // First-run checklist
   const [onboardingDismissed, setOnboardingDismissed] = usePersistentState("onboarding.dismissed", false);
   const signalCount = useMemo(() => buildTasteProfile(library).signalCount, [library]);
@@ -262,6 +287,16 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
       {!onboardingDismissed && !isOnboardingDone(steps) && !selected ? (
         <GettingStarted steps={steps} onGo={goTab} onDismiss={() => setOnboardingDismissed(true)} />
       ) : null}
+      <BackupReminder
+        reminder={!onboardingDismissed && !isOnboardingDone(steps) ? null : reminder}
+        paused={backup.status === "needs-permission"}
+        supported={backup.supported}
+        lastBackupAt={backup.lastBackupAt}
+        onReconnect={backup.reconnect}
+        onExport={exportNow}
+        onSetup={() => goTab("settings")}
+        onSnooze={() => { snoozeReminder(); setSnoozedUntil(getSnoozedUntil()); }}
+      />
       {saveFailed ? (
         <div role="alert" className="mb-4 rounded-xl border border-red-500/40 bg-red-950/50 px-4 py-3 text-sm">
           Your browser refused to save your library (storage may be full or blocked). Changes since the last successful save
@@ -375,7 +410,7 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
             </TabsContent>
 
             <TabsContent value="settings" className="mt-6">
-              <Settings settings={settings} update={updateSettings} onImport={importLib} onRetagAll={retagAll} onCleanupTags={cleanupTags} onRelink={relinkEverywhere} onRetryMatching={retryMatching} extras={{ challenges: challengeStore.challenges, marathons: marathonStore.marathons, shelves: shelfStore.shelves }} watchlist={watchlist} data={library} />
+              <Settings backup={backup} app={installApp} onExported={backup.recordManual} settings={settings} update={updateSettings} onImport={importLib} onRetagAll={retagAll} onCleanupTags={cleanupTags} onRelink={relinkEverywhere} onRetryMatching={retryMatching} extras={{ challenges: challengeStore.challenges, marathons: marathonStore.marathons, shelves: shelfStore.shelves }} watchlist={watchlist} data={library} />
             </TabsContent>
           </>
           </Suspense>

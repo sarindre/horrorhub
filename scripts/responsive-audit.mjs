@@ -113,7 +113,7 @@ try {
       await page.goto(`${url}#${view}`, { waitUntil: "networkidle2" });
       await new Promise((r) => setTimeout(r, 700)); // lazy screens and fonts
       const result = await page.evaluate(measure);
-      if (args.shots) await page.screenshot({ path: path.join(args.shots, `${view}-${width}.png`) });
+      if (args.shots) await page.screenshot({ path: path.join(args.shots, `${view}-${width}.png`), fullPage: view === "settings" });
       if (result.overflow > 0) bad.push({ view, ...result });
     }
     // states that need a click to reach: the taste quiz on the Tonight screen

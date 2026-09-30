@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "audit:responsive": "node scripts/responsive-audit.mjs"
+    "audit:responsive": "node scripts/responsive-audit.mjs",
+    "audit:offline": "node scripts/verify-offline.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.552.0",

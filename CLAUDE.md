@@ -50,6 +50,7 @@ This project should stay local-first, lightweight, and highly personalized. It i
 - `npm run lint`
 - `npm test`
 - `npm run audit:responsive` (real browser; run it after any layout or CSS change, and before releasing)
+- `npm run audit:offline` (real browser; run it after changing `public/sw.js`, the manifest, `vite.config.js` or how files are loaded)
 
 ## Layout rules
 - No element selectors (`button`, `h1`, `body`...) in `src/index.css` outside `@layer base`. Unlayered CSS beats Tailwind's utility classes (a test enforces this).
@@ -65,6 +66,11 @@ This project should stay local-first, lightweight, and highly personalized. It i
 - Dates: a "day" is a local `YYYY-MM-DD` (see `src/lib/dates.js`). Never pass a `YYYY-MM-DD` string to `new Date(...)` (it's read as UTC, the previous evening west of UTC); use `parseDay`/`dayKey` and `DateField`. Tests run in `America/Los_Angeles` by default (`vite.config.js`) to catch this.
 - Run `npm test`, `npm run lint` and `npm run build` before committing.
 - Tests: pure logic gets plain Vitest tests next to the code; views are smoke-rendered on the server (`renderToString`, so text nodes can be split by `<!-- -->` markers when matching); hooks with effects or async loops are tested in jsdom with `// @vitest-environment jsdom` at the top of the file and a stubbed `fetch`. Background work (auto-tagging, import matching) must depend only on stable callbacks so it doesn't restart on every render.
+
+## Offline and backup
+- `public/sw.js` is the service worker. The build fills in its file list (`offlineManifest` in `vite.config.js`), so new files are included automatically; don't hard-code file names in it. It never touches the TMDb API. Stored lookups use `ignoreVary` on purpose (servers send `Vary: Origin`; without it every lookup misses).
+- Automatic folder backup is `src/lib/folderBackup.js` + `src/hooks/useAutoBackup.js`; the rules (file names, reminders) are pure in `src/lib/backup.js`. What a backup contains is `buildExport` plus the `extras` built in `App.jsx`: if you add a new kind of stored data worth keeping, add it to `backupData` there and to the export/import path.
+- Tests use the fake folder and IndexedDB in `src/test/fakeFolder.js`.
 
 ## Notes for future work
 The app already has a strong foundation of library management. The next refresh should emphasize:
