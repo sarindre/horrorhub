@@ -26,7 +26,7 @@ export function MainNav({ view, onChange }) {
 
   return (
     <nav aria-label="Main">
-      <div role="tablist" aria-label="Sections" className="flex gap-2 overflow-x-auto rounded-xl bg-gray-200/50 p-2 dark:bg-white/10 sm:grid sm:grid-cols-6 sm:overflow-visible">
+      <div role="tablist" aria-label="Sections" className="flex gap-2 overflow-x-auto rounded-xl bg-gray-200/50 p-2 dark:bg-white/10 sm:grid sm:grid-flow-col sm:auto-cols-fr sm:overflow-visible">
         {NAV.map((g, i) => {
           const active = g.id === group.id;
           return (

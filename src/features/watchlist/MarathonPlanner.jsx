@@ -11,7 +11,7 @@ import { createICS } from "../../lib/ics.js";
 import { downloadBlob, slugify } from "../../lib/download.js";
 import { MOOD_PRESETS } from "../../lib/moods.js";
 import { dayKey, parseDay } from "../../lib/challenges.js";
-import { buildTasteProfile } from "../../lib/taste.js";
+import { useTasteProfile } from "../../lib/calibrationContext.js";
 import {
   ANY_THEME,
   FLOW_SHAPES,
@@ -37,8 +37,8 @@ function startFrom(dateKey, time) {
   return d;
 }
 
-function scareLabel(scares) {
-  return scares == null ? "" : `Scare ${scares}/10`;
+function scareLabel(scares, estimated) {
+  return scares == null ? "" : `Scare ${scares}/10${estimated ? " (est.)" : ""}`;
 }
 
 // Builds a themed lineup for one night: fits your time budget, follows the
@@ -58,7 +58,7 @@ export function MarathonPlanner({ library, watchlist, planTime = "20:00", store,
 
   const themes = useMemo(() => [ANY_THEME, ...seasonalThemes(), ...MOOD_PRESETS.filter((p) => p.id !== "all").map((p) => themeFromMood(p.id))], []);
   const theme = themes.find((t) => t.id === themeId) || ANY_THEME;
-  const profile = useMemo(() => buildTasteProfile(library), [library]);
+  const profile = useTasteProfile(library);
   const pool = source === "watchlist" ? watchlist : library;
 
   const plan = useMemo(
@@ -162,7 +162,7 @@ export function MarathonPlanner({ library, watchlist, planTime = "20:00", store,
                       <div className="text-xs opacity-70 text-right">
                         {film.runtime ? fmtRuntime(runtimeOf(film)) : ""}
                         {!picked.item.runtime ? " (est.)" : ""}
-                        {scareLabel(film.scares) ? ` · ${scareLabel(film.scares)}` : ""}
+                        {scareLabel(film.scares, film.scaresEst) ? ` · ${scareLabel(film.scares, film.scaresEst)}` : ""}
                       </div>
                     </div>
                     <div className="mt-1 flex items-center gap-2" aria-hidden="true">

@@ -4,7 +4,7 @@ import { Button } from "../../components/ui/button.jsx";
 import { Input } from "../../components/ui/input.jsx";
 import { useToast } from "../../lib/toastContext.js";
 import { useContentPrefs } from "../../lib/contentContext.js";
-import { buildTasteProfile } from "../../lib/taste.js";
+import { useTasteProfile } from "../../lib/calibrationContext.js";
 import { parseShelfPayload, smartShelves, snapshotFilm } from "../../lib/shelves.js";
 import { FilmTile, ShelfCover } from "./ShelfParts.jsx";
 import { ShelfDetail } from "./ShelfDetail.jsx";
@@ -18,7 +18,7 @@ export function ShelvesView({ library, store, apiKey, onUpdate, onAdd, onOpenDet
   const [openId, setOpenId] = useState(null);
   const [name, setName] = useState("");
 
-  const profile = useMemo(() => buildTasteProfile(library), [library]);
+  const profile = useTasteProfile(library);
   const curated = useMemo(() => smartShelves(library, { profile, prefs }), [library, profile, prefs]);
   const open = store.shelves.find((s) => s.id === openId);
 

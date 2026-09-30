@@ -15,7 +15,7 @@ import { MovieCard } from "../../components/MovieCard.jsx";
 import { useToast } from "../../lib/toastContext.js";
 import { describeError, tmdbGet } from "../../lib/tmdb.js";
 
-export function RecommendationsView({ items, apiKey, onAdd, onUpdate, onRemove, onOpenDetails, inLibraryIds, watchlistIds, mixer, onMixerChange, ratingById }) {
+export function RecommendationsView({ items, apiKey, onAdd, onUpdate, onRemove, onOpenDetails, inLibraryIds, watchlistIds, mixer, calibration, onMixerChange, ratingById }) {
   const toast = useToast();
   const [mood, setMood] = useState(5); // 0 = spooky, 10 = traumatizing
   const [moodPreset, setMoodPreset] = useState("all");
@@ -24,7 +24,7 @@ export function RecommendationsView({ items, apiKey, onAdd, onUpdate, onRemove, 
   mixer = mixer || { ghosts: 1, occult: 1, slasher: 1, folk: 1 };
 
   // One taste profile feeds both lists: your own library and TMDb suggestions.
-  const profile = useMemo(() => buildTasteProfile(items), [items]);
+  const profile = useMemo(() => buildTasteProfile(items, { calibration }), [items, calibration]);
   const recs = useMemo(
     () => rankLibrary(items, profile, { moodId: moodPreset, scare: mood, mixer }, { limit: 12 }),
     [items, profile, moodPreset, mood, mixer]

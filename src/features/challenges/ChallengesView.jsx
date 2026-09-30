@@ -1,17 +1,16 @@
-import { useMemo } from "react";
 import { CalendarClock, Flame } from "lucide-react";
 import { Card, CardContent } from "../../components/ui/card.jsx";
 import { Button } from "../../components/ui/button.jsx";
 import { ChallengeCard } from "./ChallengeCard.jsx";
 import { CHALLENGE_TEMPLATES, evaluateChallenge, seasonalTemplates, watchStreak } from "../../lib/challenges.js";
-import { buildTasteProfile } from "../../lib/taste.js";
+import { useTasteProfile } from "../../lib/calibrationContext.js";
 
 // Themed goals with progress tracked from your watch dates. `store` is the
 // useChallenges() result; the app owns it so exports and imports can include it.
 export function ChallengesView({ library, store, apiKey, onUpdate, onAdd, onOpenDetails }) {
   const { challenges, start, remove } = store;
   const now = new Date();
-  const profile = useMemo(() => buildTasteProfile(library), [library]);
+  const profile = useTasteProfile(library);
 
   const evaluated = challenges.map((challenge) => ({ challenge, result: evaluateChallenge(challenge, library, now) }));
   const live = evaluated.filter((e) => e.result.status === "active" || e.result.status === "upcoming");

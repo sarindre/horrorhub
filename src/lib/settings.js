@@ -1,6 +1,7 @@
 import { readJSON, readString, writeJSON } from "./storage.js";
 import { FLAG_IDS } from "./contentFlags.js";
 import { REGION_CODES } from "./regions.js";
+import { emptyCalibration, normalizeCalibration } from "./calibration.js";
 
 // Settings schema versions
 //   v1 (legacy): flat object under "horrorhub.settings.v1" (plus a stray
@@ -48,6 +49,8 @@ export const DEFAULT_SETTINGS = {
   mixerOccult: 1,
   mixerSlasher: 1,
   mixerFolk: 1,
+  // taste quiz answers (see lib/calibration.js)
+  calibration: emptyCalibration(),
   // weekly watch plan (0 = Sunday)
   planDays: [5, 6],
   planTime: "20:00",
@@ -94,6 +97,7 @@ export function normalizeSettings(raw) {
     mixerOccult: clampInt(s.mixerOccult, 0, 2, d.mixerOccult),
     mixerSlasher: clampInt(s.mixerSlasher, 0, 2, d.mixerSlasher),
     mixerFolk: clampInt(s.mixerFolk, 0, 2, d.mixerFolk),
+    calibration: normalizeCalibration(s.calibration),
     planDays: [...new Set(days)].sort((a, b) => a - b),
     planTime: typeof s.planTime === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(s.planTime) ? s.planTime : d.planTime,
   };

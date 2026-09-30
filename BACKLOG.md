@@ -385,18 +385,22 @@ Priority: P0
 Done: footer notice on every screen; Creepster bundled in `src/assets/fonts` (no request to Google); a "Where you watch" region setting (Settings → Connections) drives streaming badges, Discover release dates and the age rating on details. Left for later: the TMDb logo image (the text notice is in place), OMDb/DoesTheDogDie credit lines, and translated titles (text stays English because tag and warning matching reads English TMDb keywords).
 
 ### 20. "Tonight" home screen (make the core promise the front door)
-Status: Planned
+Status: Done (see leftovers)
 Priority: P1
 
 The app opens on generic Discover browsing (a commodity), and the For You screen puts four control cards above the actual answer. The differentiator is "what should I watch tonight, and will I be okay with it?". Make a Tonight screen the default landing: one big pick with reasons, warnings and runtime, an accept / reroll (never that one again) / different vibe control, the scare and vibe dials collapsed into a single line, plus what's in progress (streak, active challenge, saved plan for tonight).
 
 Acceptance criteria: a first-time-with-data user reaches a pick with one tap; the pick always shows why and any content flags; rerolling never repeats.
 
+Done: Tonight is the landing screen (`src/features/tonight`, logic in `lib/tonight.js`). One pick with reasons, scare level, runtime and content warnings; "Another" (never repeats in a session), "Not for me" (remembered), up to three alternatives; the scare and vibe dials sit behind one summary line; streak and running challenges show as "In progress". For You is now labelled "Tune your picks". Left for later: a TMDb-based pick when the library has nothing unwatched (the empty state links to For You instead), and a saved plan for tonight in the progress strip.
+
 ### 21. Taste calibration quiz and estimated scare levels (fix the cold start)
-Status: Planned
+Status: Done (see leftovers)
 Priority: P1
 
 The taste engine needs rated films and scare scores, and unscored films default to 5/10, so a new user gets weak picks for a long time. Add a 60-second calibration: about a dozen iconic films across subgenres ("seen it and loved it / it was fine / too much / haven't seen it"), seeding the taste profile and scare tolerance immediately. Estimate a scare level for unscored films from TMDb (certification, keywords, genres, vote data) and label it "est.", replacing the flat 5.
+
+Done: a 13-film quiz (loved / fine / too intense / not seen) seeds the taste profile at 70% weight and sets a scare ceiling ("too intense" on a film rated N means nothing above N-1 is suggested first). Unrated films get an estimated scare level from their tags, content flags and keywords, labelled "est." on cards, details, Tonight and the marathon planner, and shifted by how your own scare ratings compare with the estimates. A scare level counts as yours once you move the slider (`scaresRated`); older libraries treat a bare 5 as unrated. Left for later: using TMDb age ratings in the estimate (not stored on films yet), and using estimates in your content limits (limits still read the stored number, which defaults to 5).
 
 ### 22. Group Night (find what everyone will actually watch)
 Status: Planned
@@ -452,7 +456,7 @@ Status: Parked
 Community "look away" timestamps, shared live watch parties, and crowd-sourced scare ratings. They'd be the biggest differentiator of all but require accounts and moderation, which the product direction rules out for now.
 
 ### 31. Feature sprawl: tell people where to start
-Status: Planned
+Status: Planned (first step done: Tonight is the landing screen)
 Priority: P1
 
 There are 10 views in 6 sections and nothing says which to use first. Scope:

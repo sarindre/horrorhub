@@ -1,8 +1,9 @@
-// Navigation model. Ten views, grouped into six sections so the top bar stays
+// Navigation model. Eleven views, grouped into seven sections so the top bar stays
 // short. A view id is what the app tracks (and what shows up in the URL hash);
 // a section is just a way of presenting related views together.
 
 export const NAV = [
+  { id: "tonight", label: "Tonight", views: [{ id: "tonight", label: "Tonight" }] },
   {
     id: "discover",
     label: "Discover",
@@ -23,7 +24,7 @@ export const NAV = [
     id: "foryou",
     label: "For You",
     views: [
-      { id: "recs", label: "Picks for tonight" },
+      { id: "recs", label: "Tune your picks" },
       { id: "continuity", label: "Because you liked…" },
     ],
   },
@@ -40,7 +41,7 @@ export const NAV = [
 ];
 
 export const VIEW_IDS = NAV.flatMap((g) => g.views.map((v) => v.id));
-export const DEFAULT_VIEW = "discover";
+export const DEFAULT_VIEW = "tonight";
 
 export const isView = (id) => VIEW_IDS.includes(id);
 export const groupOf = (viewId) => NAV.find((g) => g.views.some((v) => v.id === viewId)) || NAV[0];

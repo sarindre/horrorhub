@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added (innovation review, #20 and #21)
+- **Tonight**, the new landing screen: one film for tonight with why, scare level, runtime and content warnings, plus "Another", "Not for me" (remembered), alternatives, and a strip for your streak and running challenges.
+- **Taste quiz**: 13 famous films, four answers each, teaches HorrorHub your taste and how scary is too scary before you've rated anything. Retake it any time from Tonight.
+- **Estimated scare levels**: films you haven't scored no longer default to a flat 5/10. HorrorHub estimates from tags, content flags and keywords, labels it "est.", and adjusts to how your own ratings compare.
+
+### Changed (innovation review, #20 and #21)
+- The app opens on Tonight instead of Discover; the top bar has seven sections; For You's first view is now "Tune your picks".
+- Recommendations, shelves, challenges and the marathon planner all use your quiz answers, and the marathon planner labels estimated scare levels.
+- The section tabs share the row evenly however many sections there are.
+
 ### Added (innovation review, #19)
 - TMDb attribution notice in the footer of every screen (required by TMDb's API terms).
 - "Where you watch" region setting: streaming badges, Discover release dates and age ratings now follow it instead of being fixed to the US.

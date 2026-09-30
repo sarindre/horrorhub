@@ -16,7 +16,7 @@ import puppeteer from "puppeteer-core";
 
 const args = Object.fromEntries(process.argv.slice(2).filter((a) => a.startsWith("--")).map((a) => a.slice(2).split("=")));
 const widths = String(args.widths || "320,360,390,768,1280").split(",").map(Number).filter(Boolean);
-const VIEWS = ["discover", "rate", "library", "shelves", "recs", "continuity", "watchlist", "challenges", "stats", "settings"];
+const VIEWS = ["tonight", "discover", "rate", "library", "shelves", "recs", "continuity", "watchlist", "challenges", "stats", "settings"];
 
 function findBrowser() {
   const candidates = [
@@ -116,8 +116,20 @@ try {
       if (args.shots) await page.screenshot({ path: path.join(args.shots, `${view}-${width}.png`) });
       if (result.overflow > 0) bad.push({ view, ...result });
     }
+    // states that need a click to reach: the taste quiz on the Tonight screen
+    await page.goto(`${url}#tonight`, { waitUntil: "networkidle2" });
+    const opened = await page.evaluate(() => {
+      const button = [...document.querySelectorAll("button")].find((b) => b.textContent.trim() === "Take the taste quiz");
+      button?.click();
+      return !!button;
+    });
+    await new Promise((r) => setTimeout(r, 300));
+    const quiz = await page.evaluate(measure);
+    if (args.shots) await page.screenshot({ path: path.join(args.shots, `tonight-quiz-${width}.png`) });
+    if (!opened) bad.push({ view: "tonight-quiz (button not found)", overflow: 1, culprits: [] });
+    else if (quiz.overflow > 0) bad.push({ view: "tonight-quiz", ...quiz });
     await page.close();
-    if (!bad.length) console.log(`  ${String(width).padStart(4)} px  ok (${VIEWS.length} screens)`);
+    if (!bad.length) console.log(`  ${String(width).padStart(4)} px  ok (${VIEWS.length + 1} screens)`);
     for (const b of bad) {
       failures++;
       console.log(`  ${String(width).padStart(4)} px  FAIL ${b.view}: ${b.overflow}px wider than the screen`);

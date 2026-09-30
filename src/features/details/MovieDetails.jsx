@@ -16,6 +16,7 @@ import { useContentPrefs } from "../../lib/contentContext.js";
 import { useContentFlags } from "../../hooks/useContentFlags.js";
 import { CONTENT_FLAGS, evaluateContent, flagLabel, itemFlags } from "../../lib/contentFlags.js";
 import { editFlags, editTags } from "../../lib/tagging.js";
+import { scareOf } from "../../lib/scare.js";
 import { analysisPatch, analyzeMeta, fetchFilmMeta } from "../../lib/filmMeta.js";
 
 const DETAILS_CACHE_MS = 5 * 60 * 1000;
@@ -35,7 +36,8 @@ export function MovieDetails({ item, localItem, onUpdate, onAdd, apiKey, omdbKey
   const [goreCount, setGoreCount] = useState(localItem?.goreCount ?? 0);
   const [disturbCount, setDisturbCount] = useState(localItem?.disturbCount ?? 0);
   const rating = localItem?.rating || 0;
-  const scares = localItem?.scares ?? 5;
+  const scareInfo = scareOf(localItem || item);
+  const scares = scareInfo.value;
 
   useEffect(() => {
     if (!apiKey || !item?.id) return;
@@ -296,10 +298,10 @@ export function MovieDetails({ item, localItem, onUpdate, onAdd, apiKey, omdbKey
                 min={0}
                 max={10}
                 step={1}
-                onValueChange={(val) => onUpdate?.({ ...(localItem || item), scares: val[0] })}
+                onValueChange={(val) => onUpdate?.({ ...(localItem || item), scares: val[0], scaresRated: true })}
                 className="w-40"
               />
-              <span className="tabular-nums">{scares}</span>
+              <span className="tabular-nums">{scares}{scareInfo.estimated ? <span className="ml-1 text-[10px] opacity-70">est.</span> : null}</span>
             </div>
             <div className="w-full">
               <Label className="text-xs opacity-80">Tags</Label>

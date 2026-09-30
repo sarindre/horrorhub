@@ -1,5 +1,7 @@
 import { MOOD_PRESETS, matchesMood } from "./moods.js";
 import { titleKey } from "./library.js";
+import { scareBias, scareOf } from "./scare.js";
+import { calibrationSignals, scareCeilingFrom, SEED_WEIGHT } from "./calibration.js";
 
 // The taste engine: learns what you like from your library and uses it to
 // rank and explain suggestions. Everything here is pure and local.
@@ -42,24 +44,31 @@ function recencyFactor(item, now) {
 //   tags:       [{ tag, count, score }] best first; score is roughly -1..1
 //   moods:      the same idea per mood preset (Occult, Slasher, ...)
 //   scarePref:  scare level (0-10) of the films you enjoyed, or null
-//   signalCount: how many films informed this (drives the "still learning" hint)
-export function buildTasteProfile(items, { now = Date.now() } = {}) {
+//   signalCount: how many films you rated or watched (drives the "still learning" hint)
+//   seedCount:  quiz answers that also informed it (they count for less)
+//   scareBias:  how far your scare ratings run from the estimates (see scare.js)
+//   scareCeiling: scare level you said was too much in the quiz, or null
+// `calibration` is the taste quiz ({ answers, doneAt }), if taken.
+export function buildTasteProfile(items, { now = Date.now(), calibration = null } = {}) {
   const sums = new Map();
   const counts = new Map();
   let signalCount = 0;
+  let seedCount = 0;
+  const bias = scareBias(items);
   let scareNum = 0;
   let scareDen = 0;
 
-  for (const item of items || []) {
+  for (const item of [...(items || []), ...calibrationSignals(calibration)]) {
     if (!hasSignal(item)) continue;
-    signalCount++;
-    const weight = ratingAffinity(item) * recencyFactor(item, now);
+    if (item.seed) seedCount++;
+    else signalCount++;
+    const weight = ratingAffinity(item) * recencyFactor(item, now) * (item.seed ? SEED_WEIGHT : 1);
     for (const tag of uniqueTags(item)) {
       sums.set(tag, (sums.get(tag) || 0) + weight);
       counts.set(tag, (counts.get(tag) || 0) + 1);
     }
     if (weight > 0) {
-      scareNum += weight * (item.scares ?? 5);
+      scareNum += weight * scareOf(item, { bias }).value;
       scareDen += weight;
     }
   }
@@ -82,6 +91,9 @@ export function buildTasteProfile(items, { now = Date.now() } = {}) {
 
   return {
     signalCount,
+    seedCount,
+    scareBias: bias,
+    scareCeiling: scareCeilingFrom(calibration),
     tags,
     tagScore,
     likedTags: tags.filter((t) => t.score >= LIKED_THRESHOLD && t.count >= MIN_EVIDENCE_FOR_DISPLAY).slice(0, 5),
@@ -92,7 +104,7 @@ export function buildTasteProfile(items, { now = Date.now() } = {}) {
 }
 
 // "Still learning" until there's enough to lean on.
-export const isLearning = (profile) => profile.signalCount < 8;
+export const isLearning = (profile) => profile.signalCount + (profile.seedCount || 0) * SEED_WEIGHT < 8;
 
 // ---- ranking films you already own ----
 
@@ -109,8 +121,9 @@ export function scoreLibraryItem(item, profile, { moodId = "all", scare = 5, mix
   const reasons = [];
   const tags = uniqueTags(item);
 
-  // fit to tonight's scare slider
-  const proximity = 1 - Math.min(1, Math.abs(scare - (item.scares ?? 5)) / 10);
+  // fit to tonight's scare slider (your own scare rating, or an estimate)
+  const filmScare = scareOf(item, { bias: profile.scareBias || 0 }).value;
+  const proximity = 1 - Math.min(1, Math.abs(scare - filmScare) / 10);
   let score = proximity * 0.6;
 
   // learned taste: the film's best-matching tags (and a penalty for tags you rate low)
@@ -125,11 +138,14 @@ export function scoreLibraryItem(item, profile, { moodId = "all", scare = 5, mix
   }
 
   // does the scare level match the films you usually love?
-  if (profile.scarePref != null && profile.signalCount >= 3) {
-    const closeness = 1 - Math.min(1, Math.abs(profile.scarePref - (item.scares ?? 5)) / 10);
+  if (profile.scarePref != null && profile.signalCount + (profile.seedCount || 0) >= 3) {
+    const closeness = 1 - Math.min(1, Math.abs(profile.scarePref - filmScare) / 10);
     score += closeness * 0.15;
     if (closeness >= 0.85) reasons.push("Right at your usual scare level");
   }
+
+  // you said films around this level were too intense
+  if (profile.scareCeiling != null && filmScare > profile.scareCeiling) score -= 0.08 * (filmScare - profile.scareCeiling);
 
   // the chosen night vibe
   if (moodId !== "all" && matchesMood(item.tags || [], moodId)) {

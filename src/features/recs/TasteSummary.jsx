@@ -6,18 +6,19 @@ import { isLearning } from "../../lib/taste.js";
 // What HorrorHub has learned about your taste, so suggestions don't feel like magic.
 export function TasteSummary({ profile, onUseScare }) {
   const { signalCount, likedTags, lovedMoods, scarePref } = profile;
+  const seedCount = profile.seedCount || 0;
   return (
     <Card className="rounded-2xl">
       <CardContent className="p-4 space-y-2">
         <div className="flex items-center gap-2 text-sm uppercase tracking-wide opacity-80">
           <Sparkles className="h-4 w-4" /> Your taste
         </div>
-        {signalCount === 0 ? (
+        {signalCount + seedCount === 0 ? (
           <div className="text-sm opacity-70">Rate or log a few films and HorrorHub will learn what you like, then use it to rank suggestions.</div>
         ) : (
           <div className="space-y-1 text-sm">
             <div className="opacity-70">
-              Learned from {signalCount} film{signalCount === 1 ? "" : "s"} you rated or watched.
+              Learned from {signalCount} film{signalCount === 1 ? "" : "s"} you rated or watched{seedCount ? " and your taste quiz" : ""}.
               {isLearning(profile) ? " Rate a few more to sharpen it." : ""}
             </div>
             {lovedMoods.length ? (

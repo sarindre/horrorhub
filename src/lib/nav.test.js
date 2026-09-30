@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_VIEW, NAV, VIEW_IDS, groupOf, isView, stepIndex } from "./nav.js";
 
 describe("nav model", () => {
-  it("groups the ten views into six sections", () => {
-    expect(NAV).toHaveLength(6);
-    expect(VIEW_IDS).toHaveLength(10);
-    expect(new Set(VIEW_IDS).size).toBe(10); // no view is listed twice
+  it("groups the eleven views into seven sections", () => {
+    expect(NAV).toHaveLength(7);
+    expect(VIEW_IDS).toHaveLength(11);
+    expect(new Set(VIEW_IDS).size).toBe(11); // no view is listed twice
   });
 
   it("keeps every view id the app already uses", () => {
-    for (const id of ["discover", "library", "shelves", "watchlist", "recs", "rate", "continuity", "challenges", "stats", "settings"]) expect(isView(id)).toBe(true);
+    for (const id of ["tonight", "discover", "library", "shelves", "watchlist", "recs", "rate", "continuity", "challenges", "stats", "settings"]) expect(isView(id)).toBe(true);
     expect(isView("nope")).toBe(false);
     expect(isView("")).toBe(false);
     expect(isView(undefined)).toBe(false);
@@ -24,9 +24,9 @@ describe("nav model", () => {
     expect(groupOf("bogus")).toBe(NAV[0]);
   });
 
-  it("opens each section on its first view, and the app on Discover", () => {
-    expect(NAV.map((g) => g.views[0].id)).toEqual(["discover", "library", "recs", "watchlist", "stats", "settings"]);
-    expect(DEFAULT_VIEW).toBe("discover");
+  it("opens each section on its first view, and the app on Tonight", () => {
+    expect(NAV.map((g) => g.views[0].id)).toEqual(["tonight", "discover", "library", "recs", "watchlist", "stats", "settings"]);
+    expect(DEFAULT_VIEW).toBe("tonight");
   });
 
   it("uses distinct labels so tabs can be told apart", () => {
@@ -35,8 +35,8 @@ describe("nav model", () => {
   });
 
   it("wraps around when stepping through tabs", () => {
-    expect(stepIndex(0, -1, 6)).toBe(5);
-    expect(stepIndex(5, 1, 6)).toBe(0);
+    expect(stepIndex(0, -1, 7)).toBe(6);
+    expect(stepIndex(6, 1, 7)).toBe(0);
     expect(stepIndex(2, 1, 6)).toBe(3);
   });
 });

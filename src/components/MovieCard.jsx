@@ -17,13 +17,15 @@ import { ContentWarnings } from "./ContentWarnings.jsx";
 import { useContentPrefs } from "../lib/contentContext.js";
 import { evaluateContent, itemFlags } from "../lib/contentFlags.js";
 import { editTags } from "../lib/tagging.js";
+import { scareOf } from "../lib/scare.js";
 
 export function MovieCard({ item, onAdd, onUpdate, onRemove, showWatchlist = true, compact = false, onOpenDetails, isInLibrary = false, isWatchlisted = false, providers = [], warnings }) {
   const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState(item.notes || "");
   const [tags, setTags] = useState(item.tags || []);
   const [rating, setRating] = useState(item.rating || 0);
-  const [scares, setScares] = useState(item.scares ?? 5);
+  const scareInfo = scareOf(item);
+  const [scares, setScares] = useState(scareInfo.value);
   const [addedUI, setAddedUI] = useState(false);
   const [watchlistedUI, setWatchlistedUI] = useState(!!item.watchlist || isWatchlisted);
   const isWatched = isInLibrary || (item.watchedDates?.length || 0) > 0;
@@ -43,7 +45,7 @@ export function MovieCard({ item, onAdd, onUpdate, onRemove, showWatchlist = tru
     setNotes(item.notes || "");
     setTags(item.tags || []);
     setRating(item.rating || 0);
-    setScares(item.scares ?? 5);
+    setScares(scareOf(item).value);
     setAddedUI(false);
     setWatchlistedUI(!!item.watchlist || isWatchlisted);
     // Resets the editable fields when the card shows a different film (or its
@@ -55,7 +57,8 @@ export function MovieCard({ item, onAdd, onUpdate, onRemove, showWatchlist = tru
   const poster = item.poster ? TMDB_IMG(item.poster, "w342") : "";
 
   const saveDetails = () => {
-    onUpdate?.({ ...item, notes, ...editTags(item, tags), rating, scares });
+    const scareChanged = scares !== scareOf(item).value;
+    onUpdate?.({ ...item, notes, ...editTags(item, tags), rating, ...(scareChanged ? { scares, scaresRated: true } : {}) });
     setOpen(false);
   };
   const toggleWatchlist = () => {
@@ -162,14 +165,14 @@ export function MovieCard({ item, onAdd, onUpdate, onRemove, showWatchlist = tru
                     onValueChange={(val) => {
                       const v = val[0];
                       setScares(v);
-                      const updated = { ...item, scares: v };
+                      const updated = { ...item, scares: v, scaresRated: true };
                       if (onUpdate) onUpdate(updated);
                       else onAdd?.(updated);
                     }}
                     className="w-28"
                   />
                   <span role="img" aria-label="screaming" className="text-lg">😱</span>
-                  <span className="tabular-nums">{scares}</span>
+                  <span className="tabular-nums">{scares}{scareInfo.estimated ? <span className="ml-1 text-[10px] opacity-70">est.</span> : null}</span>
                 </div>
                 {onUpdate && (
                   <WatchDialog label="Watched" longAgo onLog={(iso) => onUpdate?.({ ...item, ...watchPatch(item, iso) })} />
@@ -331,7 +334,7 @@ export function MovieCard({ item, onAdd, onUpdate, onRemove, showWatchlist = tru
                 />
                 <div className="flex items-center gap-2 opacity-80 text-sm">
                   <Flame className="h-4 w-4" />
-                  Scare: {scares}
+                  Scare: {scares}{scareInfo.estimated ? " (est.)" : ""}
                 </div>
                 {showWatchlist && !(item.watchedDates?.length) && (
                   <Button variant={item.watchlist ? "default" : "outline"} size="sm" onClick={toggleWatchlist} title="Toggle watchlist">

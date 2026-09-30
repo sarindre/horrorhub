@@ -24,11 +24,13 @@ afterEach(() => {
 });
 
 describe("main navigation", () => {
-  it("shows six sections and only offers sub-views where a section has more than one", () => {
+  it("shows seven sections and only offers sub-views where a section has more than one", () => {
     render(<App />);
     const sections = within(screen.getByRole("tablist", { name: "Sections" })).getAllByRole("tab").map((t) => t.textContent);
-    expect(sections).toEqual(["Discover", "My Library", "For You", "Plan", "Stats", "Settings"]);
-    // Discover has two views, so its sub-tabs are showing
+    expect(sections).toEqual(["Tonight", "Discover", "My Library", "For You", "Plan", "Stats", "Settings"]);
+    // Tonight has one view, so no sub-tabs; Discover has two
+    expect(screen.queryByRole("tablist", { name: /views$/ })).toBeNull();
+    fireEvent.click(tab("Discover"));
     expect(screen.getByRole("tablist", { name: "Discover views" })).toBeTruthy();
     fireEvent.click(tab("My Library"));
     expect(screen.getByRole("tablist", { name: "My Library views" })).toBeTruthy(); // All films + Shelves
@@ -38,6 +40,7 @@ describe("main navigation", () => {
 
   it("switches between the views inside a section", async () => {
     render(<App />);
+    fireEvent.click(tab("Discover"));
     fireEvent.click(tab("Rate films"));
     expect(await screen.findByText("Rating Roulette", {}, WAIT)).toBeTruthy();
     expect(tab("Rate films").getAttribute("aria-selected")).toBe("true");
@@ -84,17 +87,17 @@ describe("main navigation", () => {
 describe("keyboard", () => {
   it("moves between sections with the arrow keys, wrapping at the ends, and Home/End", () => {
     render(<App />);
-    const discover = tab("Discover");
-    discover.focus();
-    fireEvent.keyDown(discover, { key: "ArrowRight" });
-    expect(tab("My Library").getAttribute("aria-selected")).toBe("true");
-    expect(document.activeElement).toBe(tab("My Library"));
-    fireEvent.keyDown(tab("My Library"), { key: "ArrowLeft" });
-    fireEvent.keyDown(tab("Discover"), { key: "ArrowLeft" }); // wraps to the last section
+    const tonight = tab("Tonight");
+    tonight.focus();
+    fireEvent.keyDown(tonight, { key: "ArrowRight" });
+    expect(tab("Discover").getAttribute("aria-selected")).toBe("true");
+    expect(document.activeElement).toBe(tab("Discover"));
+    fireEvent.keyDown(tab("Discover"), { key: "ArrowLeft" });
+    fireEvent.keyDown(tab("Tonight"), { key: "ArrowLeft" }); // wraps to the last section
     expect(tab("Settings").getAttribute("aria-selected")).toBe("true");
     fireEvent.keyDown(tab("Settings"), { key: "Home" });
-    expect(tab("Discover").getAttribute("aria-selected")).toBe("true");
-    fireEvent.keyDown(tab("Discover"), { key: "End" });
+    expect(tab("Tonight").getAttribute("aria-selected")).toBe("true");
+    fireEvent.keyDown(tab("Tonight"), { key: "End" });
     expect(tab("Settings").getAttribute("aria-selected")).toBe("true");
   });
 
@@ -109,6 +112,9 @@ describe("keyboard", () => {
 
   it("only the selected tab is in the tab order (roving tabindex)", () => {
     render(<App />);
+    expect(tab("Tonight").getAttribute("tabindex")).toBe("0");
+    expect(tab("Discover").getAttribute("tabindex")).toBe("-1");
+    fireEvent.click(tab("Discover"));
     expect(tab("Discover").getAttribute("tabindex")).toBe("0");
     expect(tab("My Library").getAttribute("tabindex")).toBe("-1");
     expect(tab("Browse").getAttribute("tabindex")).toBe("0");
@@ -125,14 +131,14 @@ describe("URL and the browser's Back button", () => {
     expect(hash()).toBe("#settings");
   });
 
-  it("opens the view named in the URL, and falls back to Discover for junk", () => {
+  it("opens the view named in the URL, and falls back to Tonight for junk", () => {
     window.location.hash = "#stats";
     const first = render(<App />);
     expect(tab("Stats").getAttribute("aria-selected")).toBe("true");
     first.unmount();
     window.location.hash = "#not-a-view";
     render(<App />);
-    expect(tab("Discover").getAttribute("aria-selected")).toBe("true");
+    expect(tab("Tonight").getAttribute("aria-selected")).toBe("true");
   });
 
   it("follows the URL when it changes (Back, Forward, or a bookmark)", async () => {

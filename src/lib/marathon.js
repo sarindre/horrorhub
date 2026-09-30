@@ -3,6 +3,7 @@ import { evaluateItem } from "./contentFlags.js";
 import { matchesClause } from "./challenges.js";
 import { MOOD_PRESETS } from "./moods.js";
 import { buildTasteProfile, scoreLibraryItem } from "./taste.js";
+import { scareOf } from "./scare.js";
 
 // Marathon planner: pick a lineup of films for one night that fits a theme, a
 // time budget and your limits, then order it so the scare level flows the way
@@ -105,11 +106,17 @@ export function buildMarathon(pool, { count = 3, budgetMinutes = 360, theme = AN
   const p = profile || buildTasteProfile(pool, { now: now.getTime() });
   const year = now.getFullYear();
   const seen = new Set();
-  const eligible = (pool || []).filter((item) => {
-    if (seen.has(item.id)) return false;
-    seen.add(item.id);
-    return (item.year === undefined || Number(item.year) <= year) && matchesTheme(item, theme) && !evaluateItem(item, prefs).blocked;
-  });
+  const eligible = (pool || [])
+    .filter((item) => {
+      if (seen.has(item.id)) return false;
+      seen.add(item.id);
+      return (item.year === undefined || Number(item.year) <= year) && matchesTheme(item, theme) && !evaluateItem(item, prefs).blocked;
+    })
+    // films without your own scare rating carry an estimate, flagged so it can be labelled
+    .map((item) => {
+      const s = scareOf(item, { bias: p.scareBias || 0 });
+      return s.estimated ? { ...item, scares: s.value, scaresEst: true } : item;
+    });
 
   const scare = p.scarePref != null ? Math.round(p.scarePref) : 5;
   const ranked = eligible
@@ -181,6 +188,7 @@ export function normalizeMarathon(raw) {
       title: f.title.trim(),
       year: Number.isFinite(Number(f.year)) && Number(f.year) > 0 ? Number(f.year) : undefined,
       scares: Number.isFinite(Number(f.scares)) ? Math.min(10, Math.max(0, Math.round(Number(f.scares)))) : undefined,
+      scaresEst: f.scaresEst === true ? true : undefined,
       runtime: Number(f.runtime) > 0 ? Math.round(Number(f.runtime)) : undefined,
     }));
   if (!films.length) return null;
@@ -209,7 +217,7 @@ export function mergeMarathons(existing, incoming) {
   return { marathons: result, added };
 }
 
-export const snapshotFilm = (item) => ({ id: item.id, title: item.title, year: item.year, scares: item.scares, runtime: item.runtime });
+export const snapshotFilm = (item) => ({ id: item.id, title: item.title, year: item.year, scares: item.scares, scaresEst: item.scaresEst || undefined, runtime: item.runtime });
 
 export const loadMarathons = () => normalizeMarathons(readJSON(MARATHONS_KEY)?.items);
 export const saveMarathons = (list) => writeJSON(MARATHONS_KEY, { version: MARATHONS_VERSION, items: list });

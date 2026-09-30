@@ -84,6 +84,8 @@ export function normalizeItem(raw) {
     year: Number.isFinite(year) && year > 0 ? year : undefined,
     rating: Number.isFinite(rating) ? clamp(Math.round(rating * 2) / 2, 0, 5) : 0,
     scares: Number.isFinite(scares) ? clamp(Math.round(scares), 0, 10) : DEFAULT_SCARES,
+    // set once you move the scare slider; without it a scare level is only an estimate (see scare.js)
+    scaresRated: raw.scaresRated === true ? true : undefined,
     tags,
     // provenance can only refer to values that exist / were removed
     autoTags: normalizeTags(raw.autoTags).filter((t) => tags.includes(t)),

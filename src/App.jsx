@@ -33,6 +33,8 @@ import { parseShelfPayload } from "./lib/shelves.js";
 import { usePrefersReducedMotion } from "./hooks/usePrefersReducedMotion.js";
 import { Settings } from "./features/settings/Settings.jsx";
 import { Attribution } from "./components/Attribution.jsx";
+import { CalibrationContext } from "./lib/calibrationContext.js";
+import { Tonight } from "./features/tonight/Tonight.jsx";
 import { ToastProvider } from "./components/Toast.jsx";
 import { useToast } from "./lib/toastContext.js";
 
@@ -75,6 +77,7 @@ export function HorrorHub() {
       releaseDate: m.releaseDate || m.date,
       rating: m.rating,
       scares: m.scares,
+      scaresRated: m.scaresRated,
       tags: m.tags,
       autoTags: m.autoTags,
       removedTags: m.removedTags,
@@ -239,6 +242,7 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
 
   return (
     <ContentPrefsContext.Provider value={contentPrefs}>
+    <CalibrationContext.Provider value={settings.calibration}>
     <div className={`p-4 md:p-8 max-w-7xl mx-auto ${settings.highContrast ? 'hc' : ''} ${settings.dyslexic ? 'dyslexic' : ''}`}>
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -304,6 +308,18 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
         ) : (
           <Suspense fallback={<div role="status" className="mt-6 text-sm opacity-70">Loading…</div>}>
           <>
+        <TabsContent value="tonight" className="mt-6">
+          <Tonight
+            library={library}
+            calibration={settings.calibration}
+            mixer={mixer}
+            challenges={challengeStore.challenges}
+            onSaveCalibration={(c) => updateSettings({ calibration: c })}
+            onOpenDetails={setSelected}
+            onGo={goTab}
+          />
+        </TabsContent>
+
         <TabsContent value="discover" className="mt-6">
           <Discover apiKey={settings.apiKey} region={settings.region} onAdd={addToLibrary} onRemove={remove} inLibraryIds={inLibraryIds} onToggleWatchlist={addToLibrary} onOpenDetails={setSelected} watchlistIds={watchlistIds} ratingById={ratingById} />
         </TabsContent>
@@ -328,6 +344,7 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
     watchlistIds={watchlistIds}
     ratingById={ratingById}
     mixer={mixer}
+    calibration={settings.calibration}
     onMixerChange={(name, value) => updateSettings({ [`mixer${name}`]: value })}
   />
 </TabsContent>
@@ -383,6 +400,7 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
         </div>
       ) : null}
     </div>
+    </CalibrationContext.Provider>
     </ContentPrefsContext.Provider>
   );
 }
