@@ -30,7 +30,8 @@ Then open **Settings**, paste your TMDb v4 *Read Access Token* (free at themovie
 | `npm run dev` | Start the dev server |
 | `npm run build` | Production build |
 | `npm run lint` | ESLint |
-| `npm test` | Unit tests and a render smoke test (Vitest) |
+| `npm test` | Unit, render and interaction tests (Vitest) |
+| `npm run audit:responsive` | Opens every screen in Edge/Chrome at phone, tablet and desktop widths and fails if anything makes the page wider than the screen. Needs Edge or Chrome installed (set `CHROME_PATH` if it isn't found); add `-- --shots=./shots` to save screenshots |
 
 ## Your data
 

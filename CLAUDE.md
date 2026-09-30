@@ -49,6 +49,12 @@ This project should stay local-first, lightweight, and highly personalized. It i
 - `npm run build`
 - `npm run lint`
 - `npm test`
+- `npm run audit:responsive` (real browser; run it after any layout or CSS change, and before releasing)
+
+## Layout rules
+- No element selectors (`button`, `h1`, `body`...) in `src/index.css` outside `@layer base`. Unlayered CSS beats Tailwind's utility classes (a test enforces this).
+- Rows of buttons or controls need `flex-wrap`; a card wrapped in another element inside a grid needs `min-w-0` on the wrapper, or a long non-wrapping title sets the column width. `npm run audit:responsive` catches both.
+- Bare `<button>` text is centered by default; use `text-left` for title-style buttons.
 
 ## Data rules
 - Never write to `localStorage` directly; use `src/lib/storage.js` (`readJSON`/`writeJSON`), `usePersistentState` (UI preferences, stored in one object by `src/lib/prefs.js`) or `useSettings` (app settings).
