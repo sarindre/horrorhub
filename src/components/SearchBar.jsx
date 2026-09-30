@@ -29,7 +29,7 @@ export default function SearchBar({
           onKeyDown={handleKey}
           placeholder={placeholder}
           className="
-            flex-1 bg-transparent outline-none text-base
+            min-w-0 flex-1 bg-transparent outline-none text-base
             placeholder:text-zinc-500
           "
         />

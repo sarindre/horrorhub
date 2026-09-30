@@ -154,7 +154,7 @@ export function RecommendationsView({ items, apiKey, onAdd, onUpdate, onRemove, 
             <div className="text-xs opacity-60">Based on {seedTitles.slice(0, 3).join(", ")}{seedTitles.length > 3 ? ` and ${seedTitles.length - 3} more` : ""}.</div>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
               {external.map((r) => (
-                <div key={r.id} className="space-y-1">
+                <div key={r.id} className="min-w-0 space-y-1">
                   <MovieCard
                     item={{ id: r.id, title: r.title, year: r.year ? Number(r.year) : undefined, poster: r.poster, overview: "", voteAvg: r.voteAvg, rating: ratingById?.[r.id] || 0 }}
                     onAdd={onAdd}
@@ -186,7 +186,7 @@ export function RecommendationsView({ items, apiKey, onAdd, onUpdate, onRemove, 
         {libraryPicks.length ? (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
             {libraryPicks.map(({ item, reasons }) => (
-              <div key={item.id} className="space-y-1">
+              <div key={item.id} className="min-w-0 space-y-1">
                 <MovieCard item={item} onUpdate={onUpdate} onRemove={onRemove} compact onOpenDetails={onOpenDetails} />
                 <div className="px-1 text-xs opacity-60">{reasons.join(" · ")}</div>
               </div>

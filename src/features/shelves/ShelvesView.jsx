@@ -101,7 +101,7 @@ export function ShelvesView({ library, store, apiKey, onUpdate, onAdd, onOpenDet
       {store.shelves.length ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {store.shelves.map((shelf) => (
-            <button key={shelf.id} type="button" onClick={() => setOpenId(shelf.id)} className="text-left" aria-label={`Open shelf ${shelf.name}`}>
+            <button key={shelf.id} type="button" onClick={() => setOpenId(shelf.id)} className="min-w-0 text-left" aria-label={`Open shelf ${shelf.name}`}>
               <Card className="h-full rounded-2xl transition-colors hover:border-red-500/60">
                 <CardContent className="flex gap-3 p-3">
                   <ShelfCover films={shelf.films} className="h-24 w-20 shrink-0" />

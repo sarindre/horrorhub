@@ -136,7 +136,7 @@ export function MarathonPlanner({ library, watchlist, planTime = "20:00", store,
               {Object.entries(FLOW_SHAPES).map(([id, s]) => <option key={id} value={id}>{s.label}</option>)}
             </select>
           </label>
-          <label className="inline-flex items-center gap-2">
+          <label className="inline-flex flex-wrap items-center gap-2">
             Start
             <Input type="date" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} className="w-40" />
             <Input type="time" value={time} onChange={(e) => setTime(e.target.value || planTime)} className="w-28" />
@@ -155,7 +155,7 @@ export function MarathonPlanner({ library, watchlist, planTime = "20:00", store,
                       <div>
                         <span className="opacity-60 text-xs">{i + 1}. {fmtDay(start)}, {fmtTime(start)} – {fmtTime(end)}</span>
                         <div>
-                          <button className="font-medium hover:underline" onClick={() => onOpenDetails?.(picked.item)}>{film.title}</button>
+                          <button className="text-left font-medium hover:underline" onClick={() => onOpenDetails?.(picked.item)}>{film.title}</button>
                           {film.year ? <span className="opacity-60"> ({film.year})</span> : null}
                         </div>
                       </div>

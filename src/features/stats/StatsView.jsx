@@ -175,9 +175,9 @@ export function StatsView({ items, longAgoYear = 1900 }) {
 
       <Card className="rounded-2xl">
         <CardContent className="p-6 space-y-3">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="text-lg font-semibold">Watch heatmap</div>
-            <div className="flex items-center gap-2 text-sm">
+            <div className="flex flex-wrap items-center gap-2 text-sm">
               <label className="inline-flex items-center gap-2 text-sm">
                 From
                 <DateField value={rangeStart} onChange={setRangeStart} className="py-1" />

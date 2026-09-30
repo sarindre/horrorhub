@@ -122,7 +122,7 @@ export function Discover({ apiKey, onAdd, onRemove, inLibraryIds, onToggleWatchl
         </div>
 
         {/* sort quick buttons */}
-        <div className="flex gap-2 text-sm">
+        <div className="flex flex-wrap gap-2 text-sm">
           <Button size="sm" variant={sort === "popularity.desc" ? "default" : "outline"} onClick={() => setSort("popularity.desc")}>Popular</Button>
           <Button size="sm" variant={sort === "vote_average.desc" ? "default" : "outline"} onClick={() => setSort("vote_average.desc")}>Critically rated</Button>
           <Button size="sm" variant={sort === "primary_release_date.desc" ? "default" : "outline"} onClick={() => setSort("primary_release_date.desc")}>Newest</Button>
@@ -206,7 +206,7 @@ export function Discover({ apiKey, onAdd, onRemove, inLibraryIds, onToggleWatchl
         <span>provider legends</span>
       </div>
 
-      <div className="flex items-center gap-3 text-sm">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
         <span>Available on</span>
         {['netflix','prime','hulu','disney'].map(k=> (
           <label key={k} className="inline-flex items-center gap-1">
@@ -236,7 +236,7 @@ export function Discover({ apiKey, onAdd, onRemove, inLibraryIds, onToggleWatchl
 
       <div className={`grid gap-4 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 ${loading && results.length ? "opacity-60 transition-opacity" : ""}`}>
         {shown.map((r) => (
-          <div key={r.id} className="fade-in-up">
+          <div key={r.id} className="fade-in-up min-w-0">
             <MovieCard
               item={{ ...r, rating: ratingById?.[r.id] ?? 0 }}
               onAdd={(it) => onAdd?.(it)}

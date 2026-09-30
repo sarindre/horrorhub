@@ -63,12 +63,12 @@ export function ContinuityGraph({ items, apiKey, onOpenDetails }){
   return (
     <Card className="rounded-2xl">
       <CardContent className="p-4 space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-sm uppercase tracking-wide opacity-80">
             <Wand2 className="h-4 w-4" /> Because You Liked…
           </div>
-          <div className="flex items-center gap-2">
-            <select className="bg-transparent border rounded px-2 py-1 text-sm" value={seedId} onChange={(e)=> setSeedId(isNaN(Number(e.target.value))? e.target.value : Number(e.target.value))}>
+          <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
+            <select className="min-w-0 max-w-full bg-transparent border rounded px-2 py-1 text-sm" value={seedId} onChange={(e)=> setSeedId(isNaN(Number(e.target.value))? e.target.value : Number(e.target.value))}>
               {items.map(i=> (
                 <option key={i.id} value={i.id}>{i.title}</option>
               ))}

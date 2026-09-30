@@ -113,7 +113,7 @@ export function WatchlistView({ items, library = items, marathonStore, onUpdate,
                   <li key={p.film.id}>
                     <span className="opacity-70">{p.start.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}, {p.start.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}</span>
                     {" · "}
-                    <button className="hover:underline" onClick={() => onOpenDetails?.(p.film)}>{p.film.title}</button>
+                    <button className="text-left hover:underline" onClick={() => onOpenDetails?.(p.film)}>{p.film.title}</button>
                     <ContentWarnings flags={itemFlags(p.film)} avoid={prefs.avoidFlags} reasons={verdict.blocked ? verdict.reasons : []} showFlags={prefs.showWarnings} />
                   </li>
                 );

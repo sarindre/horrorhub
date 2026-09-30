@@ -175,7 +175,7 @@ export function ChallengeCard({ challenge, result, library, profile, apiKey, onU
               {picks.map((p) => (
                 <li key={p.item.id} className="flex items-center justify-between gap-2">
                   <span className="min-w-0">
-                    <button className="hover:underline" onClick={() => onOpenDetails?.(p.item)}>{p.item.title}</button>
+                    <button className="text-left hover:underline" onClick={() => onOpenDetails?.(p.item)}>{p.item.title}</button>
                     {p.item.year ? <span className="opacity-60"> ({p.item.year})</span> : null}
                     <div className="text-xs opacity-60">{p.reasons.join(" · ")}</div>
                   </span>

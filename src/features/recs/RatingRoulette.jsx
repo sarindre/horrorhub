@@ -76,7 +76,7 @@ export function RatingRoulette({ apiKey, onAdd, onOpenDetails, ratingMap={}, inL
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="text-lg font-semibold">Rating Roulette</div>
         <div className="flex items-center gap-3 flex-wrap justify-end">
           <label className="inline-flex items-center gap-2 text-sm">
@@ -94,14 +94,14 @@ export function RatingRoulette({ apiKey, onAdd, onOpenDetails, ratingMap={}, inL
               {[6,9,12,18,20].map(n=> <option key={n} value={n}>{n}</option>)}
             </select>
           </label>
-          <div className="flex items-center gap-2 text-sm">
+          <div className="flex flex-wrap items-center gap-2 text-sm">
             <span>Page {page}{totalPages? ` / ${totalPages}`: ''}</span>
             <input type="number" min={1} className="w-16 bg-transparent border rounded px-2 py-1" value={jumpVal}
                    onChange={(e)=> setJumpVal(Number(e.target.value)||1)}
                    onKeyDown={(e)=> { if (e.key==='Enter') goJump(); }} />
             <Button size="sm" variant="outline" onClick={goJump}>Go</Button>
           </div>
-          <div className="flex items-center gap-2 text-sm">
+          <div className="flex flex-wrap items-center gap-2 text-sm">
             <span>Available on</span>
             {['netflix','prime','hulu','disney'].map(k=> (
               <label key={k} className="inline-flex items-center gap-1">

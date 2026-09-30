@@ -127,65 +127,37 @@
 .hc { filter: contrast(1.15) saturate(1.1); }
 .dyslexic { font-family: "OpenDyslexic", "Atkinson Hyperlegible", Verdana, system-ui, sans-serif !important; }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #747bff;
-}
-.dark a:hover {
-  color: #535bf2;
-}
+/* Page-level defaults. These live in Tailwind's base layer so the utility classes on
+   components always win (unlayered rules beat layered ones, which is how the old Vite
+   starter styles used to override every button and heading). */
+@layer base {
+  body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+  }
 
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
+  a {
+    font-weight: 500;
+    color: #646cff;
+    text-decoration: inherit;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  .dark a:hover {
+    color: #535bf2;
+  }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
+  /* Tailwind v4's reset leaves buttons with the default arrow cursor */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #f9f9f9;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-.dark button {
-  background-color: #1a1a1a;
-}
-/* Compact tab bar overrides so buttons render in one row */
-.tabbar{
-  display:flex;
-  gap:0.5rem;
-  overflow-x:auto;
-  white-space:nowrap;
-}
-.tabbar > *{ flex:1 1 0 !important; width:auto !important; }
-.tabbar::-webkit-scrollbar{ height:6px; }
-.tabbar::-webkit-scrollbar-thumb{ background-color: rgba(255,255,255,0.15); border-radius: 9999px; }
-
-/* Make default tab triggers compact even if component library sets w-full */
-button[role="tab"]{
-  width:auto;
+  /* One visible focus style for keyboard users, on everything interactive */
+  :focus-visible {
+    outline: 2px solid #ef4444;
+    outline-offset: 2px;
+  }
 }
