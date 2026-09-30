@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added (challenges)
+- **Start today** on a challenge that hasn't begun: the window moves to start now, same length.
+- **Daily plan** on every running or upcoming challenge: a film for each night from your library, building from gentle to intense, respecting your limits and the challenge's theme. Swap nights, fill open slots, log watches from the row, replan, clear, or download a calendar file. Tonight now shows "tonight is ..." for your running challenges.
+
 ### Fixed
 - Discover's "Available on" filter now says what it is doing: "Checking where these are streaming…", "Couldn't check N films" with a Try again button (they used to vanish silently), and "None of these are streaming on Netflix in United States. New releases often aren't yet." when nothing matches (it used to show an empty page). Added tests for the filter, including ad-supported services and region.
 

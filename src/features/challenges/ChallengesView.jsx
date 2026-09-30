@@ -7,8 +7,8 @@ import { useTasteProfile } from "../../lib/calibrationContext.js";
 
 // Themed goals with progress tracked from your watch dates. `store` is the
 // useChallenges() result; the app owns it so exports and imports can include it.
-export function ChallengesView({ library, store, apiKey, onUpdate, onAdd, onOpenDetails }) {
-  const { challenges, start, remove } = store;
+export function ChallengesView({ library, store, apiKey, planTime, onUpdate, onAdd, onOpenDetails }) {
+  const { challenges, start, remove, setPlan, startNow } = store;
   const now = new Date();
   const profile = useTasteProfile(library);
 
@@ -35,6 +35,9 @@ export function ChallengesView({ library, store, apiKey, onUpdate, onAdd, onOpen
       onAdd={onAdd}
       onOpenDetails={onOpenDetails}
       onRemove={remove}
+      planTime={planTime}
+      onSetPlan={setPlan}
+      onStartNow={startNow}
     />
   );
 

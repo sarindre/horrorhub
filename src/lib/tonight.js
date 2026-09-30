@@ -1,22 +1,17 @@
 import { rankLibrary } from "./taste.js";
+import { defaultScare } from "./scare.js";
 import { evaluateItem, hasContentLimits } from "./contentFlags.js";
 import { dayKey, evaluateChallenge, watchDays, watchStreak } from "./challenges.js";
+import { tonightsEntry } from "./challengePlan.js";
 
 // The Tonight screen's logic: which film to suggest first, and what's in
 // progress. Pure; the screen only renders it.
 
-const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
 
 export const scareWord = (n) => (n <= 3 ? "Spooky" : n <= 6 ? "Intense" : "Traumatizing");
 
-// Where the scare dial starts: your usual level, never above what the quiz said
-// was too much or your own limit.
-export function defaultScare(profile, prefs = {}) {
-  let s = profile.scarePref != null ? Math.round(profile.scarePref) : 5;
-  if (profile.scareCeiling != null) s = Math.min(s, profile.scareCeiling);
-  s = Math.min(s, prefs.maxScares ?? 10);
-  return clamp(s, 0, 10);
-}
+// defaultScare (where the scare dial starts) lives in scare.js; re-exported for existing imports
+export { defaultScare };
 
 // Best-first picks from your own library. `passed` are films you told us never
 // to suggest; `skipped` are ones you rerolled this session. In "hide" mode,
@@ -42,7 +37,12 @@ export function inProgress(library, challenges = [], now = new Date()) {
   for (const c of challenges) {
     const s = evaluateChallenge(c, library, now);
     if (s.status !== "active") continue;
-    lines.push({ id: `challenge:${c.id}`, tab: "challenges", text: `${c.title}: ${s.done} of ${s.target}, ${s.daysLeft} day${s.daysLeft === 1 ? "" : "s"} left` });
+    const planned = tonightsEntry(c, library, now);
+    lines.push({
+      id: `challenge:${c.id}`,
+      tab: "challenges",
+      text: planned ? `${c.title}: tonight is ${planned.title}` : `${c.title}: ${s.done} of ${s.target}, ${s.daysLeft} day${s.daysLeft === 1 ? "" : "s"} left`,
+    });
   }
   return lines.slice(0, 3);
 }

@@ -7,7 +7,8 @@ import { HiddenNotice } from "../../components/HiddenNotice.jsx";
 import { useContentGate } from "../../hooks/useContentGate.js";
 import { useToast } from "../../lib/toastContext.js";
 import { useContentPrefs } from "../../lib/contentContext.js";
-import { addDays, pacePhrase, parseDay, suggestForChallenge } from "../../lib/challenges.js";
+import { addDays, dayKey, daysBetween, pacePhrase, parseDay, suggestForChallenge } from "../../lib/challenges.js";
+import { ChallengePlan } from "./ChallengePlan.jsx";
 import { fetchChallengeIdeas } from "../../lib/challengeIdeas.js";
 import { describeError, isAbort } from "../../lib/tmdb.js";
 
@@ -65,7 +66,7 @@ function Ideas({ ideas, apiKey, onAdd, onOpenDetails }) {
   );
 }
 
-export function ChallengeCard({ challenge, result, library, profile, apiKey, onUpdate, onAdd, onOpenDetails, onRemove }) {
+export function ChallengeCard({ challenge, result, library, profile, apiKey, planTime, onUpdate, onAdd, onOpenDetails, onRemove, onSetPlan, onStartNow }) {
   const toast = useToast();
   const prefs = useContentPrefs();
   const [picks, setPicks] = useState(null);
@@ -151,6 +152,20 @@ export function ChallengeCard({ challenge, result, library, profile, apiKey, onU
               </li>
             ))}
           </ul>
+        ) : null}
+
+        {result.status === "upcoming" ? (
+          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-red-500/40 bg-red-500/5 p-3 text-sm">
+            <span className="min-w-0 flex-1">
+              Starts {fmt(challenge.startDate)}, in {daysBetween(dayKey(new Date()), challenge.startDate)} day{daysBetween(dayKey(new Date()), challenge.startDate) === 1 ? "" : "s"}.
+              Want to begin now? The whole window moves to start today.
+            </span>
+            <Button size="sm" onClick={() => onStartNow?.(challenge.id)}>Start today</Button>
+          </div>
+        ) : null}
+
+        {live ? (
+          <ChallengePlan challenge={challenge} library={library} profile={profile} planTime={planTime} onSetPlan={(plan) => onSetPlan?.(challenge.id, plan)} onUpdate={onUpdate} onOpenDetails={onOpenDetails} />
         ) : null}
 
         {live ? (

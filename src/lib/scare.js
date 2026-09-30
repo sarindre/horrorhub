@@ -100,4 +100,13 @@ export function scareOf(item, { bias = 0 } = {}) {
   return { value: Math.round(clamp(est.value + bias, MIN_ESTIMATE, MAX_ESTIMATE)), estimated: true, signals: est.signals };
 }
 
+// Where a scare dial starts: your usual level, never above what the taste quiz
+// said was too much or your own limit.
+export function defaultScare(profile, prefs = {}) {
+  let s = profile.scarePref != null ? Math.round(profile.scarePref) : NEUTRAL_SCARE;
+  if (profile.scareCeiling != null) s = Math.min(s, profile.scareCeiling);
+  s = Math.min(s, prefs.maxScares ?? 10);
+  return clamp(s, 0, 10);
+}
+
 export const scareValue = (item, opts) => scareOf(item, opts).value;

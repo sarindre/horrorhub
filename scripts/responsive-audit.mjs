@@ -128,8 +128,25 @@ try {
     if (args.shots) await page.screenshot({ path: path.join(args.shots, `tonight-quiz-${width}.png`) });
     if (!opened) bad.push({ view: "tonight-quiz (button not found)", overflow: 1, culprits: [] });
     else if (quiz.overflow > 0) bad.push({ view: "tonight-quiz", ...quiz });
+    // ...and a challenge's daily plan, expanded
+    await page.goto(`${url}#challenges`, { waitUntil: "networkidle2" });
+    const planned = await page.evaluate(() => {
+      const click = (label) => {
+        const button = [...document.querySelectorAll("button")].find((b) => b.textContent.trim() === label);
+        button?.click();
+        return !!button;
+      };
+      return click("Plan my days");
+    });
+    await new Promise((r) => setTimeout(r, 300));
+    await page.evaluate(() => [...document.querySelectorAll("button")].find((b) => /^Show all \d+ nights$/.test(b.textContent.trim()))?.click());
+    await new Promise((r) => setTimeout(r, 300));
+    const planView = await page.evaluate(measure);
+    if (args.shots) await page.screenshot({ path: path.join(args.shots, `challenges-plan-${width}.png`) });
+    if (!planned) bad.push({ view: "challenges-plan (button not found)", overflow: 1, culprits: [] });
+    else if (planView.overflow > 0) bad.push({ view: "challenges-plan", ...planView });
     await page.close();
-    if (!bad.length) console.log(`  ${String(width).padStart(4)} px  ok (${VIEWS.length + 1} screens)`);
+    if (!bad.length) console.log(`  ${String(width).padStart(4)} px  ok (${VIEWS.length + 2} screens)`);
     for (const b of bad) {
       failures++;
       console.log(`  ${String(width).padStart(4)} px  FAIL ${b.view}: ${b.overflow}px wider than the screen`);

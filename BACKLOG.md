@@ -479,5 +479,13 @@ Each weakness the review raised is covered by an item above. Scope decisions so 
 | Fragile data | #28 | Promoted: PWA, automatic folder backup, "last backed up" reminder in the header when overdue |
 | Feature sprawl | #31 | Above |
 
+### 32. Challenge build-out: start today and a daily plan
+Status: Done (see leftovers)
+Priority: P1
+
+Raised while using the app: an added challenge like 31 Nights of Halloween sat on "Not started" with no way to begin, and nothing showed what to watch on which night.
+
+Done: an upcoming challenge has a "Start today" button that moves its window to begin now (same length). Each running or upcoming challenge has a Daily plan (`features/challenges/ChallengePlan.jsx`, logic in `lib/challengePlan.js`): one film per night from your library, building from gentle to intense around your usual scare level, skipping watched films and anything over your limits, and only films that count for a themed challenge. Swap any night, fill open slots, log the watch from the row, replan, clear, or download the plan as a calendar file. The plan is saved on the challenge (so it is in exports) and Tonight shows "tonight is ..." for your running challenges. Left for later: filling open slots straight from TMDb ideas (today: add ideas to your library, then Replan), and plans for finished challenges.
+
 ## Notes
 The product should feel like a personal horror curator, not just a database. The strongest differentiator is a recommendation system that understands horror taste, mood, and watch planning.

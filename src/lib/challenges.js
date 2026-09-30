@@ -281,6 +281,37 @@ export function challengeDiscoverPath(challenge, keywordIds = []) {
 export const CHALLENGES_KEY = "horrorhub.challenges.v1";
 export const CHALLENGES_VERSION = 1;
 
+// A saved day-by-day plan (see challengePlan.js): one entry per day inside the
+// challenge window, in date order. filmId null is an open slot.
+export function normalizePlan(raw, startDate, endDate) {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set();
+  const out = [];
+  for (const e of raw) {
+    if (!e || typeof e !== "object" || !isDayKey(e.day) || e.day < startDate || e.day > endDate || seen.has(e.day)) continue;
+    const hasFilm = (typeof e.filmId === "string" && e.filmId) || Number.isFinite(e.filmId);
+    if (hasFilm && !(typeof e.title === "string" && e.title.trim())) continue;
+    seen.add(e.day);
+    if (!hasFilm) {
+      out.push({ day: e.day, filmId: null });
+      continue;
+    }
+    const year = Number(e.year);
+    const scares = Number(e.scares);
+    const runtime = Number(e.runtime);
+    out.push({
+      day: e.day,
+      filmId: e.filmId,
+      title: e.title.trim(),
+      year: Number.isFinite(year) && year > 0 ? year : undefined,
+      scares: Number.isFinite(scares) ? Math.min(10, Math.max(0, Math.round(scares))) : undefined,
+      scaresEst: e.scaresEst === true ? true : undefined,
+      runtime: Number.isFinite(runtime) && runtime > 0 ? Math.round(runtime) : undefined,
+    });
+  }
+  return out.sort((a, b) => a.day.localeCompare(b.day));
+}
+
 export function normalizeChallenge(raw) {
   if (!raw || typeof raw !== "object") return null;
   if (typeof raw.id !== "string" || !raw.id || typeof raw.title !== "string" || !raw.title.trim()) return null;
@@ -289,6 +320,7 @@ export function normalizeChallenge(raw) {
   if (!Number.isFinite(target) || target < 1 || target > 366) return null;
   if (!isDayKey(raw.startDate) || !isDayKey(raw.endDate) || raw.endDate < raw.startDate) return null;
   const match = Array.isArray(raw.match) ? raw.match.filter((c) => c && typeof c === "object") : [];
+  const plan = normalizePlan(raw.plan, raw.startDate, raw.endDate);
   return {
     id: raw.id,
     templateId: typeof raw.templateId === "string" ? raw.templateId : "custom",
@@ -300,6 +332,7 @@ export function normalizeChallenge(raw) {
     match,
     createdAt: typeof raw.createdAt === "string" ? raw.createdAt : new Date().toISOString(),
     ...(isDayKey(raw.completedAt) ? { completedAt: raw.completedAt } : {}),
+    ...(plan.length ? { plan } : {}),
   };
 }
 

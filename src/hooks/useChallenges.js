@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { startChallengeNow } from "../lib/challengePlan.js";
 import { createChallenge, evaluateChallenge, loadChallenges, mergeChallenges, saveChallenges } from "../lib/challenges.js";
 
 // Your challenges, persisted. Progress is never stored: it's derived from the
@@ -20,6 +21,20 @@ export function useChallenges({ library, onComplete } = {}) {
     if (!challenge) return null;
     setChallenges((prev) => (prev.some((c) => c.id === challenge.id) ? prev : [challenge, ...prev]));
     return challenge;
+  }, []);
+
+  // Save (or clear, with an empty list) a challenge's day-by-day plan.
+  const setPlan = useCallback((id, plan) => {
+    setChallenges((prev) => prev.map((c) => {
+      if (c.id !== id) return c;
+      const { plan: _old, ...rest } = c;
+      return plan?.length ? { ...rest, plan } : rest;
+    }));
+  }, []);
+
+  // Begin a not-yet-started challenge today instead of waiting for its date.
+  const startNow = useCallback((id) => {
+    setChallenges((prev) => prev.map((c) => (c.id === id ? startChallengeNow(c) : c)));
   }, []);
 
   const remove = useCallback((id) => setChallenges((prev) => prev.filter((c) => c.id !== id)), []);
@@ -49,5 +64,5 @@ export function useChallenges({ library, onComplete } = {}) {
     finished.forEach((f) => onCompleteRef.current?.(f.challenge));
   }, [challenges, library]);
 
-  return { challenges, start, remove, merge };
+  return { challenges, start, remove, merge, setPlan, startNow };
 }

@@ -367,7 +367,7 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
             </TabsContent>
 
             <TabsContent value="challenges" className="mt-6">
-              <ChallengesView library={library} store={challengeStore} apiKey={settings.apiKey} onUpdate={upsert} onAdd={addToLibrary} onOpenDetails={setSelected} />
+              <ChallengesView library={library} store={challengeStore} apiKey={settings.apiKey} planTime={settings.planTime} onUpdate={upsert} onAdd={addToLibrary} onOpenDetails={setSelected} />
             </TabsContent>
 
             <TabsContent value="stats" className="mt-6">
