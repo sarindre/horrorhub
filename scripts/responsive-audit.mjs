@@ -136,13 +136,14 @@ try {
         button?.click();
         return !!button;
       };
+      click("Build my watch list");
       return click("Plan my days");
     });
     await new Promise((r) => setTimeout(r, 300));
     await page.evaluate(() => [...document.querySelectorAll("button")].find((b) => /^Show all \d+ nights$/.test(b.textContent.trim()))?.click());
     await new Promise((r) => setTimeout(r, 300));
     const planView = await page.evaluate(measure);
-    if (args.shots) await page.screenshot({ path: path.join(args.shots, `challenges-plan-${width}.png`) });
+    if (args.shots) await page.screenshot({ path: path.join(args.shots, `challenges-plan-${width}.png`), fullPage: true });
     if (!planned) bad.push({ view: "challenges-plan (button not found)", overflow: 1, culprits: [] });
     else if (planView.overflow > 0) bad.push({ view: "challenges-plan", ...planView });
     await page.close();

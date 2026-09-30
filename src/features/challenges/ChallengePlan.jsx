@@ -49,7 +49,29 @@ export function ChallengePlan({ challenge, library, profile, planTime, onSetPlan
     downloadBlob(new Blob([createICS({ events })], { type: "text/calendar" }), `horrorhub-${slugify(challenge.title)}-plan.ics`);
   };
 
-  const visible = showAll ? rows : rows.slice(0, SHOWN_AT_FIRST);
+  // Runs of nights with no film collapse into one line, so a half-empty plan stays short.
+  const items = [];
+  for (const row of rows) {
+    const last = items[items.length - 1];
+    if (row.state === "open" && last?.open) last.days.push(row.day);
+    else items.push(row.state === "open" ? { open: true, key: row.day, days: [row.day] } : { open: false, key: row.day, row });
+  }
+  const visible = showAll ? items : items.slice(0, SHOWN_AT_FIRST);
+
+  // Fill the given nights from your library, best fit first.
+  const fill = (days) => {
+    let next = challenge.plan;
+    let filled = 0;
+    for (const day of days) {
+      const pick = replacementFor(challenge, next, day, library, { ...opts, now });
+      if (!pick) break;
+      next = next.map((e) => (e.day === day ? pick : e));
+      filled++;
+    }
+    if (!filled) return toast("No unwatched film in your library fits those nights. Add some from the TMDb ideas, then fill them.");
+    onSetPlan(next);
+    if (filled < days.length) toast(`Filled ${filled} of ${days.length} nights. The rest need more films in your library.`);
+  };
 
   return (
     <section aria-label="Daily plan" className="space-y-2 rounded-xl border p-3">
@@ -69,7 +91,20 @@ export function ChallengePlan({ challenge, library, profile, planTime, onSetPlan
       ) : (
         <>
           <ul className="space-y-1.5">
-            {visible.map((row) => (
+            {visible.map((item) => {
+            if (item.open) {
+              return (
+              <li key={item.key} className="flex flex-wrap items-center justify-between gap-2 rounded-lg px-2 py-1.5">
+                <div className="min-w-0 text-sm opacity-70">
+                  {item.days.length === 1 ? dayLabel(item.days[0]) : `${dayLabel(item.days[0])} – ${dayLabel(item.days[item.days.length - 1])}`}
+                  <span className="block text-xs">{item.days.length} night{item.days.length === 1 ? "" : "s"} open</span>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => fill(item.days)}>Fill from library</Button>
+              </li>
+              );
+            }
+            const row = item.row;
+            return (
               <li key={row.day} className={`flex flex-wrap items-center justify-between gap-2 rounded-lg px-2 py-1.5 ${row.isToday ? "bg-red-500/10 ring-1 ring-red-500/40" : ""}`}>
                 <div className="min-w-0">
                   <div className="text-xs opacity-70">{dayLabel(row.day)}{row.isToday ? " · Tonight" : ""}</div>
@@ -99,9 +134,10 @@ export function ChallengePlan({ challenge, library, profile, planTime, onSetPlan
                   {row.state === "missed" ? <span className="text-xs opacity-60">Missed</span> : null}
                 </div>
               </li>
-            ))}
+            );
+          })}
           </ul>
-          {rows.length > SHOWN_AT_FIRST ? (
+          {items.length > SHOWN_AT_FIRST ? (
             <Button size="sm" variant="ghost" onClick={() => setShowAll(!showAll)}>{showAll ? "Show fewer" : `Show all ${rows.length} nights`}</Button>
           ) : null}
         </>

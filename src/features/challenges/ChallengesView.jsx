@@ -85,12 +85,12 @@ export function ChallengesView({ library, store, apiKey, planTime, onUpdate, onA
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {available.map((t) => (
             <Card key={t.id} className="rounded-xl">
-              <CardContent className="p-3 flex h-full flex-col justify-between gap-2">
-                <div>
+              <CardContent className="flex h-full items-center justify-between gap-3 p-3">
+                <div className="min-w-0">
                   <div className="font-medium">{t.title}</div>
                   <div className="text-xs opacity-70">{t.blurb}</div>
                 </div>
-                <Button size="sm" variant="outline" onClick={() => start(t.id)}>Start</Button>
+                <Button size="sm" variant="outline" className="shrink-0" onClick={() => start(t.id)}>Start</Button>
               </CardContent>
             </Card>
           ))}

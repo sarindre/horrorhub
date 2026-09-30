@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed (challenges, shorter screens)
+- Challenge suggestions are compact: "From your library" and "Ideas from TMDb" show three rows with "Show all", one reason per film, a one-line button, and a Hide link. TMDb ideas are slim rows instead of full film cards.
+- In the daily plan, a run of empty nights is one line ("24 nights open") with a **Fill from library** button, instead of one row per night.
+- The "Start a challenge" list uses compact rows. On a phone the Challenges page is about a third shorter.
+
+### Fixed
+- Challenge cards could stretch wider than a phone screen once long titles were listed; they now shrink to fit (the responsive audit now opens the watch list and plan to catch this).
+
 ### Added (challenges)
 - **Start today** on a challenge that hasn't begun: the window moves to start now, same length.
 - **Daily plan** on every running or upcoming challenge: a film for each night from your library, building from gentle to intense, respecting your limits and the challenge's theme. Swap nights, fill open slots, log watches from the row, replan, clear, or download a calendar file. Tonight now shows "tonight is ..." for your running challenges.

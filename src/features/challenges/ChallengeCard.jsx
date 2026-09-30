@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Flame } from "lucide-react";
 import { Card, CardContent } from "../../components/ui/card.jsx";
 import { Button } from "../../components/ui/button.jsx";
-import { MovieCard } from "../../components/MovieCard.jsx";
+import { ContentWarnings } from "../../components/ContentWarnings.jsx";
 import { HiddenNotice } from "../../components/HiddenNotice.jsx";
 import { useContentGate } from "../../hooks/useContentGate.js";
 import { useToast } from "../../lib/toastContext.js";
@@ -10,7 +10,7 @@ import { useContentPrefs } from "../../lib/contentContext.js";
 import { addDays, dayKey, daysBetween, pacePhrase, parseDay, suggestForChallenge } from "../../lib/challenges.js";
 import { ChallengePlan } from "./ChallengePlan.jsx";
 import { fetchChallengeIdeas } from "../../lib/challengeIdeas.js";
-import { describeError, isAbort } from "../../lib/tmdb.js";
+import { TMDB_IMG, describeError, isAbort } from "../../lib/tmdb.js";
 
 const fmt = (key) => parseDay(key).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 
@@ -43,25 +43,37 @@ function DayStrip({ challenge, result }) {
   );
 }
 
-// Ideas from TMDb are their own component so the content gate (hook) can run on them.
+const SHOWN_AT_FIRST = 3;
+
+// Ideas from TMDb are their own component so the content gate (hook) can run on
+// them. Compact rows: a poster thumbnail, the title and two buttons.
 function Ideas({ ideas, apiKey, onAdd, onOpenDetails }) {
   const gate = useContentGate(ideas, apiKey);
+  const prefs = useContentPrefs();
+  const [showAll, setShowAll] = useState(false);
+  const rows = showAll ? gate.visible : gate.visible.slice(0, SHOWN_AT_FIRST);
   return (
     <div className="space-y-2">
       <HiddenNotice count={gate.hiddenCount} onReveal={gate.reveal} />
-      <div className="grid gap-3 sm:grid-cols-2">
-        {gate.visible.map((m) => (
-          <MovieCard
-            key={m.id}
-            item={m}
-            onAdd={(it) => onAdd?.({ ...it, watchlist: true })}
-            onUpdate={(it) => onAdd?.(it)}
-            compact
-            onOpenDetails={onOpenDetails}
-            warnings={gate.flagsById[m.id] || []}
-          />
-        ))}
-      </div>
+      <ul className="space-y-2">
+        {rows.map((m) => {
+          const poster = m.poster ? TMDB_IMG(m.poster, "w92") : "";
+          return (
+            <li key={m.id} className="flex items-center gap-3">
+              {poster ? <img src={poster} alt="" className="h-14 w-10 shrink-0 rounded object-cover" /> : <div aria-hidden="true" className="h-14 w-10 shrink-0 rounded bg-white/5" />}
+              <div className="min-w-0 flex-1">
+                <button type="button" className="block max-w-full truncate text-left text-sm font-medium hover:underline" onClick={() => onOpenDetails?.(m)}>{m.title}</button>
+                <div className="text-xs opacity-60">{[m.year, m.voteAvg ? `TMDb ${m.voteAvg.toFixed(1)}` : ""].filter(Boolean).join(" · ")}</div>
+                <ContentWarnings flags={gate.flagsById[m.id] || []} avoid={prefs.avoidFlags} showFlags={prefs.showWarnings} />
+              </div>
+              <Button size="sm" variant="outline" className="shrink-0 whitespace-nowrap" onClick={() => onAdd?.({ ...m, watchlist: true })}>+ Watchlist</Button>
+            </li>
+          );
+        })}
+      </ul>
+      {gate.visible.length > SHOWN_AT_FIRST ? (
+        <Button size="sm" variant="ghost" onClick={() => setShowAll(!showAll)}>{showAll ? "Show fewer" : `Show all ${gate.visible.length}`}</Button>
+      ) : null}
     </div>
   );
 }
@@ -70,6 +82,7 @@ export function ChallengeCard({ challenge, result, library, profile, apiKey, pla
   const toast = useToast();
   const prefs = useContentPrefs();
   const [picks, setPicks] = useState(null);
+  const [showAllPicks, setShowAllPicks] = useState(false);
   const [ideas, setIdeas] = useState(null);
   const [loadingIdeas, setLoadingIdeas] = useState(false);
 
@@ -100,7 +113,7 @@ export function ChallengeCard({ challenge, result, library, profile, apiKey, pla
   };
 
   return (
-    <Card className="rounded-2xl">
+    <Card className="min-w-0 rounded-2xl">
       <CardContent className="p-4 space-y-3">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
@@ -181,33 +194,43 @@ export function ChallengeCard({ challenge, result, library, profile, apiKey, pla
         )}
 
         {picks?.length ? (
-          <div className="space-y-2 rounded-xl border p-3">
-            <div className="flex items-center justify-between">
+          <section aria-label="From your library" className="space-y-2 rounded-xl border p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="text-sm font-semibold">From your library</div>
-              <Button size="sm" onClick={addAll}>Add all to watchlist</Button>
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" onClick={addAll}>Add all to watchlist</Button>
+                <Button size="sm" variant="ghost" onClick={() => { setPicks(null); setShowAllPicks(false); }}>Hide</Button>
+              </div>
             </div>
-            <ul className="space-y-1.5 text-sm">
-              {picks.map((p) => (
+            <ul className="space-y-2 text-sm">
+              {(showAllPicks ? picks : picks.slice(0, SHOWN_AT_FIRST)).map((p) => (
                 <li key={p.item.id} className="flex items-center justify-between gap-2">
-                  <span className="min-w-0">
-                    <button className="text-left hover:underline" onClick={() => onOpenDetails?.(p.item)}>{p.item.title}</button>
-                    {p.item.year ? <span className="opacity-60"> ({p.item.year})</span> : null}
-                    <div className="text-xs opacity-60">{p.reasons.join(" · ")}</div>
+                  <span className="min-w-0 flex-1">
+                    <button type="button" className="block max-w-full truncate text-left hover:underline" onClick={() => onOpenDetails?.(p.item)}>
+                      {p.item.title}{p.item.year ? <span className="opacity-60"> ({p.item.year})</span> : null}
+                    </button>
+                    <span className="block truncate text-xs opacity-60">{p.reasons.find((r) => r !== "On your watchlist") || p.reasons[0]}</span>
                   </span>
-                  <Button size="sm" variant={p.item.watchlist ? "default" : "outline"} onClick={() => onUpdate?.({ ...p.item, watchlist: true })} disabled={p.item.watchlist}>
-                    {p.item.watchlist ? "On watchlist" : "Watchlist"}
+                  <Button size="sm" variant={p.item.watchlist ? "ghost" : "outline"} className="shrink-0 whitespace-nowrap" onClick={() => onUpdate?.({ ...p.item, watchlist: true })} disabled={p.item.watchlist}>
+                    {p.item.watchlist ? "✓ Listed" : "+ Watchlist"}
                   </Button>
                 </li>
               ))}
             </ul>
-          </div>
+            {picks.length > SHOWN_AT_FIRST ? (
+              <Button size="sm" variant="ghost" onClick={() => setShowAllPicks(!showAllPicks)}>{showAllPicks ? "Show fewer" : `Show all ${picks.length}`}</Button>
+            ) : null}
+          </section>
         ) : null}
 
         {ideas?.length ? (
-          <div className="space-y-2">
-            <div className="text-sm font-semibold">Ideas from TMDb</div>
+          <section aria-label="Ideas from TMDb" className="space-y-2 rounded-xl border p-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-sm font-semibold">Ideas from TMDb</div>
+              <Button size="sm" variant="ghost" onClick={() => setIdeas(null)}>Hide</Button>
+            </div>
             <Ideas ideas={ideas} apiKey={apiKey} onAdd={onAdd} onOpenDetails={onOpenDetails} />
-          </div>
+          </section>
         ) : null}
       </CardContent>
     </Card>
