@@ -6,7 +6,7 @@ import { isAbort, parseProviders, tmdbGet } from "../lib/tmdb.js";
 // rate limit doesn't permanently mark a film as "not streaming anywhere".
 const sessionCache = new Map();
 
-export function useProviders(ids, apiKey, enabled) {
+export function useProviders(ids, apiKey, enabled, region = "US") {
   const [map, setMap] = useState({});
   const key = (ids || []).join(",");
 
@@ -14,22 +14,23 @@ export function useProviders(ids, apiKey, enabled) {
     if (!enabled || !apiKey || !key) return;
     const controller = new AbortController();
     const wanted = key.split(",");
-    const pending = wanted.filter((id) => !sessionCache.has(id));
+    const cacheKey = (id) => `${region}:${id}`;
+    const pending = wanted.filter((id) => !sessionCache.has(cacheKey(id)));
 
     Promise.all(
       pending.map((id) =>
         tmdbGet(`/movie/${id}/watch/providers`, { apiKey, signal: controller.signal })
-          .then((data) => sessionCache.set(id, parseProviders(data)))
+          .then((data) => sessionCache.set(cacheKey(id), parseProviders(data, region)))
           .catch((err) => {
             if (!isAbort(err)) console.warn("Provider lookup failed for", id, err.message);
           })
       )
     ).then(() => {
       if (controller.signal.aborted) return;
-      setMap(Object.fromEntries(wanted.map((id) => [id, sessionCache.get(id) || []])));
+      setMap(Object.fromEntries(wanted.map((id) => [id, sessionCache.get(cacheKey(id)) || []])));
     });
     return () => controller.abort();
-  }, [key, apiKey, enabled]);
+  }, [key, apiKey, enabled, region]);
 
   return map;
 }

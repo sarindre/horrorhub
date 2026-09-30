@@ -1,5 +1,6 @@
 import { readJSON, readString, writeJSON } from "./storage.js";
 import { FLAG_IDS } from "./contentFlags.js";
+import { REGION_CODES } from "./regions.js";
 
 // Settings schema versions
 //   v1 (legacy): flat object under "horrorhub.settings.v1" (plus a stray
@@ -20,6 +21,8 @@ export const DEFAULT_SETTINGS = {
   omdbKey: "",
   dddKey: "",
   externalOff: false,
+  // where you watch: streaming availability, release dates, age ratings
+  region: "US",
   // appearance
   theme: "dark",
   spookyFont: true,
@@ -69,6 +72,7 @@ export function normalizeSettings(raw) {
     omdbKey: text(s.omdbKey),
     dddKey: text(s.dddKey),
     externalOff: bool(s.externalOff, d.externalOff),
+    region: REGION_CODES.includes(s.region) ? s.region : d.region,
     theme: THEMES.includes(s.theme) ? s.theme : d.theme,
     spookyFont: bool(s.spookyFont, d.spookyFont),
     flicker: bool(s.flicker, d.flicker),

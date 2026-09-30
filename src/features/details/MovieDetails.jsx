@@ -20,7 +20,7 @@ import { analysisPatch, analyzeMeta, fetchFilmMeta } from "../../lib/filmMeta.js
 
 const DETAILS_CACHE_MS = 5 * 60 * 1000;
 
-export function MovieDetails({ item, localItem, onUpdate, onAdd, apiKey, omdbKey, dddKey, externalOff = false, shelfStore }) {
+export function MovieDetails({ item, localItem, onUpdate, onAdd, apiKey, omdbKey, dddKey, externalOff = false, region = "US", shelfStore }) {
   const toast = useToast();
   const prefs = useContentPrefs();
   const [details, setDetails] = useState(null);
@@ -60,10 +60,10 @@ export function MovieDetails({ item, localItem, onUpdate, onAdd, apiKey, omdbKey
       if (d) setDetails(d);
       setVideos(v?.results || []);
       setCast((c?.cast || []).slice(0, 10));
-      // Extract certification (MPAA) — prefer US, else first non-empty
+      // Extract the age rating: prefer your region, else first non-empty
       const rels = rd?.results || [];
-      const us = rels.find((r) => r.iso_3166_1 === "US");
-      const pick = (us?.release_dates || []).find((x) => x.certification) ||
+      const local = rels.find((r) => r.iso_3166_1 === region);
+      const pick = (local?.release_dates || []).find((x) => x.certification) ||
         rels.flatMap((r) => r.release_dates || []).find((x) => x.certification);
       setCert(pick?.certification || "");
 
@@ -132,7 +132,7 @@ export function MovieDetails({ item, localItem, onUpdate, onAdd, apiKey, omdbKey
     return () => controller.abort();
     // Deliberately keyed on the title/keys only: onUpdate/localItem change on every save and would refetch in a loop.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [item?.id, apiKey, omdbKey]);
+  }, [item?.id, apiKey, omdbKey, region]);
 
   // keep counts in sync when switching items
   useEffect(() => {

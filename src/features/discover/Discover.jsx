@@ -13,11 +13,12 @@ import { TMDB_IMG, describeError, isAbort, mapMovie, tmdbGet } from "../../lib/t
 
 const NO_KEY_MESSAGE = "Add your TMDb API token in Settings first.";
 const LIST_CACHE_MS = 5 * 60 * 1000;
-const DISCOVER_BASE = "/discover/movie?include_adult=false&language=en-US&with_genres=27&region=US";
-const CLASSIC_PATH = `${DISCOVER_BASE}&with_runtime.lte=90&primary_release_date.lte=1985-12-31&sort_by=primary_release_date.desc`;
+const discoverBase = (region) => `/discover/movie?include_adult=false&language=en-US&with_genres=27&region=${region}`;
+const classicPath = (region) => `${discoverBase(region)}&with_runtime.lte=90&primary_release_date.lte=1985-12-31&sort_by=primary_release_date.desc`;
 const fmtDate = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
-function discoverPath(sortKey) {
+function discoverPath(sortKey, region) {
+  const DISCOVER_BASE = discoverBase(region);
   if (sortKey === "primary_release_date.desc") {
     const start = new Date();
     start.setDate(start.getDate() - 30);
@@ -28,7 +29,7 @@ function discoverPath(sortKey) {
   return `${DISCOVER_BASE}&sort_by=${sortKey}`;
 }
 
-export function Discover({ apiKey, onAdd, onRemove, inLibraryIds, onToggleWatchlist, onOpenDetails, watchlistIds, ratingById }) {
+export function Discover({ apiKey, region = "US", onAdd, onRemove, inLibraryIds, onToggleWatchlist, onOpenDetails, watchlistIds, ratingById }) {
   const toast = useToast();
   const [q, setQ] = useState("");
   const [results, setResults] = useState([]);
@@ -40,7 +41,7 @@ export function Discover({ apiKey, onAdd, onRemove, inLibraryIds, onToggleWatchl
   const [hideWatchlisted, setHideWatchlisted] = usePersistentState('discover.hideWatchlisted', false);
   const [hideInLibrary, setHideInLibrary] = usePersistentState('discover.hideInLibrary', false);
   const [providersSel, setProvidersSel] = usePersistentState('discover.providers', []);
-  const providerMap = useProviders(results.map((r) => r.id), apiKey, (providersSel || []).length > 0);
+  const providerMap = useProviders(results.map((r) => r.id), apiKey, (providersSel || []).length > 0, region);
   const gate = useContentGate(results, apiKey);
 
   // Every list request goes through here. Starting a new one cancels the previous,
@@ -66,14 +67,15 @@ export function Discover({ apiKey, onAdd, onRemove, inLibraryIds, onToggleWatchl
     },
     [apiKey]
   );
+  useEffect(() => setUpcoming([]), [region]);
 
   useEffect(() => {
     if (!apiKey) {
       setResults([]);
       return;
     }
-    load(discoverPath(sort));
-  }, [apiKey, sort, load]);
+    load(discoverPath(sort, region));
+  }, [apiKey, sort, region, load]);
   // cancel any request still in flight when leaving the tab
   useEffect(() => () => abortRef.current?.abort(), []);
 
@@ -83,19 +85,19 @@ export function Discover({ apiKey, onAdd, onRemove, inLibraryIds, onToggleWatchl
     return false;
   };
   const classicUnder90 = () => {
-    if (requireKey()) load(CLASSIC_PATH);
+    if (requireKey()) load(classicPath(region));
   };
   const search = () => {
     if (!requireKey()) return;
     const term = q.trim();
-    load(term ? `/search/movie?include_adult=false&language=en-US&query=${encodeURIComponent(term)}` : discoverPath(sort));
+    load(term ? `/search/movie?include_adult=false&language=en-US&query=${encodeURIComponent(term)}` : discoverPath(sort, region));
   };
 
   const loadUpcoming = async () => {
     if (!requireKey()) return;
     if (!upcoming.length) {
       try {
-        const data = await tmdbGet(`${DISCOVER_BASE}&sort_by=primary_release_date.asc&primary_release_date.gte=${fmtDate(new Date())}`, { apiKey, cacheMs: LIST_CACHE_MS });
+        const data = await tmdbGet(`${discoverBase(region)}&sort_by=primary_release_date.asc&primary_release_date.gte=${fmtDate(new Date())}`, { apiKey, cacheMs: LIST_CACHE_MS });
         setUpcoming((data.results || []).slice(0, 9).map((m) => ({ id: m.id, title: m.title, date: m.release_date, poster: m.poster_path })));
       } catch (err) {
         toast(describeError(err), { kind: "error" });
@@ -224,7 +226,7 @@ export function Discover({ apiKey, onAdd, onRemove, inLibraryIds, onToggleWatchl
       ) : error ? (
         <div role="alert" className="flex items-center gap-3 rounded-xl border border-red-500/40 bg-red-950/40 px-4 py-3 text-sm">
           <span className="flex-1">{describeError(error)}</span>
-          <Button size="sm" variant="outline" onClick={() => load(lastPathRef.current || discoverPath(sort))}>Retry</Button>
+          <Button size="sm" variant="outline" onClick={() => load(lastPathRef.current || discoverPath(sort, region))}>Retry</Button>
         </div>
       ) : loading && !results.length ? (
         <div className="text-sm opacity-70">Loading…</div>

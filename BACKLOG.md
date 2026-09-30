@@ -375,12 +375,14 @@ Progress: 231 tests. The pure logic in `lib/*` (recommendation scoring, taste, t
 Source: the product review of 2026-09-29. The roadmap above is built; these are the ideas that would make HorrorHub *different* from Letterboxd/Trakt-style trackers, plus a few must-fix items the review turned up. Ordered by value for the effort.
 
 ### 19. Must-fix: TMDb attribution and privacy leaks
-Status: Planned
+Status: Done (text notice; see leftovers)
 Priority: P0
 
 - TMDb's API terms require an attribution notice and logo ("This product uses the TMDB API but is not endorsed or certified by TMDB"). There is none anywhere in the app. Add it to the footer and Settings → Connections (also credit OMDb / DoesTheDogDie where their data is shown)
 - The Creepster header font is loaded from Google Fonts on every visit, which sends your IP to Google, at odds with a local-first, private app. Self-host it (the font file ships with the build)
 - Discover and streaming badges are hard-coded to the US (`region=US`, `results.US`, `en-US`). Add a region/language setting so non-US users get their own availability and titles
+
+Done: footer notice on every screen; Creepster bundled in `src/assets/fonts` (no request to Google); a "Where you watch" region setting (Settings → Connections) drives streaming badges, Discover release dates and the age rating on details. Left for later: the TMDb logo image (the text notice is in place), OMDb/DoesTheDogDie credit lines, and translated titles (text stays English because tag and warning matching reads English TMDb keywords).
 
 ### 20. "Tonight" home screen (make the core promise the front door)
 Status: Planned

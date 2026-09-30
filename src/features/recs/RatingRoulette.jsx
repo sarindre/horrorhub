@@ -7,7 +7,7 @@ import { HiddenNotice } from "../../components/HiddenNotice.jsx";
 import { MovieCard } from "../../components/MovieCard.jsx";
 import { describeError, isAbort, mapMovie, tmdbGet } from "../../lib/tmdb.js";
 
-export function RatingRoulette({ apiKey, onAdd, onOpenDetails, ratingMap={}, inLibraryIds = new Set(), watchlistIds = new Set() }){
+export function RatingRoulette({ apiKey, region = "US", onAdd, onOpenDetails, ratingMap={}, inLibraryIds = new Set(), watchlistIds = new Set() }){
   const [page, setPage] = useState(1);
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -21,7 +21,7 @@ export function RatingRoulette({ apiKey, onAdd, onOpenDetails, ratingMap={}, inL
   const [jumpVal, setJumpVal] = useState(1);
   const cacheRef = useRef(new Map()); // page -> rows
   const abortRef = useRef(null);
-  const providerMap = useProviders(rows.map((r) => r.id), apiKey, (providersSel || []).length > 0);
+  const providerMap = useProviders(rows.map((r) => r.id), apiKey, (providersSel || []).length > 0, region);
   const gate = useContentGate(rows, apiKey);
 
   const fetchPage = useCallback(async (p) => {

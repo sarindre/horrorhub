@@ -16,6 +16,15 @@ describe("mapMovie", () => {
   });
 });
 
+describe("parseProviders in other regions", () => {
+  const data = { results: { US: { flatrate: [{ provider_name: "Netflix" }] }, GB: { flatrate: [{ provider_name: "Disney Plus" }] } } };
+  it("reads the requested region only", () => {
+    expect(parseProviders(data, "GB")).toEqual(["disney"]);
+    expect(parseProviders(data, "US")).toEqual(["netflix"]);
+    expect(parseProviders(data, "FR")).toEqual([]);
+  });
+});
+
 describe("parseProviders", () => {
   it("collects known US streaming services once, from flatrate and ad tiers", () => {
     const data = {

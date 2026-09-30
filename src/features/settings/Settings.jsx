@@ -7,6 +7,7 @@ import { ExportImport } from "./ExportImport.jsx";
 import { ImportedFilms } from "./ImportedFilms.jsx";
 import { usePrefersReducedMotion } from "../../hooks/usePrefersReducedMotion.js";
 import { THEMES } from "../../lib/settings.js";
+import { REGIONS } from "../../lib/regions.js";
 import { CONTENT_FLAGS } from "../../lib/contentFlags.js";
 
 const THEME_LABELS = { dark: "Dark", light: "Light", system: "System" };
@@ -206,6 +207,12 @@ export function Settings({ settings, update, onImport, onRetagAll, onCleanupTags
           <Label className="text-sm">TMDb API Access Token (v4)</Label>
           <SecretInput value={settings.apiKey} onChange={(v) => update({ apiKey: v })} placeholder="Paste your Bearer token here" />
           <div className="text-sm opacity-70">Get a free account at themoviedb.org → Settings → API → v4 auth. Paste the long token here.</div>
+          <div className="pt-3" />
+          <Label className="text-sm" htmlFor="region-select">Where you watch</Label>
+          <select id="region-select" value={settings.region} onChange={(e) => update({ region: e.target.value })} className="h-9 w-full max-w-xs rounded-md border bg-transparent px-2 text-sm">
+            {REGIONS.map(([code, name]) => <option key={code} value={code} className="text-black">{name}</option>)}
+          </select>
+          <div className="text-sm opacity-70">Sets which streaming services, release dates and age ratings you see. Descriptions and tags stay in English.</div>
           <div className="pt-3" />
           <Label className="text-sm">OMDb API Key (optional, for IMDb/RT ratings)</Label>
           <SecretInput value={settings.omdbKey} onChange={(v) => update({ omdbKey: v })} placeholder="If set, details pages show IMDb and Rotten Tomatoes" />

@@ -40,6 +40,15 @@ describe("normalizeSettings", () => {
   });
 });
 
+describe("region setting", () => {
+  it("defaults to US and accepts known regions only", () => {
+    expect(normalizeSettings({}).region).toBe("US");
+    expect(normalizeSettings({ region: "GB" }).region).toBe("GB");
+    expect(normalizeSettings({ region: "ZZ" }).region).toBe("US");
+    expect(normalizeSettings({ region: 5 }).region).toBe("US");
+  });
+});
+
 describe("settings storage", () => {
   afterEach(() => vi.unstubAllGlobals());
 

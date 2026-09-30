@@ -32,6 +32,7 @@ import { useShelves } from "./hooks/useShelves.js";
 import { parseShelfPayload } from "./lib/shelves.js";
 import { usePrefersReducedMotion } from "./hooks/usePrefersReducedMotion.js";
 import { Settings } from "./features/settings/Settings.jsx";
+import { Attribution } from "./components/Attribution.jsx";
 import { ToastProvider } from "./components/Toast.jsx";
 import { useToast } from "./lib/toastContext.js";
 
@@ -286,6 +287,7 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
           <div className="mt-4">
               <Suspense fallback={<div role="status" className="mt-6 text-sm opacity-70">Loading…</div>}>
               <MovieDetails
+                region={settings.region}
                 item={selected}
                 localItem={library.find((i) => i.id === selected.id)}
                 onUpdate={upsert}
@@ -303,7 +305,7 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
           <Suspense fallback={<div role="status" className="mt-6 text-sm opacity-70">Loading…</div>}>
           <>
         <TabsContent value="discover" className="mt-6">
-          <Discover apiKey={settings.apiKey} onAdd={addToLibrary} onRemove={remove} inLibraryIds={inLibraryIds} onToggleWatchlist={addToLibrary} onOpenDetails={setSelected} watchlistIds={watchlistIds} ratingById={ratingById} />
+          <Discover apiKey={settings.apiKey} region={settings.region} onAdd={addToLibrary} onRemove={remove} inLibraryIds={inLibraryIds} onToggleWatchlist={addToLibrary} onOpenDetails={setSelected} watchlistIds={watchlistIds} ratingById={ratingById} />
         </TabsContent>
 
             <TabsContent value="library" className="mt-6">
@@ -336,7 +338,7 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
         </TabsContent>
 
         <TabsContent value="rate" className="mt-6">
-          <RatingRoulette apiKey={settings.apiKey} onAdd={addToLibrary} onOpenDetails={setSelected} ratingMap={ratingById} inLibraryIds={inLibraryIds} watchlistIds={watchlistIds} />
+          <RatingRoulette apiKey={settings.apiKey} region={settings.region} onAdd={addToLibrary} onOpenDetails={setSelected} ratingMap={ratingById} inLibraryIds={inLibraryIds} watchlistIds={watchlistIds} />
         </TabsContent>
 
             <TabsContent value="shelves" className="mt-6">
@@ -362,6 +364,7 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
       <p className="mt-10 text-sm opacity-60">
         Your library lives in this browser. Back it up any time in Settings → Backup &amp; Import.
       </p>
+      <Attribution />
       {settings.flicker && !reducedMotion && <FlickerOverlay />}
       {settings.fog && !reducedMotion && <FogOverlay />}
       {settings.ambientAudio ? <AmbientAudio /> : null}

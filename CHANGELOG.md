@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added (innovation review, #19)
+- TMDb attribution notice in the footer of every screen (required by TMDb's API terms).
+- "Where you watch" region setting: streaming badges, Discover release dates and age ratings now follow it instead of being fixed to the US.
+
+### Changed (innovation review, #19)
+- The Creepster font is now bundled with the app instead of loaded from Google Fonts, so the app no longer contacts Google.
+
 ### Added
 - Created project guidance in [CLAUDE.md](CLAUDE.md) to document the app’s purpose, stack, product direction, and development workflow.
 - Added the refresh roadmap in [BACKLOG.md](BACKLOG.md), outlining the next major horror-focused product improvements.
