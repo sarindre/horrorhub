@@ -16,7 +16,7 @@ import puppeteer from "puppeteer-core";
 
 const args = Object.fromEntries(process.argv.slice(2).filter((a) => a.startsWith("--")).map((a) => a.slice(2).split("=")));
 const widths = String(args.widths || "320,360,390,768,1280").split(",").map(Number).filter(Boolean);
-const VIEWS = ["tonight", "discover", "rate", "library", "shelves", "recs", "continuity", "watchlist", "challenges", "stats", "settings"];
+const VIEWS = ["tonight", "group", "discover", "rate", "library", "shelves", "recs", "continuity", "watchlist", "challenges", "stats", "settings"];
 
 function findBrowser() {
   const candidates = [

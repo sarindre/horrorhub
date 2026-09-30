@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added (innovation review, #22)
+- **Group night** (Tonight → Group night): add 2-4 people with their scare limits, content to avoid and favorite vibes, and get the films from your library that suit the whole room. Limits are hard rules; the least-happy person decides the ranking; every pick explains the compromise, and a panel shows what each person's limits ruled out. Guests can be saved for next time.
+
+### Changed (innovation review, #22)
+- The Tonight section now has two views: "Tonight's pick" and "Group night".
+
 ### Added (innovation review, #20 and #21)
 - **Tonight**, the new landing screen: one film for tonight with why, scare level, runtime and content warnings, plus "Another", "Not for me" (remembered), alternatives, and a strip for your streak and running challenges.
 - **Taste quiz**: 13 famous films, four answers each, teaches HorrorHub your taste and how scary is too scary before you've rated anything. Retake it any time from Tonight.

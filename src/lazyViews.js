@@ -9,6 +9,7 @@ const loaders = {
   continuity: () => import("./features/recs/ContinuityGraph.jsx"),
   roulette: () => import("./features/recs/RatingRoulette.jsx"),
   shelves: () => import("./features/shelves/ShelvesView.jsx"),
+  group: () => import("./features/tonight/GroupNight.jsx"),
 };
 
 export const StatsView = lazy(() => loaders.stats().then((m) => ({ default: m.StatsView })));
@@ -17,6 +18,7 @@ export const ChallengesView = lazy(() => loaders.challenges().then((m) => ({ def
 export const ContinuityGraph = lazy(() => loaders.continuity().then((m) => ({ default: m.ContinuityGraph })));
 export const RatingRoulette = lazy(() => loaders.roulette().then((m) => ({ default: m.RatingRoulette })));
 export const ShelvesView = lazy(() => loaders.shelves().then((m) => ({ default: m.ShelvesView })));
+export const GroupNight = lazy(() => loaders.group().then((m) => ({ default: m.GroupNight })));
 
 // Fetch the small screens while the browser is idle, so switching tabs is
 // instant without slowing the first load. Stats (the charting library, ~95 KB

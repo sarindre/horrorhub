@@ -28,9 +28,10 @@ describe("main navigation", () => {
     render(<App />);
     const sections = within(screen.getByRole("tablist", { name: "Sections" })).getAllByRole("tab").map((t) => t.textContent);
     expect(sections).toEqual(["Tonight", "Discover", "My Library", "For You", "Plan", "Stats", "Settings"]);
-    // Tonight has one view, so no sub-tabs; Discover has two
-    expect(screen.queryByRole("tablist", { name: /views$/ })).toBeNull();
+    // Tonight has Tonight and Group night; Stats has one view and so no sub-tabs
+    expect(screen.getByRole("tablist", { name: "Tonight views" })).toBeTruthy();
     fireEvent.click(tab("Discover"));
+    expect(screen.getByRole("tablist", { name: "Discover views" })).toBeTruthy();
     expect(screen.getByRole("tablist", { name: "Discover views" })).toBeTruthy();
     fireEvent.click(tab("My Library"));
     expect(screen.getByRole("tablist", { name: "My Library views" })).toBeTruthy(); // All films + Shelves

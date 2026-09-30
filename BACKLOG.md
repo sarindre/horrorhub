@@ -403,10 +403,12 @@ The taste engine needs rated films and scare scores, and unscored films default 
 Done: a 13-film quiz (loved / fine / too intense / not seen) seeds the taste profile at 70% weight and sets a scare ceiling ("too intense" on a film rated N means nothing above N-1 is suggested first). Unrated films get an estimated scare level from their tags, content flags and keywords, labelled "est." on cards, details, Tonight and the marathon planner, and shifted by how your own scare ratings compare with the estimates. A scare level counts as yours once you move the slider (`scaresRated`); older libraries treat a bare 5 as unrated. Left for later: using TMDb age ratings in the estimate (not stored on films yet), and using estimates in your content limits (limits still read the stored number, which defaults to 5).
 
 ### 22. Group Night (find what everyone will actually watch)
-Status: Planned
+Status: Done (see leftovers)
 Priority: P1
 
 Nothing else does this. Add 2-4 people, each with a quick profile (vibe dials, content limits to avoid, seen-it list), and find films that sit inside everyone's limits and overlap on taste, ranking by the least-happy person's score (min-max, not average) and explaining the compromise ("Sam avoids animal harm, Alex wants slow-burn: this fits both"). Local only; profiles saved as named presets. Pairs with the marathon planner for a whole night.
+
+Done: Tonight → Group night (`features/tonight/GroupNight.jsx`, logic in `lib/group.js`). 2-4 people; each has a scare limit, content to avoid and vibes they enjoy (yours come from Settings). Limits are hard rules, then films are ranked by the least-happy person with the average only breaking ties, and each pick says why it works and whose call the compromise is. A "Ruled out by limits" panel shows what each person's limits removed. Films someone has seen are left out (tick "has seen it" per guest, or include them, listed last). Guests can be saved and re-added; the current group is remembered. Left for later: feeding the group's pick into the marathon planner as a whole night, a Group Night pick that reaches beyond your library (TMDb), and guests with a taste quiz of their own (guests only have vibes and limits, not learned taste).
 
 ### 23. Mystery Reel (blind pick)
 Status: Planned
