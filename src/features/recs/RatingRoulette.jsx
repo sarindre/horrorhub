@@ -21,7 +21,7 @@ export function RatingRoulette({ apiKey, region = "US", onAdd, onOpenDetails, ra
   const [jumpVal, setJumpVal] = useState(1);
   const cacheRef = useRef(new Map()); // page -> rows
   const abortRef = useRef(null);
-  const providerMap = useProviders(rows.map((r) => r.id), apiKey, (providersSel || []).length > 0, region);
+  const { map: providerMap } = useProviders(rows.map((r) => r.id), apiKey, (providersSel || []).length > 0, region);
   const gate = useContentGate(rows, apiKey);
 
   const fetchPage = useCallback(async (p) => {

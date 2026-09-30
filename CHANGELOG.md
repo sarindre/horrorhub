@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- Discover's "Available on" filter now says what it is doing: "Checking where these are streaming…", "Couldn't check N films" with a Try again button (they used to vanish silently), and "None of these are streaming on Netflix in United States. New releases often aren't yet." when nothing matches (it used to show an empty page). Added tests for the filter, including ad-supported services and region.
+
 ### Added (innovation review, #22)
 - **Group night** (Tonight → Group night): add 2-4 people with their scare limits, content to avoid and favorite vibes, and get the films from your library that suit the whole room. Limits are hard rules; the least-happy person decides the ranking; every pick explains the compromise, and a panel shows what each person's limits ruled out. Guests can be saved for next time.
 
