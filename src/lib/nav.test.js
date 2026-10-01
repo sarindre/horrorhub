@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_VIEW, NAV, VIEW_IDS, groupOf, isView, stepIndex } from "./nav.js";
 
 describe("nav model", () => {
-  it("groups the twelve views into seven sections", () => {
+  it("groups the thirteen views into seven sections", () => {
     expect(NAV).toHaveLength(7);
-    expect(VIEW_IDS).toHaveLength(12);
-    expect(new Set(VIEW_IDS).size).toBe(12); // no view is listed twice
+    expect(VIEW_IDS).toHaveLength(13);
+    expect(new Set(VIEW_IDS).size).toBe(13); // no view is listed twice
   });
 
   it("keeps every view id the app already uses", () => {
-    for (const id of ["tonight", "group", "discover", "library", "shelves", "watchlist", "recs", "rate", "continuity", "challenges", "stats", "settings"]) expect(isView(id)).toBe(true);
+    for (const id of ["tonight", "group", "ask", "discover", "library", "shelves", "watchlist", "recs", "rate", "continuity", "challenges", "stats", "settings"]) expect(isView(id)).toBe(true);
     expect(isView("nope")).toBe(false);
     expect(isView("")).toBe(false);
     expect(isView(undefined)).toBe(false);
@@ -18,6 +18,7 @@ describe("nav model", () => {
   it("finds a view's section, falling back to the first for an unknown id", () => {
     expect(groupOf("group").id).toBe("tonight");
     expect(groupOf("rate").id).toBe("discover");
+    expect(groupOf("ask").id).toBe("discover");
     expect(groupOf("shelves").id).toBe("library");
     expect(groupOf("continuity").id).toBe("foryou");
     expect(groupOf("challenges").id).toBe("plan");

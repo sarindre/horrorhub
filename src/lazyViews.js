@@ -10,6 +10,7 @@ const loaders = {
   roulette: () => import("./features/recs/RatingRoulette.jsx"),
   shelves: () => import("./features/shelves/ShelvesView.jsx"),
   group: () => import("./features/tonight/GroupNight.jsx"),
+  ask: () => import("./features/ask/AskView.jsx"),
 };
 
 export const StatsView = lazy(() => loaders.stats().then((m) => ({ default: m.StatsView })));
@@ -18,6 +19,7 @@ export const ChallengesView = lazy(() => loaders.challenges().then((m) => ({ def
 export const ContinuityGraph = lazy(() => loaders.continuity().then((m) => ({ default: m.ContinuityGraph })));
 export const RatingRoulette = lazy(() => loaders.roulette().then((m) => ({ default: m.RatingRoulette })));
 export const ShelvesView = lazy(() => loaders.shelves().then((m) => ({ default: m.ShelvesView })));
+export const AskView = lazy(() => loaders.ask().then((m) => ({ default: m.AskView })));
 export const GroupNight = lazy(() => loaders.group().then((m) => ({ default: m.GroupNight })));
 
 // Fetch the small screens while the browser is idle, so switching tabs is

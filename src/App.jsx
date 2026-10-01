@@ -27,7 +27,7 @@ import { LibraryView } from "./features/library/LibraryView.jsx";
 import { Discover } from "./features/discover/Discover.jsx";
 import { WatchlistView } from "./features/watchlist/WatchlistView.jsx";
 import { RecommendationsView } from "./features/recs/RecommendationsView.jsx";
-import { ChallengesView, ContinuityGraph, MovieDetails, RatingRoulette, GroupNight, ShelvesView, StatsView, preloadLazyViews } from "./lazyViews.js";
+import { AskView, ChallengesView, ContinuityGraph, MovieDetails, RatingRoulette, GroupNight, ShelvesView, StatsView, preloadLazyViews } from "./lazyViews.js";
 import { useShelves } from "./hooks/useShelves.js";
 import { parseShelfPayload } from "./lib/shelves.js";
 import { usePrefersReducedMotion } from "./hooks/usePrefersReducedMotion.js";
@@ -365,6 +365,10 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
             onOpenDetails={setSelected}
             onGo={goTab}
           />
+        </TabsContent>
+
+        <TabsContent value="ask" className="mt-6">
+          <AskView library={library} apiKey={settings.apiKey} region={settings.region} onOpenDetails={setSelected} onAdd={addToLibrary} onUpdate={upsert} />
         </TabsContent>
 
         <TabsContent value="group" className="mt-6">

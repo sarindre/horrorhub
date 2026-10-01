@@ -67,6 +67,9 @@ This project should stay local-first, lightweight, and highly personalized. It i
 - Run `npm test`, `npm run lint` and `npm run build` before committing.
 - Tests: pure logic gets plain Vitest tests next to the code; views are smoke-rendered on the server (`renderToString`, so text nodes can be split by `<!-- -->` markers when matching); hooks with effects or async loops are tested in jsdom with `// @vitest-environment jsdom` at the top of the file and a stubbed `fetch`. Background work (auto-tagging, import matching) must depend only on stable callbacks so it doesn't restart on every render.
 
+## Ask HorrorHub
+- `src/lib/query.js` is a rule-based parser (no LLM, nothing leaves the device). Its vocabulary tables (`FLAG_WORDS`, `TAG_WORDS`, `MOOD_WORDS`) are the place to teach it a new word, and `src/lib/query.test.js` is its specification. Order in `parseQuery` matters (exclusions, status, topics, tags, then numbers) and is explained there. A phrase that is both a flag and a tag ("gory", "body horror") means the tag when asked for and rules out both when excluded.
+
 ## Offline and backup
 - `public/sw.js` is the service worker. The build fills in its file list (`offlineManifest` in `vite.config.js`), so new files are included automatically; don't hard-code file names in it. It never touches the TMDb API. Stored lookups use `ignoreVary` on purpose (servers send `Vary: Origin`; without it every lookup misses).
 - Automatic folder backup is `src/lib/folderBackup.js` + `src/hooks/useAutoBackup.js`; the rules (file names, reminders) are pure in `src/lib/backup.js`. What a backup contains is `buildExport` plus the `extras` built in `App.jsx`: if you add a new kind of stored data worth keeping, add it to `backupData` there and to the export/import path.

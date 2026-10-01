@@ -16,7 +16,7 @@ import puppeteer from "puppeteer-core";
 
 const args = Object.fromEntries(process.argv.slice(2).filter((a) => a.startsWith("--")).map((a) => a.slice(2).split("=")));
 const widths = String(args.widths || "320,360,390,768,1280").split(",").map(Number).filter(Boolean);
-const VIEWS = ["tonight", "group", "discover", "rate", "library", "shelves", "recs", "continuity", "watchlist", "challenges", "stats", "settings"];
+const VIEWS = ["tonight", "group", "ask", "discover", "rate", "library", "shelves", "recs", "continuity", "watchlist", "challenges", "stats", "settings"];
 
 function findBrowser() {
   const candidates = [
@@ -129,6 +129,24 @@ try {
     if (args.shots) await page.screenshot({ path: path.join(args.shots, `tonight-quiz-${width}.png`) });
     if (!opened) bad.push({ view: "tonight-quiz (button not found)", overflow: 1, culprits: [] });
     else if (quiz.overflow > 0) bad.push({ view: "tonight-quiz", ...quiz });
+    // ...and an Ask HorrorHub answer
+    await page.goto(`${url}#ask`, { waitUntil: "networkidle2" });
+    const asked = await page.evaluate(() => {
+      const input = document.querySelector('input[aria-label="Ask HorrorHub"]');
+      if (!input) return false;
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set;
+      setter.call(input, "occult or slow-burn under 3 hours from my watchlist, no animal harm");
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      return true;
+    });
+    await new Promise((r) => setTimeout(r, 100));
+    await page.evaluate(() => document.querySelector('input[aria-label="Ask HorrorHub"]')?.closest("form")?.requestSubmit());
+    await new Promise((r) => setTimeout(r, 400));
+    const answer = await page.evaluate(measure);
+    if (args.shots) await page.screenshot({ path: path.join(args.shots, `ask-answer-${width}.png`), fullPage: true });
+    if (!asked) bad.push({ view: "ask-answer (no input found)", overflow: 1, culprits: [] });
+    else if (answer.overflow > 0) bad.push({ view: "ask-answer", ...answer });
+
     // ...and the "Pair with" panel, then the planner holding a double feature
     await page.goto(`${url}#library`, { waitUntil: "networkidle2" }); // leave Tonight so the quiz above is closed
     await page.goto(`${url}#tonight`, { waitUntil: "networkidle2" });

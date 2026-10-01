@@ -451,10 +451,14 @@ Done: a **Pair with…** button on a film's page and on Tonight's pick (`feature
 Left for later: pairing from a film that isn't in your library using TMDb to suggest companions (today companions come from your library only); a "warm-up" companion to watch before a heavy film; and three-film pairings.
 
 ### 27. Ask HorrorHub (natural-language search)
-Status: Planned
+Status: Done (see leftovers)
 Priority: P2
 
 "Slow-burn folk horror under 100 minutes, no animal harm" typed into one box. Start with a deterministic parser (runtime, decade, moods and tags, exclusions mapped to content flags) over your library and TMDb; optionally use an LLM key for freer phrasing, off by default to keep the app local-first.
+
+Done: Discover → **Ask** (`features/ask/AskView.jsx`; parser and matching in `lib/query.js`, TMDb side in `lib/askTmdb.js`). A rule-based, fully local parser turns a sentence into filters: subgenres and moods ("folk horror", "slow-burn", "atmospheric"), runtime ("under 100 minutes", "under 2 hours", "short", "over 2 hours"), years ("from the 80s", "before 1990", "since 2015", "recent"), how scary ("gentle", "not too scary", "terrifying", "scare level under 6"), what to avoid ("no animal harm", "without gore or jump scares", "nothing too gory", "gore free", "no slashers") mapped to the content flags, status and rating ("haven't seen", "on my watchlist", "top rated", "rated 4+"), and topics ("about nuns"). It always shows what it understood as chips and lists the words it ignored, so you can see why you got what you got. It ranks your library by how many of the asked-for subgenres match plus your taste, shows why, and says what the exclusions left out. **Also look on TMDb** turns the length, years and subgenre keywords into a TMDb request for films you don't own, then checks each film's warnings and drops any that break your exclusions or (when a question asks to avoid something) can't be checked. Only length, years and keywords are sent to TMDb.
+
+Left for later: the optional LLM mode for freer phrasing was deliberately not built (it would need an API key and sends your words to a third party, against the local-first direction); the parser only knows the vocabulary above, so unusual phrasings show up under "I didn't use"; scare level, rating and watched-or-not filters apply to your library only (TMDb has no such data); and an unscored film's runtime is often unknown until it's been tagged, in which case it's kept and labelled "runtime unknown".
 
 ### 28. Installable and safe: PWA plus automatic backups
 Status: Done (see leftovers)

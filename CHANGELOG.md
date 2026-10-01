@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added (innovation review, #27)
+- **Ask HorrorHub** (Discover → Ask): type what you're in the mood for ("slow-burn folk horror under 100 minutes, no animal harm") and get films from your library, ranked, with the reason for each. It shows how it read your question and what it ignored. **Also look on TMDb** finds films you don't own, checking warnings so exclusions are respected. Runs entirely on your device; only length, years and subgenre keywords go to TMDb, and only when you press the button.
+
 ### Added (innovation review, #29)
 - **Export for Letterboxd**: a CSV of your ratings, watch dates (one row per watch), rewatches, tags and notes in the format Letterboxd's importer reads, plus a separate watchlist file. Leaving is now as easy as arriving.
 - The Letterboxd importer reads TMDb ids, tags and reviews, so an export and import round-trips.

@@ -1,4 +1,4 @@
-// Navigation model. Twelve views, grouped into seven sections so the top bar stays
+// Navigation model. Thirteen views, grouped into seven sections so the top bar stays
 // short. A view id is what the app tracks (and what shows up in the URL hash);
 // a section is just a way of presenting related views together.
 
@@ -17,6 +17,7 @@ export const NAV = [
     views: [
       { id: "discover", label: "Browse" },
       { id: "rate", label: "Rate films" },
+      { id: "ask", label: "Ask" },
     ],
   },
   {
