@@ -472,7 +472,7 @@ Done:
 - **Reminder** for browsers that can't write to a folder, or before you set it up: a banner when a library has never been backed up or the last backup is 14 days old, with Export now, Set up, and Remind me later (snoozes 7 days).
 - **Protect storage**: a button asks the browser not to clear the site's data when space is low, and Settings says whether it agreed.
 
-Left for later: the backup holds your library, shelves, challenges and plans, but not settings (comfort limits, region, taste-quiz answers); an "update available" prompt when a new version is installed; and the folder-picker and permission flow has been tested with simulated folders but not clicked through in a real browser (the browser's own dialogs can't be automated).
+Update: backups and exports now include your settings (comfort limits, region, appearance, taste-quiz answers) but never API keys; importing a file that has settings asks before replacing yours, and a file can never set or change a key. Left for later: an "update available" prompt when a new version is installed; and the folder-picker and permission flow has been tested with simulated folders but not clicked through in a real browser (the browser's own dialogs can't be automated).
 
 ### 29. Round-trip with Letterboxd
 Status: Done (see leftovers)

@@ -7,7 +7,7 @@ import { useHashTab } from "./hooks/useHashTab.js";
 import { readJSON, readString, writeJSON, writeString } from "./lib/storage.js";
 import { buildExport, mergeLibraries, validateImport } from "./lib/library.js";
 import { FlickerOverlay, FogOverlay, AmbientAudio, LightsOutOverlay } from "./components/overlays.jsx";
-import { getMixer } from "./lib/settings.js";
+import { getMixer, portableSettings, settingsDiffer, settingsFromImport } from "./lib/settings.js";
 import { ContentPrefsContext } from "./lib/contentContext.js";
 import { useAutoTagger } from "./hooks/useAutoTagger.js";
 import { useChallenges } from "./hooks/useChallenges.js";
@@ -123,6 +123,15 @@ export function HorrorHub() {
     const summary = `Import from ${label}:\n\n• ${added} new title${added === 1 ? "" : "s"}\n• ${updated} existing title${updated === 1 ? "" : "s"} updated (tags and watch dates are combined)${skipped ? `\n• ${skipped} row${skipped === 1 ? "" : "s"} skipped (missing id or title)` : ""}\n\nNothing in your library is deleted. Continue?`;
     if (!window.confirm(summary)) return;
     replaceLibrary(items);
+    // a backup that carries settings (comfort limits, region, taste quiz): ask before replacing yours
+    const incomingSettings = settingsFromImport(payload?.settings);
+    let appliedSettings = false;
+    if (Object.keys(incomingSettings).length && settingsDiffer(settings, incomingSettings)) {
+      if (window.confirm("This file also has the settings it was saved with (comfort limits, region, appearance, taste quiz answers).\n\nApply them? They replace your current ones. Your TMDb token and other API keys are never changed.")) {
+        updateSettings(incomingSettings);
+        appliedSettings = true;
+      }
+    }
     const newChallenges = Array.isArray(payload?.challenges) ? challengeStore.merge(payload.challenges) : 0;
     const newPlans = Array.isArray(payload?.marathons) ? marathonStore.merge(payload.marathons) : 0;
     const newShelves = Array.isArray(payload?.shelves) ? shelfStore.merge(payload.shelves) : 0;
@@ -130,6 +139,7 @@ export function HorrorHub() {
       newChallenges && `${newChallenges} challenge${newChallenges === 1 ? "" : "s"}`,
       newPlans && `${newPlans} saved plan${newPlans === 1 ? "" : "s"}`,
       newShelves && `${newShelves} shelf${newShelves === 1 ? "" : "ves"}`,
+      appliedSettings && "your settings",
     ].filter(Boolean);
     toast(`Imported from ${label}: ${added} new, ${updated} updated${extra.length ? `, ${extra.join(", ")}` : ""}.`, { kind: "success" });
   };
@@ -190,10 +200,14 @@ export function HorrorHub() {
   };
 
   // Keeping the library safe: automatic folder backup, installing the app, and a reminder
-  const backupData = useMemo(
-    () => ({ items: library, extras: { challenges: challengeStore.challenges, marathons: marathonStore.marathons, shelves: shelfStore.shelves } }),
-    [library, challengeStore.challenges, marathonStore.marathons, shelfStore.shelves]
+  // your settings travel in backups (never the API keys); keyed by content so typing a key doesn't trigger a backup
+  const portableKey = JSON.stringify(portableSettings(settings));
+  const portable = useMemo(() => JSON.parse(portableKey), [portableKey]);
+  const backupExtras = useMemo(
+    () => ({ challenges: challengeStore.challenges, marathons: marathonStore.marathons, shelves: shelfStore.shelves, settings: portable }),
+    [challengeStore.challenges, marathonStore.marathons, shelfStore.shelves, portable]
   );
+  const backupData = useMemo(() => ({ items: library, extras: backupExtras }), [library, backupExtras]);
   const backup = useAutoBackup(backupData);
   const installApp = useInstallPrompt();
   const [snoozedUntil, setSnoozedUntil] = useState(getSnoozedUntil);
@@ -430,7 +444,7 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
             </TabsContent>
 
             <TabsContent value="settings" className="mt-6">
-              <Settings backup={backup} app={installApp} onExported={backup.recordManual} onExportNow={exportNow} onBeforeReset={backup.disable} settings={settings} update={updateSettings} onImport={importLib} onRetagAll={retagAll} onCleanupTags={cleanupTags} onRelink={relinkEverywhere} onRetryMatching={retryMatching} extras={{ challenges: challengeStore.challenges, marathons: marathonStore.marathons, shelves: shelfStore.shelves }} watchlist={watchlist} data={library} />
+              <Settings backup={backup} app={installApp} onExported={backup.recordManual} onExportNow={exportNow} onBeforeReset={backup.disable} settings={settings} update={updateSettings} onImport={importLib} onRetagAll={retagAll} onCleanupTags={cleanupTags} onRelink={relinkEverywhere} onRetryMatching={retryMatching} extras={backupExtras} watchlist={watchlist} data={library} />
             </TabsContent>
 
             <TabsContent value="help" className="mt-6">

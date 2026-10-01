@@ -47,7 +47,7 @@ Then open **Settings**, paste your TMDb v4 *Read Access Token* (free at themovie
 
 HorrorHub has no backend. Your library, settings and API keys are stored in this browser's `localStorage`, so they are not synced anywhere and are lost if you clear site data.
 
-- **Automatic backup:** in Chrome, Edge and other Chromium browsers, Settings → Backup & Import → *Choose backup folder* keeps a backup there (latest plus 7 daily copies), updated a few seconds after every change. Pick a folder inside OneDrive, Dropbox or iCloud to also protect against losing the computer. It saves your library, shelves, challenges and plans, not settings or API keys.
+- **Automatic backup:** in Chrome, Edge and other Chromium browsers, Settings → Backup & Import → *Choose backup folder* keeps a backup there (latest plus 7 daily copies), updated a few seconds after every change. Pick a folder inside OneDrive, Dropbox or iCloud to also protect against losing the computer. It saves your library, shelves, challenges, plans and settings (comfort limits, region, taste quiz), never your API keys.
 - **Other browsers:** Settings → Backup & Import → *Export* downloads a JSON file, and HorrorHub reminds you when it has been a while.
 - **Importing** (JSON, Letterboxd CSV, IMDb CSV) merges into your library after a preview. Nothing is deleted, empty fields never overwrite what you've curated, and tags and watch dates are combined.
 - **API keys** (TMDb, OMDb, DoesTheDogDie) are stored here too, in plain text, and only ever sent to the service they belong to. Don't paste them on a shared computer, and export your library (not your settings) when sharing a backup.

@@ -171,7 +171,7 @@ export const GLOSSARY = [
 // Questions people ask.
 export const FAQ = [
   { q: "Where is my data, and how do I keep it safe?", a: "In this browser on this device. In Settings → Backup & Import, choose a backup folder (Chrome, Edge and other Chromium browsers) and a copy is saved after every change. Elsewhere, use Export now and then, and HorrorHub will remind you when it's been a while." },
-  { q: "How do I move to another device?", a: "Export on the old one (Settings → Backup & Import) and Import the file on the new one. Importing merges and never deletes. Your TMDb token isn't included, so paste it in again." },
+  { q: "How do I move to another device?", a: "Export on the old one (Settings → Backup & Import) and Import the file on the new one. Importing merges your films and never deletes any, and asks before replacing your settings with the ones in the file. Your TMDb token and other API keys are never included, so paste them in again." },
   { q: "How do I get a TMDb token?", a: "Create a free account at themoviedb.org, open Settings → API, and copy the long \"API Read Access Token\". Paste it into HorrorHub under Settings → Connections." },
   { q: "Why does a scare level say \"est.\"?", a: "You haven't set one for that film, so HorrorHub estimated it from the film's tags and warnings. Move the Scare slider on the film, or log how scared you were, and it becomes yours." },
   { q: "Why can't I see some films?", a: "Check the filters at the top of the screen, and whether your content limits are set to hide films (Settings). Discover and Rate films also have \"Skip titles in library\" style checkboxes." },

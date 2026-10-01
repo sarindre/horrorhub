@@ -53,7 +53,7 @@ export function BackupCard({ backup, app }) {
         )}
         {supported && error && status === "off" ? <div role="alert" className="text-sm text-red-300">{error}</div> : null}
         <div className="text-xs opacity-60">
-          Saves your library, shelves, challenges and plans as horrorhub-backup.json plus the last {KEEP_DATED_BACKUPS} daily copies. API keys and settings are not included. Restore with Import below.
+          Saves your library, shelves, challenges, plans and settings (comfort limits, region, taste quiz) as horrorhub-backup.json plus the last {KEEP_DATED_BACKUPS} daily copies. API keys are never included. Restore with Import below.
         </div>
       </section>
 

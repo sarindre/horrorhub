@@ -103,6 +103,26 @@ export function normalizeSettings(raw) {
   };
 }
 
+// Settings that travel in a backup or export: everything except the API keys, which
+// stay on the device they were typed on.
+export const SECRET_KEYS = ["apiKey", "omdbKey", "dddKey"];
+export function portableSettings(settings) {
+  const portable = { ...normalizeSettings(settings) };
+  SECRET_KEYS.forEach((k) => delete portable[k]);
+  return portable;
+}
+
+// The settings from a backup file, safe to apply: only keys the file actually had, each
+// checked like any setting, and never an API key (a file can't set or change yours).
+export function settingsFromImport(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+  const clean = normalizeSettings(raw);
+  return Object.fromEntries(Object.entries(clean).filter(([key]) => key in raw && !SECRET_KEYS.includes(key)));
+}
+
+// True when applying `incoming` would change something.
+export const settingsDiffer = (current, incoming) => Object.entries(incoming).some(([k, v]) => JSON.stringify(current[k]) !== JSON.stringify(v));
+
 // The content limits, in the shape lib/contentFlags.js expects.
 export const getContentPrefs = (settings) => ({ avoidFlags: settings.avoidFlags, maxScares: settings.maxScares });
 

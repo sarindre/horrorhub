@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Settings travel in backups.** Automatic backups and exports now include your comfort limits, region, appearance and taste quiz answers (never your API keys), so a restore on a new device brings your setup back. Importing a file that has settings asks before replacing yours, and a file can't set or change your API keys.
+
+### Added
 - **Reset app** (Settings → Preferences, at the bottom): erases everything HorrorHub stores in this browser and starts fresh. It lists what will go, offers an export first, can keep your settings and API keys, and needs you to type RESET. It also forgets the backup folder and the saved poster images, and never touches files in your backup folder.
 
 ### Fixed

@@ -20,7 +20,8 @@ describe("BackupCard: automatic backup", () => {
     render(<BackupCard backup={b} app={app()} />);
     fireEvent.click(screen.getByRole("button", { name: "Choose backup folder" }));
     expect(b.choose).toHaveBeenCalled();
-    expect(screen.getByText(/API keys and settings are not included/)).toBeTruthy();
+    expect(screen.getByText(/API keys are never included/)).toBeTruthy();
+    expect(screen.getByText(/comfort limits, region, taste quiz/)).toBeTruthy();
     expect(screen.getByText(/OneDrive, Dropbox or iCloud/)).toBeTruthy();
   });
   it("shows where it is backing up and when it last did", () => {
