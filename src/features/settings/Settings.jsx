@@ -5,6 +5,7 @@ import { Input } from "../../components/ui/input.jsx";
 import { Label } from "../../components/ui/label.jsx";
 import { ExportImport } from "./ExportImport.jsx";
 import { BackupCard } from "./BackupCard.jsx";
+import { ResetCard } from "./ResetCard.jsx";
 import { ImportedFilms } from "./ImportedFilms.jsx";
 import { usePrefersReducedMotion } from "../../hooks/usePrefersReducedMotion.js";
 import { THEMES } from "../../lib/settings.js";
@@ -75,7 +76,7 @@ function SecretInput({ value, onChange, placeholder }) {
 
 // Controlled by the app: `settings` is the single source of truth and every
 // change goes through `update({ key: value })`, which validates and persists.
-export function Settings({ backup, app, onExported, settings, update, onImport, onRetagAll, onCleanupTags, onRelink, onRetryMatching, watchlist, data, extras = {} }) {
+export function Settings({ backup, app, onExported, onExportNow, onBeforeReset, settings, update, onImport, onRetagAll, onCleanupTags, onRelink, onRetryMatching, watchlist, data, extras = {} }) {
   const thisYear = new Date().getFullYear();
   const reducedMotion = usePrefersReducedMotion();
   return (
@@ -225,6 +226,12 @@ export function Settings({ backup, app, onExported, settings, update, onImport, 
           <SecretInput value={settings.dddKey} onChange={(v) => update({ dddKey: v })} placeholder="If set, details pages auto-fill jump scares/gore/disturbing" />
         </CardContent>
       </Card>
+
+      <ResetCard
+        counts={{ films: (data || []).length, shelves: (extras.shelves || []).length, challenges: (extras.challenges || []).length, plans: (extras.marathons || []).length }}
+        onExportNow={onExportNow}
+        onBeforeReset={onBeforeReset}
+      />
     </div>
   );
 }

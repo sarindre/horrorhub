@@ -430,7 +430,7 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
             </TabsContent>
 
             <TabsContent value="settings" className="mt-6">
-              <Settings backup={backup} app={installApp} onExported={backup.recordManual} settings={settings} update={updateSettings} onImport={importLib} onRetagAll={retagAll} onCleanupTags={cleanupTags} onRelink={relinkEverywhere} onRetryMatching={retryMatching} extras={{ challenges: challengeStore.challenges, marathons: marathonStore.marathons, shelves: shelfStore.shelves }} watchlist={watchlist} data={library} />
+              <Settings backup={backup} app={installApp} onExported={backup.recordManual} onExportNow={exportNow} onBeforeReset={backup.disable} settings={settings} update={updateSettings} onImport={importLib} onRetagAll={retagAll} onCleanupTags={cleanupTags} onRelink={relinkEverywhere} onRetryMatching={retryMatching} extras={{ challenges: challengeStore.challenges, marathons: marathonStore.marathons, shelves: shelfStore.shelves }} watchlist={watchlist} data={library} />
             </TabsContent>
 
             <TabsContent value="help" className="mt-6">

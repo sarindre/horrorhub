@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Reset app** (Settings → Preferences, at the bottom): erases everything HorrorHub stores in this browser and starts fresh. It lists what will go, offers an export first, can keep your settings and API keys, and needs you to type RESET. It also forgets the backup folder and the saved poster images, and never touches files in your backup folder.
+
+### Fixed
+- "2 shelfs" is now "2 shelves".
+
+### Added
 - **Ask: "Show more films"** on the TMDb results. It loads the next page below (no repeats, warnings checked as before) and says how many films your exclusions left out. If the whole first page was already in your library, "Try the next page" appears.
 
 ### Added

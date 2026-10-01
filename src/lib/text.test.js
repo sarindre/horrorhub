@@ -10,5 +10,7 @@ describe("plural", () => {
     expect(plural(5, "day")).toBe("5 days");
     expect(plural(3, "entry")).toBe("3 entries");
     expect(plural(1, "entry")).toBe("1 entry");
+    expect(plural(2, "shelf")).toBe("2 shelves");
+    expect(plural(1, "shelf")).toBe("1 shelf");
   });
 });

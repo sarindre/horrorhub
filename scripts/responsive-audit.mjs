@@ -218,6 +218,37 @@ try {
     if (args.shots) await page.screenshot({ path: path.join(args.shots, `challenges-plan-${width}.png`), fullPage: true });
     if (!planned) bad.push({ view: "challenges-plan (button not found)", overflow: 1, culprits: [] });
     else if (planView.overflow > 0) bad.push({ view: "challenges-plan", ...planView });
+    // ...and Reset app really empties the app (last, because it erases the seeded data; once, at the first width)
+    if (width === widths[0]) {
+      await page.goto(`${url}#settings`, { waitUntil: "networkidle2" });
+      const before = await page.evaluate(() => JSON.parse(localStorage.getItem("horrorhub.library.v3") || "{}").items?.length || 0);
+      await page.evaluate(() => [...document.querySelectorAll("button")].find((b) => b.textContent.trim() === "Reset app…")?.click());
+      await new Promise((r) => setTimeout(r, 300));
+      const dialogShot = args.shots ? await page.screenshot({ path: path.join(args.shots, `reset-dialog-${width}.png`) }) : null;
+      const overflow = await page.evaluate(measure);
+      await page.evaluate(() => {
+        const input = document.getElementById("reset-confirm");
+        const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set;
+        setter.call(input, "RESET");
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+      await new Promise((r) => setTimeout(r, 150));
+      const nav = page.waitForNavigation({ waitUntil: "networkidle2", timeout: 15000 }).catch(() => null);
+      await page.evaluate(() => [...document.querySelectorAll("button")].find((b) => b.textContent.trim() === "Erase everything")?.click());
+      await nav;
+      await new Promise((r) => setTimeout(r, 800));
+      const after = await page.evaluate(() => ({
+        films: JSON.parse(localStorage.getItem("horrorhub.library.v3") || "{}").items?.length || 0,
+        shelves: JSON.parse(localStorage.getItem("horrorhub.shelves.v1") || "{}").items?.length || 0,
+        challenges: JSON.parse(localStorage.getItem("horrorhub.challenges.v1") || "{}").items?.length || 0,
+        token: JSON.parse(localStorage.getItem("horrorhub.settings.v2") || "{}").settings?.apiKey || "",
+        empty: document.body.textContent.includes("Your library is empty"),
+      }));
+      const ok = before > 0 && overflow.overflow === 0 && after.films === 0 && after.shelves === 0 && after.challenges === 0 && after.empty;
+      if (!ok) bad.push({ view: `reset-app (films ${before} -> ${after.films}, empty screen: ${after.empty}, overflow ${overflow.overflow})`, overflow: 1, culprits: [] });
+      void dialogShot;
+    }
+
     await page.close();
     if (!bad.length) console.log(`  ${String(width).padStart(4)} px  ok (${VIEWS.length + 2} screens)`);
     for (const b of bad) {
