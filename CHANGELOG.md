@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added (help)
+- **Help screen** (? in the header, or Settings → Help): getting started, how every screen works, a glossary, a FAQ, keyboard tips, and a search box.
+- **"How this screen works"** at the top of every screen; it opens the first time you visit and then stays folded away. First-visit tips can be turned off or shown again from the Help screen.
+- Ask HorrorHub's TMDb results now say which of your filters (how scary, ratings, watched) they couldn't apply.
+
+### Changed (help)
+- The Settings tab is now called Preferences, with Help beside it.
+
 ### Fixed
 - "+ Watchlist" on films from TMDb (Ask HorrorHub, and Ideas on Challenges) gave no sign that it worked. It now shows "Added ... to your watchlist" and the button becomes "✓ On watchlist" (or "✓ In library").
 

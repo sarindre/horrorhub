@@ -16,7 +16,7 @@ import puppeteer from "puppeteer-core";
 
 const args = Object.fromEntries(process.argv.slice(2).filter((a) => a.startsWith("--")).map((a) => a.slice(2).split("=")));
 const widths = String(args.widths || "320,360,390,768,1280").split(",").map(Number).filter(Boolean);
-const VIEWS = ["tonight", "group", "ask", "discover", "rate", "library", "shelves", "recs", "continuity", "watchlist", "challenges", "stats", "settings"];
+const VIEWS = ["tonight", "group", "ask", "discover", "rate", "library", "shelves", "recs", "continuity", "watchlist", "challenges", "stats", "settings", "help"];
 
 function findBrowser() {
   const candidates = [
@@ -114,7 +114,7 @@ try {
       await page.goto(`${url}#${view}`, { waitUntil: "networkidle2" });
       await new Promise((r) => setTimeout(r, 700)); // lazy screens and fonts
       const result = await page.evaluate(measure);
-      if (args.shots) await page.screenshot({ path: path.join(args.shots, `${view}-${width}.png`), fullPage: view === "settings" });
+      if (args.shots) await page.screenshot({ path: path.join(args.shots, `${view}-${width}.png`), fullPage: view === "settings" || view === "help" });
       if (result.overflow > 0) bad.push({ view, ...result });
     }
     // states that need a click to reach: the taste quiz on the Tonight screen

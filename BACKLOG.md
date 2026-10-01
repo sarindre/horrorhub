@@ -519,5 +519,15 @@ Raised while using the app: an added challenge like 31 Nights of Halloween sat o
 
 Done: an upcoming challenge has a "Start today" button that moves its window to begin now (same length). Each running or upcoming challenge has a Daily plan (`features/challenges/ChallengePlan.jsx`, logic in `lib/challengePlan.js`): one film per night from your library, building from gentle to intense around your usual scare level, skipping watched films and anything over your limits, and only films that count for a themed challenge. Swap any night, fill open slots, log the watch from the row, replan, clear, or download the plan as a calendar file. The plan is saved on the challenge (so it is in exports) and Tonight shows "tonight is ..." for your running challenges. Left for later: filling open slots straight from TMDb ideas (today: add ideas to your library, then Replan), and plans for finished challenges.
 
+### 33. Help text throughout the app
+Status: Done
+Priority: P1
+
+Raised while using the app: several features (estimated scare levels, the taste quiz, content-limit modes, Group night, Ask) are not self-explanatory, and nothing in the app explained them.
+
+Done: every screen has a "How this screen works" panel at the top (`components/ScreenHelp.jsx`) that opens the first time you visit it and then stays folded behind a button; a **Help** screen (Settings → Help, or the ? in the header; `features/help/HelpView.jsx`) with getting started, every screen explained, a glossary (scare level, est., tags and ✦, content warnings, limits, streak, XP...), a FAQ (where is my data, how to get a TMDb token, why "est.", how to log a film from years ago...), keyboard and link tips, a search box over all of it, and a switch for the first-visit tips. All text lives in `lib/help.js`, and a test fails if a screen has no help or text has blanks, leftovers or unbalanced quotes. Also: TMDb results in Ask now say which filters (scare, rating, watched) they couldn't honour. The old "Settings" tab is now "Preferences" so the section can hold Help.
+
+Left for later: small "what's this?" hints on individual controls (the est. label, the Subgenre Mixer), and translated help.
+
 ## Notes
 The product should feel like a personal horror curator, not just a database. The strongest differentiator is a recommendation system that understands horror taste, mood, and watch planning.

@@ -67,6 +67,9 @@ This project should stay local-first, lightweight, and highly personalized. It i
 - Run `npm test`, `npm run lint` and `npm run build` before committing.
 - Tests: pure logic gets plain Vitest tests next to the code; views are smoke-rendered on the server (`renderToString`, so text nodes can be split by `<!-- -->` markers when matching); hooks with effects or async loops are tested in jsdom with `// @vitest-environment jsdom` at the top of the file and a stubbed `fetch`. Background work (auto-tagging, import matching) must depend only on stable callbacks so it doesn't restart on every render.
 
+## Help text
+- All help lives in `src/lib/help.js` (per-screen entries, glossary, FAQ). When you add a screen or change what one does, update its entry: a test fails if a view has no help. Write for someone who has never seen the app, and use the names of the buttons as they appear on screen.
+
 ## Ask HorrorHub
 - `src/lib/query.js` is a rule-based parser (no LLM, nothing leaves the device). Its vocabulary tables (`FLAG_WORDS`, `TAG_WORDS`, `MOOD_WORDS`) are the place to teach it a new word, and `src/lib/query.test.js` is its specification. Order in `parseQuery` matters (exclusions, status, topics, tags, then numbers) and is explained there. A phrase that is both a flag and a tag ("gory", "body horror") means the tag when asked for and rules out both when excluded.
 

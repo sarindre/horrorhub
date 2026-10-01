@@ -1,5 +1,5 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
-import { Sparkles } from "lucide-react";
+import { CircleHelp, Sparkles } from "lucide-react";
 import { Button } from "./components/ui/button.jsx";
 import { Tabs, TabsContent } from "./components/ui/tabs.jsx";
 import { MainNav } from "./components/MainNav.jsx";
@@ -27,7 +27,7 @@ import { LibraryView } from "./features/library/LibraryView.jsx";
 import { Discover } from "./features/discover/Discover.jsx";
 import { WatchlistView } from "./features/watchlist/WatchlistView.jsx";
 import { RecommendationsView } from "./features/recs/RecommendationsView.jsx";
-import { AskView, ChallengesView, ContinuityGraph, MovieDetails, RatingRoulette, GroupNight, ShelvesView, StatsView, preloadLazyViews } from "./lazyViews.js";
+import { HelpView, AskView, ChallengesView, ContinuityGraph, MovieDetails, RatingRoulette, GroupNight, ShelvesView, StatsView, preloadLazyViews } from "./lazyViews.js";
 import { useShelves } from "./hooks/useShelves.js";
 import { parseShelfPayload } from "./lib/shelves.js";
 import { usePrefersReducedMotion } from "./hooks/usePrefersReducedMotion.js";
@@ -36,6 +36,7 @@ import { Attribution } from "./components/Attribution.jsx";
 import { CalibrationContext } from "./lib/calibrationContext.js";
 import { Tonight } from "./features/tonight/Tonight.jsx";
 import { BackupReminder } from "./components/BackupReminder.jsx";
+import { ScreenHelp } from "./components/ScreenHelp.jsx";
 import { useAutoBackup } from "./hooks/useAutoBackup.js";
 import { useInstallPrompt } from "./hooks/useInstallPrompt.js";
 import { backupReminder, getSnoozedUntil, snoozeReminder } from "./lib/backup.js";
@@ -286,6 +287,7 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
           <div className="opacity-80">Track what you've watched, find what to watch next, and plan the perfect night.</div>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" aria-label="Help" title="Help" onClick={() => goTab("help")}><CircleHelp className="h-4 w-4" /></Button>
           <Button variant={settings.lightsOut ? "default" : "outline"} onClick={() => updateSettings({ lightsOut: !settings.lightsOut })}>
             {settings.lightsOut ? 'Lights on' : 'Lights out'}
           </Button>
@@ -352,6 +354,8 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
             </div>
           </div>
         ) : (
+          <>
+          {tab !== "help" ? <ScreenHelp key={tab} view={tab} onOpenHelp={() => goTab("help")} /> : null}
           <Suspense fallback={<div role="status" className="mt-6 text-sm opacity-70">Loading…</div>}>
           <>
         <TabsContent value="tonight" className="mt-6">
@@ -428,8 +432,13 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
             <TabsContent value="settings" className="mt-6">
               <Settings backup={backup} app={installApp} onExported={backup.recordManual} settings={settings} update={updateSettings} onImport={importLib} onRetagAll={retagAll} onCleanupTags={cleanupTags} onRelink={relinkEverywhere} onRetryMatching={retryMatching} extras={{ challenges: challengeStore.challenges, marathons: marathonStore.marathons, shelves: shelfStore.shelves }} watchlist={watchlist} data={library} />
             </TabsContent>
+
+            <TabsContent value="help" className="mt-6">
+              <HelpView onGo={goTab} />
+            </TabsContent>
           </>
           </Suspense>
+          </>
         )}
       </Tabs>
 

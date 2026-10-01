@@ -135,6 +135,25 @@ describe("looking on TMDb", () => {
     expect(onAdd).toHaveBeenCalledWith(expect.objectContaining({ id: 501, watchlist: true }));
   });
 
+  it("says which filters TMDb results couldn't honour", async () => {
+    stub();
+    setup({ apiKey: "tok" });
+    ask("gentle folk horror under 2 hours I haven't seen");
+    fireEvent.click(screen.getByRole("button", { name: "Also look on TMDb" }));
+    const note = await screen.findByRole("note", {}, WAIT);
+    expect(note.textContent).toContain("how scary, what you've watched");
+    expect(note.textContent).not.toContain("your ratings");
+  });
+
+  it("doesn't warn when every filter applied", async () => {
+    stub();
+    setup({ apiKey: "tok" });
+    ask("folk horror under 2 hours");
+    fireEvent.click(screen.getByRole("button", { name: "Also look on TMDb" }));
+    await screen.findByText("Clean New", {}, WAIT);
+    expect(screen.queryByRole("note")).toBeNull();
+  });
+
   it("is disabled when nothing was understood", () => {
     setup({ apiKey: "tok" });
     ask("xyzzy");

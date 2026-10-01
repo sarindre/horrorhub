@@ -19,6 +19,7 @@ Then open **Settings**, paste your TMDb v4 *Read Access Token* (free at themovie
 - **Group night:** add everyone watching with their scare limits, content to avoid and favorite vibes; it finds the films from your library that suit the whole room, ranked by how the least-happy person feels, and explains the compromise.
 - **Letterboxd both ways:** import your history, and export ratings, watch dates, tags and reviews back out in the CSV format Letterboxd imports.
 - **Ask HorrorHub:** describe what you want in plain words ("gentle 80s slashers I haven't seen, no gore") and it searches your library, shows how it understood you, and can look on TMDb too. Rule-based and local.
+- **Help built in:** every screen has a short "How this screen works" panel, and a Help screen has a glossary, FAQ and search.
 - **Library:** rate, review, tag and log watches; import from Letterboxd/IMDb; filter by mood, several tags at once, or "untagged".
 - **Recommendations:** learns your taste from your ratings, watches and tags, and explains every suggestion ("You tend to enjoy #folk-horror", "Because you liked Hereditary").
 - **Auto-tagging:** reads TMDb keywords, genres and descriptions and tags films for you (marked ✦). Your own edits always win.

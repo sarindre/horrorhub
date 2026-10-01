@@ -134,6 +134,13 @@ export function AskView({ library, apiKey, region = "US", onOpenDetails, onAdd, 
   const hiddenByLimits = found ? found.results.length - results.length : 0;
   const shown = showAll ? results : results.slice(0, FIRST);
   const leftOut = found ? Object.entries(found.leftOut) : [];
+  // filters that only make sense for films you own, so TMDb results can't honour them
+  const f = parsed.filters;
+  const unappliedOnTmdb = [
+    f.scareMin !== undefined || f.scareMax !== undefined ? "how scary" : "",
+    f.ratingMin !== undefined || f.ratingMax !== undefined ? "your ratings" : "",
+    f.watched !== undefined || f.watchlist ? "what you've watched" : "",
+  ].filter(Boolean);
 
   const ask = (question) => {
     const q = (question ?? text).trim();
@@ -239,6 +246,11 @@ export function AskView({ library, apiKey, region = "US", onOpenDetails, onAdd, 
               <div className="text-xs opacity-60">Sends only the length, years and subgenre keywords to TMDb. Scare level, rating and watched-or-not filters apply to your library only.</div>
             ) : null}
             {tmdb.status === "error" ? <div role="alert" className="text-sm text-red-300">{tmdb.error}</div> : null}
+            {tmdb.status === "done" && unappliedOnTmdb.length ? (
+              <div role="note" className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs">
+                These weren't filtered by {unappliedOnTmdb.join(", ")}: TMDb doesn't have that information, so it only applies to your own library. Check a film's page before you pick.
+              </div>
+            ) : null}
             {tmdb.status === "done" && tmdb.films.length ? <TmdbResults films={tmdb.films} apiKey={apiKey} filters={parsed.filters} library={library} onOpenDetails={onOpenDetails} onAdd={onAdd} /> : null}
             {tmdb.status === "done" && !tmdb.films.length ? <div className="text-sm opacity-70">{tmdb.note}</div> : null}
           </section>
