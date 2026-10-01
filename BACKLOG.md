@@ -471,10 +471,14 @@ Done:
 Left for later: the backup holds your library, shelves, challenges and plans, but not settings (comfort limits, region, taste-quiz answers); an "update available" prompt when a new version is installed; and the folder-picker and permission flow has been tested with simulated folders but not clicked through in a real browser (the browser's own dialogs can't be automated).
 
 ### 29. Round-trip with Letterboxd
-Status: Planned
+Status: Done (see leftovers)
 Priority: P2
 
 Imports work, but you can't get your ratings and watches back out. Add a Letterboxd-compatible CSV export (and IMDb-style ratings), so leaving is as easy as arriving. That's what makes moving in trustworthy.
+
+Done: Settings → Backup & Import → **Export for Letterboxd** writes a CSV in the column format Letterboxd's importer documents (tmdbID, Title, Year, Rating, WatchedDate, Rewatch, Tags, Review): one row per watch with its calendar date, later watches marked as rewatches, ratings, your tags and your notes as the review, and TMDb ids so matching is exact. Films you rated or saw "long ago" come across without a made-up date. A separate **Letterboxd watchlist** file lists unwatched watchlist films. HorrorHub's own importer now reads this format back (TMDb ids, tags, reviews), so the round trip is tested. There is no IMDb export: IMDb has no way to import ratings. While doing this, CSV import was fixed to read "YYYY-MM-DD" as that local day (it was the evening before west of UTC, the same bug class CLAUDE.md warns about).
+
+Left for later: the file has been tested against HorrorHub's own importer and Letterboxd's documented columns, but not uploaded to Letterboxd itself (that needs an account), so check the first import on a spare account if it matters; scare-diary notes aren't exported (Letterboxd has no field for them).
 
 ### 30. Out of scope for now (need a backend)
 Status: Parked

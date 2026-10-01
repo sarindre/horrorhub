@@ -4,9 +4,11 @@ import { Button } from "../../components/ui/button.jsx";
 import { parseImdbCSV, parseLetterboxdCSV } from "../../lib/csv.js";
 import { createICS } from "../../lib/ics.js";
 import { buildExport } from "../../lib/library.js";
+import { buildLetterboxdExport } from "../../lib/letterboxdExport.js";
+import { plural } from "../../lib/text.js";
 import { useToast } from "../../lib/toastContext.js";
 
-export function ExportImport({ data, onImport, watchlist = [], extras = {}, onExported }) {
+export function ExportImport({ data, onImport, watchlist = [], extras = {}, onExported, longAgoYear = 1900 }) {
   const toast = useToast();
   const fileRef = useRef(null);
   const lbRef = useRef(null);
@@ -26,6 +28,18 @@ export function ExportImport({ data, onImport, watchlist = [], extras = {}, onEx
     const blob = new Blob([JSON.stringify(buildExport(data, extras), null, 2)], { type: "application/json" });
     saveBlob(blob, `horrorhub-${today()}.json`);
     onExported?.();
+  };
+
+  // Letterboxd's importer reads this CSV (letterboxd.com/import): your ratings, watch dates,
+  // tags and reviews, one row per watch. It is not a backup (use Export for that).
+  const letterboxd = buildLetterboxdExport(data, { longAgoYear });
+  const downloadLetterboxd = () => {
+    saveBlob(new Blob([letterboxd.watched.csv], { type: "text/csv" }), `horrorhub-letterboxd-${today()}.csv`);
+    toast(`Exported ${plural(letterboxd.watched.films, "film")} (${plural(letterboxd.watched.watches, "dated watch")}). On letterboxd.com/import, choose the file.`, { kind: "success" });
+  };
+  const downloadLetterboxdWatchlist = () => {
+    saveBlob(new Blob([letterboxd.watchlist.csv], { type: "text/csv" }), `horrorhub-letterboxd-watchlist-${today()}.csv`);
+    toast(`Exported ${plural(letterboxd.watchlist.films, "watchlist film")}. Import it on Letterboxd as a list or your watchlist.`, { kind: "success" });
   };
 
   // Reads a file, turns its text into an import payload, and hands it to the
@@ -92,6 +106,16 @@ export function ExportImport({ data, onImport, watchlist = [], extras = {}, onEx
         <CalendarPlus className="h-4 w-4 mr-2" />
         Export ICS
       </Button>
+      <Button variant="outline" onClick={downloadLetterboxd} disabled={!letterboxd.watched.films} title="A CSV Letterboxd can import: ratings, watch dates, tags and reviews">
+        <Download className="h-4 w-4 mr-2" />
+        Export for Letterboxd
+      </Button>
+      {letterboxd.watchlist.films ? (
+        <Button variant="outline" onClick={downloadLetterboxdWatchlist}>
+          <Download className="h-4 w-4 mr-2" />
+          Letterboxd watchlist
+        </Button>
+      ) : null}
     </div>
   );
 }

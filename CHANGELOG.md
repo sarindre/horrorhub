@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added (innovation review, #29)
+- **Export for Letterboxd**: a CSV of your ratings, watch dates (one row per watch), rewatches, tags and notes in the format Letterboxd's importer reads, plus a separate watchlist file. Leaving is now as easy as arriving.
+- The Letterboxd importer reads TMDb ids, tags and reviews, so an export and import round-trips.
+
+### Fixed
+- Importing a Letterboxd CSV read "2026-03-05" as the evening of March 4th in timezones west of UTC; it is now that day.
+
 ### Added (innovation review, #26)
 - **Pair with…** on a film's page and on Tonight's pick: companions from your library for a double feature, by wavelength (same corner of horror), palate cleanser (lighter, to wind down) or quick one (shorter). One tap loads the pair into the marathon planner with a start time, save and calendar export.
 

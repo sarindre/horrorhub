@@ -1,3 +1,16 @@
+import { isoDateOnly, parseDay } from "./dates.js";
+
+// One CSV cell: quoted when it contains a comma, quote or line break.
+const cell = (value) => {
+  const text = value === undefined || value === null ? "" : String(value);
+  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+};
+
+// Rows (objects) to CSV text, with the columns in the order given.
+export function toCSV(columns, rows) {
+  return [columns.join(","), ...rows.map((row) => columns.map((c) => cell(row[c])).join(","))].join("\r\n") + "\r\n";
+}
+
 // Minimal CSV parser supporting quoted fields, escaped quotes and CRLF.
 export function parseCSV(text) {
   const rows = [];
@@ -28,9 +41,15 @@ export function parseCSV(text) {
   return rows;
 }
 
-// A bad date in one row must not sink the whole import.
+// A bad date in one row must not sink the whole import. A bare "YYYY-MM-DD" is a local
+// calendar day (new Date() would read it as UTC, the evening before west of UTC).
 function toISO(value) {
   if (!value) return null;
+  const text = String(value).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+    const day = parseDay(text);
+    return Number.isNaN(day.getTime()) ? null : isoDateOnly(day);
+  }
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
 }
@@ -58,17 +77,26 @@ export function parseLetterboxdCSV(text) {
   const iTitle = findColumn(header, ["name", "title"]);
   if (iTitle < 0) throw new Error("This doesn't look like a Letterboxd export (no Name/Title column).");
   const iYear = findColumn(header, ["year"]);
-  const iWatched = findColumn(header, ["watched date", "watched on", "date"]);
+  const iWatched = findColumn(header, ["watched date", "watcheddate", "watched on", "date"]);
   const iRating = findColumn(header, ["rating", "your rating"]);
+  const iTmdb = findColumn(header, ["tmdbid", "tmdb id"]);
+  const iTags = findColumn(header, ["tags"]);
+  const iReview = findColumn(header, ["review"]);
   return body
     .map((r) => {
       const title = (r[iTitle] || "").trim();
       const year = Number(r[iYear]) || undefined;
       const watched = toISO(r[iWatched]);
-      const item = { id: `letterboxd:${title}:${year || ""}`, title, year };
+      // a TMDb id (as in HorrorHub's own Letterboxd export) links the film to TMDb straight away
+      const tmdbId = iTmdb >= 0 ? Number(r[iTmdb]) : NaN;
+      const item = { id: Number.isInteger(tmdbId) && tmdbId > 0 ? tmdbId : `letterboxd:${title}:${year || ""}`, title, year };
       if (watched) item.watchedDates = [watched];
       const rating = Number(r[iRating]);
       if (rating > 0) item.rating = rating;
+      const tags = iTags >= 0 ? (r[iTags] || "").split(",").map((t) => t.trim()).filter(Boolean) : [];
+      if (tags.length) item.tags = tags;
+      const review = iReview >= 0 ? (r[iReview] || "").trim() : "";
+      if (review) item.notes = review;
       return item;
     })
     .filter((i) => i.title);

@@ -17,6 +17,7 @@ Then open **Settings**, paste your TMDb v4 *Read Access Token* (free at themovie
 
 - **Tonight:** the home screen. One pick for tonight with the reasons, scare level and content warnings, a reroll that never repeats, and your streak and challenges underneath. A 60-second taste quiz teaches it your taste and how scary is too scary; scare levels you haven't set are estimated and labelled "est.".
 - **Group night:** add everyone watching with their scare limits, content to avoid and favorite vibes; it finds the films from your library that suit the whole room, ranked by how the least-happy person feels, and explains the compromise.
+- **Letterboxd both ways:** import your history, and export ratings, watch dates, tags and reviews back out in the CSV format Letterboxd imports.
 - **Library:** rate, review, tag and log watches; import from Letterboxd/IMDb; filter by mood, several tags at once, or "untagged".
 - **Recommendations:** learns your taste from your ratings, watches and tags, and explains every suggestion ("You tend to enjoy #folk-horror", "Because you liked Hereditary").
 - **Auto-tagging:** reads TMDb keywords, genres and descriptions and tags films for you (marked ✦). Your own edits always win.

@@ -199,7 +199,8 @@ export function Settings({ backup, app, onExported, settings, update, onImport, 
           {backup && app ? <BackupCard backup={backup} app={app} /> : null}
           <div className="text-sm font-semibold">Export and import</div>
           <div className="text-sm opacity-70">Export your library to JSON, import from JSON/CSV, or export a watchlist calendar.</div>
-          <ExportImport data={data || []} onImport={onImport} watchlist={watchlist || []} extras={extras} onExported={onExported} />
+          <ExportImport data={data || []} onImport={onImport} watchlist={watchlist || []} extras={extras} onExported={onExported} longAgoYear={settings.longAgoYear} />
+          <div className="text-xs opacity-60">Leaving Letterboxd or coming back? "Export for Letterboxd" writes your ratings, watch dates, tags and reviews in the CSV format their importer reads, so you can move both ways. IMDb has no import, so there is no IMDb export.</div>
         </CardContent>
       </Card>
 
