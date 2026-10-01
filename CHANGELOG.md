@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- **Rate films and Browse**: a card disappeared the moment you rated or added it (the "Hide already rated" / "Skip titles in library" filters dropped it at once). It now stays on screen so you can finish rating, and clears when you change page or search. A message at the bottom says where the film went, for example "Rated Alien 4★ and added it to your library. Find it in My Library → All films."
+
 ### Added (help)
 - **Help screen** (? in the header, or Settings → Help): getting started, how every screen works, a glossary, a FAQ, keyboard tips, and a search box.
 - **"How this screen works"** at the top of every screen; it opens the first time you visit and then stays folded away. First-visit tips can be turned off or shown again from the Help screen.

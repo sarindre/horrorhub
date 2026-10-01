@@ -10,6 +10,7 @@ import { useContentGate } from "../../hooks/useContentGate.js";
 import { HiddenNotice } from "../../components/HiddenNotice.jsx";
 import { useToast } from "../../lib/toastContext.js";
 import { MovieCard } from "../../components/MovieCard.jsx";
+import { useTouchedCards } from "../../hooks/useTouchedCards.js";
 import { TMDB_IMG, describeError, isAbort, mapMovie, tmdbGet } from "../../lib/tmdb.js";
 
 const PROVIDER_NAMES = { netflix: "Netflix", prime: "Prime Video", hulu: "Hulu", disney: "Disney+" };
@@ -109,10 +110,14 @@ export function Discover({ apiKey, region = "US", onAdd, onRemove, inLibraryIds,
     setShowUpcoming((v) => !v);
   };
 
+  // a film you've just rated or added stays on screen (the filters below would drop it at once)
+  const { touched, handle } = useTouchedCards({ ratingById, inLibraryIds, watchlistIds, onAdd, resetKey: results });
+
   const shown = gate.visible
-    .filter((r) => (hideWatchlisted ? !watchlistIds?.has(r.id) : true))
-    .filter((r) => (hideInLibrary ? !inLibraryIds?.has(r.id) : true))
+    .filter((r) => touched.has(r.id) || (hideWatchlisted ? !watchlistIds?.has(r.id) : true))
+    .filter((r) => touched.has(r.id) || (hideInLibrary ? !inLibraryIds?.has(r.id) : true))
     .filter((r) => {
+      if (touched.has(r.id)) return true;
       if (!(providersSel || []).length) return true;
       return (providerMap[r.id] || []).some((p) => providersSel.includes(p));
     });
@@ -257,8 +262,8 @@ export function Discover({ apiKey, region = "US", onAdd, onRemove, inLibraryIds,
           <div key={r.id} className="fade-in-up min-w-0">
             <MovieCard
               item={{ ...r, rating: ratingById?.[r.id] ?? 0 }}
-              onAdd={(it) => onAdd?.(it)}
-              onUpdate={(it) => onAdd?.(it)}
+              onAdd={handle}
+              onUpdate={handle}
               onRemove={(id) => onRemove?.(id)}
               showWatchlist={false}
               compact

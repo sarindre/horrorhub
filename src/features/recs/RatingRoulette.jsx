@@ -5,6 +5,7 @@ import { useProviders } from "../../hooks/useProviders.js";
 import { useContentGate } from "../../hooks/useContentGate.js";
 import { HiddenNotice } from "../../components/HiddenNotice.jsx";
 import { MovieCard } from "../../components/MovieCard.jsx";
+import { useTouchedCards } from "../../hooks/useTouchedCards.js";
 import { describeError, isAbort, mapMovie, tmdbGet } from "../../lib/tmdb.js";
 
 export function RatingRoulette({ apiKey, region = "US", onAdd, onOpenDetails, ratingMap={}, inLibraryIds = new Set(), watchlistIds = new Set() }){
@@ -23,6 +24,8 @@ export function RatingRoulette({ apiKey, region = "US", onAdd, onOpenDetails, ra
   const abortRef = useRef(null);
   const { map: providerMap } = useProviders(rows.map((r) => r.id), apiKey, (providersSel || []).length > 0, region);
   const gate = useContentGate(rows, apiKey);
+  // a film you've just rated or added stays on screen (the filters below would drop it at once)
+  const { touched, handle } = useTouchedCards({ ratingById: ratingMap, inLibraryIds, watchlistIds, onAdd, resetKey: page });
 
   const fetchPage = useCallback(async (p) => {
     // a newer request (or a cached page) always wins over one still in flight
@@ -56,6 +59,7 @@ export function RatingRoulette({ apiKey, region = "US", onAdd, onOpenDetails, ra
   // derive current ratings live from ratingMap and apply optional filters
   const derived = gate.visible.map(r => ({ ...r, rating: ratingMap[r.id] || 0 }));
   const filtered = derived.filter(r => {
+    if (touched.has(r.id)) return true;
     if (hideRated && (r.rating||0) > 0) return false;
     if (hideInLibrary && inLibraryIds.has(r.id)) return false;
     if (hideWatchlisted && watchlistIds.has(r.id)) return false;
@@ -139,7 +143,7 @@ export function RatingRoulette({ apiKey, region = "US", onAdd, onOpenDetails, ra
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {display.map(r => (
-          <MovieCard key={r.id} item={r} onAdd={(it)=> onAdd?.(it)} onUpdate={(it)=> onAdd?.(it)} onOpenDetails={onOpenDetails} showWatchlist={false} compact isInLibrary={inLibraryIds.has(r.id)} isWatchlisted={watchlistIds.has(r.id)} providers={providerMap[r.id] || []} warnings={gate.flagsById[r.id] || []} />
+          <MovieCard key={r.id} item={r} onAdd={handle} onUpdate={handle} onOpenDetails={onOpenDetails} showWatchlist={false} compact isInLibrary={inLibraryIds.has(r.id)} isWatchlisted={watchlistIds.has(r.id)} providers={providerMap[r.id] || []} warnings={gate.flagsById[r.id] || []} />
         ))}
       </div>
     </div>

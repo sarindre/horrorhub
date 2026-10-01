@@ -42,7 +42,7 @@ export const HELP = {
     what: "Search TMDb for horror films and add them to your library or watchlist.",
     points: [
       "Type a title and press Enter, or use the buttons for popular, critically rated, newest, oldest, classics under 90 minutes, and upcoming releases.",
-      "\"Add\" puts a film in your library. \"Watchlist\" marks it as something you want to see. \"Watched\" logs when you saw it.",
+      "\"Add\" puts a film in your library (a message says where it went, and the card stays until the list changes). \"Watchlist\" marks it as something you want to see. \"Watched\" logs when you saw it.",
       "\"Available on\" keeps only films streaming on the services you tick, for the country chosen in Settings.",
       "Click a title for its full page: cast, trailer, ratings and content warnings.",
     ],
@@ -52,7 +52,7 @@ export const HELP = {
     title: "Rate films",
     what: "A quick way to teach HorrorHub your taste: rate popular horror films you've already seen.",
     points: [
-      "Click the knives on a film to rate it. Rating a film adds it to your library.",
+      "Click the knives on a film to rate it. Rating a film adds it to your library, and a message tells you where it went. The card stays on screen so you can change your mind, and clears when you change page.",
       "Skip films you haven't seen. Use the page controls to move through the list.",
       "\"Hide already rated\", \"Skip titles in library\" and \"Skip watchlisted\" keep the list fresh.",
     ],
