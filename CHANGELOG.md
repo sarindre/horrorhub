@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- "+ Watchlist" on films from TMDb (Ask HorrorHub, and Ideas on Challenges) gave no sign that it worked. It now shows "Added ... to your watchlist" and the button becomes "✓ On watchlist" (or "✓ In library").
+
 ### Added (innovation review, #27)
 - **Ask HorrorHub** (Discover → Ask): type what you're in the mood for ("slow-burn folk horror under 100 minutes, no animal harm") and get films from your library, ranked, with the reason for each. It shows how it read your question and what it ignored. **Also look on TMDb** finds films you don't own, checking warnings so exclusions are respected. Runs entirely on your device; only length, years and subgenre keywords go to TMDb, and only when you press the button.
 

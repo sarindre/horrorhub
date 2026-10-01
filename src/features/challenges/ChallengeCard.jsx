@@ -3,6 +3,7 @@ import { Flame } from "lucide-react";
 import { Card, CardContent } from "../../components/ui/card.jsx";
 import { Button } from "../../components/ui/button.jsx";
 import { ContentWarnings } from "../../components/ContentWarnings.jsx";
+import { WatchlistButton } from "../../components/WatchlistButton.jsx";
 import { HiddenNotice } from "../../components/HiddenNotice.jsx";
 import { useContentGate } from "../../hooks/useContentGate.js";
 import { useToast } from "../../lib/toastContext.js";
@@ -47,7 +48,7 @@ const SHOWN_AT_FIRST = 3;
 
 // Ideas from TMDb are their own component so the content gate (hook) can run on
 // them. Compact rows: a poster thumbnail, the title and two buttons.
-function Ideas({ ideas, apiKey, onAdd, onOpenDetails }) {
+function Ideas({ ideas, apiKey, library, onAdd, onOpenDetails }) {
   const gate = useContentGate(ideas, apiKey);
   const prefs = useContentPrefs();
   const [showAll, setShowAll] = useState(false);
@@ -66,7 +67,7 @@ function Ideas({ ideas, apiKey, onAdd, onOpenDetails }) {
                 <div className="text-xs opacity-60">{[m.year, m.voteAvg ? `TMDb ${m.voteAvg.toFixed(1)}` : ""].filter(Boolean).join(" · ")}</div>
                 <ContentWarnings flags={gate.flagsById[m.id] || []} avoid={prefs.avoidFlags} showFlags={prefs.showWarnings} />
               </div>
-              <Button size="sm" variant="outline" className="shrink-0 whitespace-nowrap" onClick={() => onAdd?.({ ...m, watchlist: true })}>+ Watchlist</Button>
+              <WatchlistButton film={m} owned={library.find((i) => String(i.id) === String(m.id))} onAdd={onAdd} />
             </li>
           );
         })}
@@ -229,7 +230,7 @@ export function ChallengeCard({ challenge, result, library, profile, apiKey, pla
               <div className="text-sm font-semibold">Ideas from TMDb</div>
               <Button size="sm" variant="ghost" onClick={() => setIdeas(null)}>Hide</Button>
             </div>
-            <Ideas ideas={ideas} apiKey={apiKey} onAdd={onAdd} onOpenDetails={onOpenDetails} />
+            <Ideas ideas={ideas} apiKey={apiKey} library={library} onAdd={onAdd} onOpenDetails={onOpenDetails} />
           </section>
         ) : null}
       </CardContent>

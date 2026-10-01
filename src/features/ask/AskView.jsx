@@ -5,6 +5,7 @@ import { Button } from "../../components/ui/button.jsx";
 import { Input } from "../../components/ui/input.jsx";
 import { MovieCard } from "../../components/MovieCard.jsx";
 import { ContentWarnings } from "../../components/ContentWarnings.jsx";
+import { WatchlistButton } from "../../components/WatchlistButton.jsx";
 import { HiddenNotice } from "../../components/HiddenNotice.jsx";
 import { useTasteProfile } from "../../lib/calibrationContext.js";
 import { useContentPrefs } from "../../lib/contentContext.js";
@@ -69,7 +70,7 @@ function useAskFlags(films, apiKey) {
 // Films from TMDb, with the question's exclusions and your own limits applied once
 // their warnings are known. A film whose warnings couldn't be checked is not shown
 // when you asked to avoid something, rather than risk it.
-function TmdbResults({ films, apiKey, filters, onOpenDetails, onAdd }) {
+function TmdbResults({ films, apiKey, filters, library, onOpenDetails, onAdd }) {
   const prefs = useContentPrefs();
   const { flags, checking } = useAskFlags(films, apiKey);
   const [revealed, setRevealed] = useState(false);
@@ -101,7 +102,7 @@ function TmdbResults({ films, apiKey, filters, onOpenDetails, onAdd }) {
               <div className="text-xs opacity-60">{[m.year, m.voteAvg ? `TMDb ${m.voteAvg.toFixed(1)}` : ""].filter(Boolean).join(" · ")}</div>
               <ContentWarnings flags={flags[m.id] || []} avoid={prefs.avoidFlags} showFlags={prefs.showWarnings} />
             </div>
-            <Button size="sm" variant="outline" className="shrink-0 whitespace-nowrap" onClick={() => onAdd?.({ ...m, watchlist: true })}>+ Watchlist</Button>
+            <WatchlistButton film={m} owned={library.find((i) => String(i.id) === String(m.id))} onAdd={onAdd} />
           </li>
         ))}
       </ul>
@@ -238,7 +239,7 @@ export function AskView({ library, apiKey, region = "US", onOpenDetails, onAdd, 
               <div className="text-xs opacity-60">Sends only the length, years and subgenre keywords to TMDb. Scare level, rating and watched-or-not filters apply to your library only.</div>
             ) : null}
             {tmdb.status === "error" ? <div role="alert" className="text-sm text-red-300">{tmdb.error}</div> : null}
-            {tmdb.status === "done" && tmdb.films.length ? <TmdbResults films={tmdb.films} apiKey={apiKey} filters={parsed.filters} onOpenDetails={onOpenDetails} onAdd={onAdd} /> : null}
+            {tmdb.status === "done" && tmdb.films.length ? <TmdbResults films={tmdb.films} apiKey={apiKey} filters={parsed.filters} library={library} onOpenDetails={onOpenDetails} onAdd={onAdd} /> : null}
             {tmdb.status === "done" && !tmdb.films.length ? <div className="text-sm opacity-70">{tmdb.note}</div> : null}
           </section>
         </>
