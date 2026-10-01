@@ -19,20 +19,21 @@ export function askTags(filters) {
 }
 
 // The /discover request (no topic words), or the /search request (with one).
-export function askPath(filters, { keywordIds = [], region = "US" } = {}) {
-  if (filters.terms.length) return `/search/movie?include_adult=false&language=en-US&query=${encodeURIComponent(filters.terms.join(" "))}`;
+export function askPath(filters, { keywordIds = [], region = "US", page = 1 } = {}) {
+  const paged = (path) => (page > 1 ? `${path}&page=${page}` : path);
+  if (filters.terms.length) return paged(`/search/movie?include_adult=false&language=en-US&query=${encodeURIComponent(filters.terms.join(" "))}`);
   const q = ["include_adult=false", "language=en-US", `with_genres=${HORROR_GENRE_ID}`, `region=${region}`, "sort_by=vote_count.desc", "vote_count.gte=100"];
   if (filters.runtimeMax !== undefined) q.push(`with_runtime.lte=${filters.runtimeMax}`);
   if (filters.runtimeMin !== undefined) q.push(`with_runtime.gte=${filters.runtimeMin}`);
   if (filters.yearMin !== undefined) q.push(`primary_release_date.gte=${filters.yearMin}-01-01`);
   if (filters.yearMax !== undefined) q.push(`primary_release_date.lte=${filters.yearMax}-12-31`);
   if (keywordIds.length) q.push(`with_keywords=${keywordIds.join("|")}`);
-  return `/discover/movie?${q.join("&")}`;
+  return paged(`/discover/movie?${q.join("&")}`);
 }
 
-// Films from TMDb that fit and that you don't already have. Returns { films, note }
-// where `note` explains an empty result.
-export async function fetchAskIdeas(filters, { apiKey, signal, library = [], region = "US", limit = 12 } = {}) {
+// Films from TMDb that fit and that you don't already have, one page at a time.
+// Returns { films, note, page, totalPages } where `note` explains an empty result.
+export async function fetchAskIdeas(filters, { apiKey, signal, library = [], region = "US", limit = 20, page = 1 } = {}) {
   const tags = askTags(filters);
   const terms = challengeKeywordTerms({ match: [{ tagsAny: tags }] });
   let keywordIds = [];
@@ -49,10 +50,10 @@ export async function fetchAskIdeas(filters, { apiKey, signal, library = [], reg
       })
     );
     keywordIds = found.filter(Boolean);
-    if (!keywordIds.length) return { films: [], note: "TMDb doesn't have a keyword for those subgenres, so there's nothing to search with." };
+    if (!keywordIds.length) return { films: [], note: "TMDb doesn't have a keyword for those subgenres, so there's nothing to search with.", page, totalPages: 1 };
   }
 
-  const data = await tmdbGet(askPath(filters, { keywordIds, region }), { apiKey, signal, cacheMs: LIST_CACHE_MS });
+  const data = await tmdbGet(askPath(filters, { keywordIds, region, page }), { apiKey, signal, cacheMs: LIST_CACHE_MS });
   const ownedIds = new Set(library.map((i) => String(i.id)));
   const ownedKeys = ownedTitleKeys(library);
   const year = (m) => (m.release_date ? Number(m.release_date.slice(0, 4)) : undefined);
@@ -62,5 +63,5 @@ export async function fetchAskIdeas(filters, { apiKey, signal, library = [], reg
     .map(mapMovie)
     .filter((m) => !ownedIds.has(String(m.id)) && !isOwnedTitle(ownedKeys, m))
     .slice(0, limit);
-  return { films, note: films.length ? "" : "TMDb had nothing new that fits." };
+  return { films, note: films.length ? "" : "TMDb had nothing new that fits.", page, totalPages: Math.max(1, Number(data.total_pages) || 1) };
 }

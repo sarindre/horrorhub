@@ -33,7 +33,7 @@ export const HELP = {
     points: [
       "It understands subgenres (folk horror, slasher), lengths (under 100 minutes), decades (from the 80s), how scary (gentle, terrifying), things to avoid (no animal harm, without gore) and your own lists (on my watchlist, haven't seen).",
       "The chips under the box show what it understood. \"I didn't use\" lists words it didn't recognise.",
-      "\"Also look on TMDb\" finds films you don't own. It checks their warnings and drops any that break your exclusions.",
+      "\"Also look on TMDb\" finds films you don't own. It checks their warnings and drops any that break your exclusions, and says how many it left out. \"Show more films\" loads the next page.",
     ],
     tips: ["Scare level, rating and watched-or-not only apply to your library, because TMDb doesn't have that information.", "Nothing is sent to TMDb until you press its button, and then only length, years and subgenre keywords."],
   },

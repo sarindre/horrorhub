@@ -70,7 +70,7 @@ function useAskFlags(films, apiKey) {
 // Films from TMDb, with the question's exclusions and your own limits applied once
 // their warnings are known. A film whose warnings couldn't be checked is not shown
 // when you asked to avoid something, rather than risk it.
-function TmdbResults({ films, apiKey, filters, library, onOpenDetails, onAdd }) {
+function TmdbResults({ films, apiKey, filters, library, onOpenDetails, onAdd, hasMore, onMore, loadingMore, moreError }) {
   const prefs = useContentPrefs();
   const { flags, checking } = useAskFlags(films, apiKey);
   const [revealed, setRevealed] = useState(false);
@@ -78,10 +78,11 @@ function TmdbResults({ films, apiKey, filters, library, onOpenDetails, onAdd }) 
 
   const shown = [];
   let hidden = 0;
+  let excluded = 0;
   for (const m of films) {
     const f = flags[m.id];
-    if (mustCheck && (f === undefined || f === null)) continue; // not known yet, or couldn't be checked
-    if (f && f.some((id) => filters.excludeFlags.includes(id))) continue;
+    if (mustCheck && (f === undefined || f === null)) { if (!checking) excluded++; continue; } // not known yet, or couldn't be checked
+    if (f && f.some((id) => filters.excludeFlags.includes(id))) { excluded++; continue; }
     if (prefs.contentMode === "hide" && !revealed && hasContentLimits(prefs) && f && evaluateContent({ flags: f }, prefs).blocked) {
       hidden++;
       continue;
@@ -106,6 +107,17 @@ function TmdbResults({ films, apiKey, filters, library, onOpenDetails, onAdd }) 
           </li>
         ))}
       </ul>
+      {shown.length || hasMore ? (
+        <div className="flex flex-wrap items-center gap-3 text-sm">
+          <span className="opacity-70">
+            Showing {shown.length} of {films.length} found
+            {excluded ? ` (${excluded} left out: they have something you asked to avoid, or their warnings couldn't be checked)` : ""}.
+            {!hasMore ? " That's everything TMDb has for this." : ""}
+          </span>
+          {hasMore ? <Button variant="outline" onClick={onMore} disabled={loadingMore}>{loadingMore ? "Loading…" : "Show more films"}</Button> : null}
+        </div>
+      ) : null}
+      {moreError ? <div role="alert" className="text-sm text-red-300">{moreError}</div> : null}
       {!checking && !shown.length ? <div className="text-sm opacity-70">{mustCheck ? "Nothing on TMDb passed your exclusions (films whose warnings couldn't be checked are left out)." : "Nothing to show."}</div> : null}
     </div>
   );
@@ -122,7 +134,7 @@ export function AskView({ library, apiKey, region = "US", onOpenDetails, onAdd, 
   const [asked, setAsked] = useState("");
   const [showAll, setShowAll] = useState(false);
   const [revealed, setRevealed] = useState(false);
-  const [tmdb, setTmdb] = useState({ status: "idle", films: [], note: "", error: "" });
+  const [tmdb, setTmdb] = useState({ status: "idle", films: [], note: "", error: "", page: 1, totalPages: 1, loadingMore: false, moreError: "" });
   const abortRef = useRef(null);
 
   const parsed = useMemo(() => parseQuery(asked), [asked]);
@@ -150,19 +162,37 @@ export function AskView({ library, apiKey, region = "US", onOpenDetails, onAdd, 
     setAsked(q);
     setShowAll(false);
     setRevealed(false);
-    setTmdb({ status: "idle", films: [], note: "", error: "" });
+    setTmdb({ status: "idle", films: [], note: "", error: "", page: 1, totalPages: 1, loadingMore: false, moreError: "" });
   };
 
   const searchTmdb = async () => {
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
-    setTmdb({ status: "loading", films: [], note: "", error: "" });
+    setTmdb({ status: "loading", films: [], note: "", error: "", page: 1, totalPages: 1, loadingMore: false, moreError: "" });
     try {
       const r = await fetchAskIdeas(parsed.filters, { apiKey, signal: controller.signal, library, region });
-      setTmdb({ status: "done", films: r.films, note: r.note, error: "" });
+      setTmdb({ status: "done", films: r.films, note: r.note, error: "", page: r.page, totalPages: r.totalPages, loadingMore: false, moreError: "" });
     } catch (err) {
-      if (!isAbort(err)) setTmdb({ status: "error", films: [], note: "", error: describeError(err) });
+      if (!isAbort(err)) setTmdb({ status: "error", films: [], note: "", error: describeError(err), page: 1, totalPages: 1, loadingMore: false, moreError: "" });
+    }
+  };
+
+  // The next page of the same question, added below. Films already shown aren't repeated.
+  const loadMoreTmdb = async () => {
+    if (tmdb.loadingMore || tmdb.page >= tmdb.totalPages) return;
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setTmdb((t) => ({ ...t, loadingMore: true, moreError: "" }));
+    try {
+      const r = await fetchAskIdeas(parsed.filters, { apiKey, signal: controller.signal, library, region, page: tmdb.page + 1 });
+      setTmdb((t) => {
+        const seen = new Set(t.films.map((m) => m.id));
+        return { ...t, films: [...t.films, ...r.films.filter((m) => !seen.has(m.id))], page: r.page, totalPages: r.totalPages, loadingMore: false };
+      });
+    } catch (err) {
+      if (!isAbort(err)) setTmdb((t) => ({ ...t, loadingMore: false, moreError: describeError(err) }));
     }
   };
   useEffect(() => () => abortRef.current?.abort(), []);
@@ -251,8 +281,13 @@ export function AskView({ library, apiKey, region = "US", onOpenDetails, onAdd, 
                 These weren't filtered by {unappliedOnTmdb.join(", ")}: TMDb doesn't have that information, so it only applies to your own library. Check a film's page before you pick.
               </div>
             ) : null}
-            {tmdb.status === "done" && tmdb.films.length ? <TmdbResults films={tmdb.films} apiKey={apiKey} filters={parsed.filters} library={library} onOpenDetails={onOpenDetails} onAdd={onAdd} /> : null}
-            {tmdb.status === "done" && !tmdb.films.length ? <div className="text-sm opacity-70">{tmdb.note}</div> : null}
+            {tmdb.status === "done" && tmdb.films.length ? <TmdbResults films={tmdb.films} apiKey={apiKey} filters={parsed.filters} library={library} onOpenDetails={onOpenDetails} onAdd={onAdd} hasMore={tmdb.page < tmdb.totalPages} onMore={loadMoreTmdb} loadingMore={tmdb.loadingMore} moreError={tmdb.moreError} /> : null}
+            {tmdb.status === "done" && !tmdb.films.length ? (
+              <div className="flex flex-wrap items-center gap-3 text-sm opacity-90">
+                <span className="opacity-70">{tmdb.note}</span>
+                {tmdb.page < tmdb.totalPages ? <Button variant="outline" onClick={loadMoreTmdb} disabled={tmdb.loadingMore}>{tmdb.loadingMore ? "Loading…" : "Try the next page"}</Button> : null}
+              </div>
+            ) : null}
           </section>
         </>
       )}

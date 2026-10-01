@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Ask: "Show more films"** on the TMDb results. It loads the next page below (no repeats, warnings checked as before) and says how many films your exclusions left out. If the whole first page was already in your library, "Try the next page" appears.
+
+### Added
 - **Browse: "Show more films"**. Browse loaded a single page of 20 films, and your filters then trimmed it further. A button at the bottom now adds the next page below (without repeating films), a line says how many are shown, loaded and hidden by your filters, and it says when you've reached the end. A new search or sort starts again from the top.
 
 ### Fixed
