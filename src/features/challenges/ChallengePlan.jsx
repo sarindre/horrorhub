@@ -126,7 +126,7 @@ export function ChallengePlan({ challenge, library, profile, planTime, onSetPlan
                   ) : (
                     <>
                       {row.item && row.state !== "watched" ? (
-                        <WatchDialog label="Watched" onLog={(iso) => onUpdate?.({ ...row.item, ...watchPatch(row.item, iso) })} />
+                        <WatchDialog label="Watched" onLog={(iso, diary) => onUpdate?.({ ...row.item, ...watchPatch(row.item, iso, diary) })} />
                       ) : null}
                       <Button size="sm" variant="outline" onClick={() => swap(row)}>{row.item ? "Swap" : "Find a film"}</Button>
                     </>

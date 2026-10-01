@@ -158,3 +158,45 @@ describe("how many films count as enough", () => {
     expect(computeInsights(mixed, { now: NOW }).ready).toBe(true);
   });
 });
+
+describe("from your scare diary", () => {
+  const gory = (diary, over = {}) => film({ tags: ["gore", "disturbing"], scares: 5, scaresRated: false, rating: 3, diary, ...over }); // the estimate for these is 7-8
+  const entry = (n, scared, extra = {}) => ({ day: `2026-01-${String(n).padStart(2, "0")}`, scared, ...extra });
+  const base = () => many(2, () => film({ rating: 3 }));
+
+  it("says so when horror hits you harder than predicted", () => {
+    const items = [...base(), ...Array.from({ length: 4 }, (_, i) => gory([entry(i + 1, 10)]))];
+    const i = find(computeInsights(items, { now: NOW }), "calibration");
+    expect(i.text).toMatch(/hits you harder than average/);
+    expect(i.evidence).toBe("4 films with your own scare level");
+  });
+  it("or that you take it in stride", () => {
+    const items = [...base(), ...Array.from({ length: 4 }, (_, i) => gory([entry(i + 1, 2)]))];
+    expect(find(computeInsights(items, { now: NOW }), "calibration").text).toMatch(/take horror in stride/);
+  });
+  it("needs a few films and a real difference", () => {
+    const few = [...base(), ...Array.from({ length: 3 }, (_, i) => gory([entry(i + 1, 10)]))];
+    expect(find(computeInsights(few, { now: NOW }), "calibration")).toBeUndefined();
+    const close = [...base(), ...Array.from({ length: 4 }, (_, i) => gory([entry(i + 1, 8)]))]; // the estimate is 8
+    expect(find(computeInsights(close, { now: NOW }), "calibration")).toBeUndefined();
+  });
+
+  it("notices you're more scared alone, on films of the same kind", () => {
+    // every film scores the same baseline (a slider rating of 6); alone entries run 3 higher
+    const rated = (diary) => film({ scares: 6, scaresRated: true, rating: 3, diary });
+    const items = [...Array.from({ length: 3 }, (_, i) => rated([entry(i + 1, 9, { company: "alone" })])), ...Array.from({ length: 3 }, (_, i) => rated([entry(i + 10, 6, { company: "friends" })]))];
+    const i = find(computeInsights(items, { now: NOW }), "company");
+    expect(i.text).toBe("You feel 3.0 points more scared watching alone than with other people, on films of the same kind.");
+    expect(i.evidence).toBe("3 entries and 3 others");
+  });
+  it("notices late nights", () => {
+    const rated = (diary) => film({ scares: 6, scaresRated: true, rating: 3, diary });
+    const items = [...Array.from({ length: 3 }, (_, i) => rated([entry(i + 1, 9, { when: "late" })])), ...Array.from({ length: 3 }, (_, i) => rated([entry(i + 10, 7, { when: "evening" })]))];
+    expect(find(computeInsights(items, { now: NOW }), "late-night").text).toBe("Late at night the same films scare you 2.0 points more than at other times.");
+  });
+  it("won't compare without enough entries on both sides", () => {
+    const rated = (diary) => film({ scares: 6, scaresRated: true, rating: 3, diary });
+    const items = [...Array.from({ length: 2 }, (_, i) => rated([entry(i + 1, 9, { company: "alone" })])), ...Array.from({ length: 3 }, (_, i) => rated([entry(i + 10, 5, { company: "friends" })])), ...base()];
+    expect(find(computeInsights(items, { now: NOW }), "company")).toBeUndefined();
+  });
+});

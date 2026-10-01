@@ -93,6 +93,7 @@ export function HorrorHub() {
       runtime: m.runtime,
       taggedAt: m.taggedAt,
       watchedDates: m.watchedDates,
+      diary: m.diary,
       notes: m.notes,
       watchlist: m.watchlist === undefined ? undefined : !!m.watchlist,
     };

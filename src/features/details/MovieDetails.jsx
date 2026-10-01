@@ -8,6 +8,7 @@ import { StarRating } from "../../components/StarRating.jsx";
 import { TagEditor } from "../../components/TagEditor.jsx";
 import { TMDB_IMG, describeError, isAbort, tmdbGet } from "../../lib/tmdb.js";
 import { WatchDialog } from "../../components/WatchDialog.jsx";
+import { ViewingDiary } from "./ViewingDiary.jsx";
 import { AddToShelfDialog } from "../../components/AddToShelfDialog.jsx";
 import { snapshotFilm } from "../../lib/shelves.js";
 import { watchPatch } from "../../lib/watch.js";
@@ -347,7 +348,7 @@ export function MovieDetails({ item, localItem, onUpdate, onAdd, apiKey, omdbKey
             )}
 
             {/* Watched logging */}
-            <WatchDialog label="Watched" onLog={(iso) => onUpdate?.({ ...(localItem || item), ...watchPatch(localItem || item, iso) })} />
+            <WatchDialog label="Watched" onLog={(iso, diary) => onUpdate?.({ ...(localItem || item), ...watchPatch(localItem || item, iso, diary) })} />
 
             {shelfStore ? <AddToShelfDialog film={snapshotFilm({ ...base, poster: base.poster || details?.poster_path })} store={shelfStore} /> : null}
 
@@ -372,12 +373,14 @@ export function MovieDetails({ item, localItem, onUpdate, onAdd, apiKey, omdbKey
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => onUpdate?.({ ...localItem, watchedDates: [] })}
-                title="Remove logged watch dates"
+                onClick={() => onUpdate?.({ ...localItem, watchedDates: [], diary: [] })}
+                title="Remove logged watch dates and diary notes"
               >
                 Clear watched
               </Button>
             ) : null}
+
+            <ViewingDiary item={localItem} onUpdate={(next) => onUpdate?.(next)} />
 
             {trailer ? (
               <a

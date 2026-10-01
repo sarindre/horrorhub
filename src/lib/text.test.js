@@ -8,5 +8,7 @@ describe("plural", () => {
     expect(plural(0, "watch")).toBe("0 watches");
     expect(plural(1, "watch")).toBe("1 watch");
     expect(plural(5, "day")).toBe("5 days");
+    expect(plural(3, "entry")).toBe("3 entries");
+    expect(plural(1, "entry")).toBe("1 entry");
   });
 });

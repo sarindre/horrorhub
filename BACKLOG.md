@@ -431,10 +431,14 @@ Done (Stats screen, `features/stats`, logic in `lib/insights.js`, `lib/wrapped.j
 Left for later: a December prompt to open Wrapped; insights are descriptive, not predictions (no recommendations come from them yet); the heatmap, tag matrix and recent list are unchanged; and "Midnight Marathon" now uses your longest streak (so it stays earned) instead of the current one.
 
 ### 25. Scare diary and fear calibration
-Status: Planned
+Status: Done (see leftovers)
 Priority: P2
 
 After a watch, optionally log how scared you actually were, who you watched with, and when. Compare with the predicted scare level to calibrate you personally ("horror hits you harder than average: predictions adjusted +1"), and surface context insights (alone at night vs with friends). Feeds the taste engine and Group Night.
+
+Done: logging a watch now has an optional "How was it?" section (how scared you were 0-10, who with, and daytime / evening / late night), and each film page lists its Viewing diary with a remove button for each entry (`lib/diary.js`, `features/details/ViewingDiary.jsx`). Notes are kept per film and day, survive imports (merged, never overwritten) and are in backups. A film with a diary score no longer shows an estimated scare level: your own word replaces it everywhere (Tonight, Group Night, marathons, Wrapped). Your diary scores and slider ratings are compared with the predictions to calibrate you personally: if you run higher or lower than the formula, estimates for films you haven't scored shift with you. Stats insights gain "Horror hits you harder than average", "You feel N points more scared watching alone than with other people" and "Late at night the same films scare you N points more".
+
+Left for later: adding a diary note to a watch you logged earlier (today only new watches take one); a diary timeline view across films; and using company in Group Night (e.g. "nobody here has seen it, and it's a group watch").
 
 ### 26. Double-feature pairing
 Status: Planned

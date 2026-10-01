@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added (innovation review, #25)
+- **Scare diary**: when you log a watch you can note how scared you were, who with and what time of day. Notes show on the film page (and can be removed one by one) and are included in imports, exports and backups.
+- **Personal calibration**: your diary scores replace estimates for those films everywhere, and teach HorrorHub how scary things are *for you*, so estimates for other films shift up or down to match.
+- New insights from the diary: whether horror hits you harder than predicted, and how company and late nights change how scared you get.
+
+### Fixed
+- "1 entry / 2 entries" and "1 watch / 2 watches" are spelled correctly everywhere (shared `plural` helper).
+
 ### Added (innovation review, #24)
 - **What your habits say** on Stats: plain-sentence insights about your own taste (best and worst subgenre, whether you rate scarier films higher, a scarier or gentler drift, your watching night, favorite decade, watchlist pace), each with what it rests on.
 - **Horror Wrapped**: your year in horror with a personality, key numbers and highlights; save it as a shareable image or copy it as text. Built on your device.

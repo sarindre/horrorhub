@@ -1,11 +1,15 @@
 import { writeString } from "./storage.js";
 import { loadSettings } from "./settings.js";
+import { withDiaryEntry } from "./diary.js";
 
 export const LAST_WATCH_KEY = "horrorhub.lastWatch";
 
-// The changes that log a watch: add the date (an exact duplicate is ignored) and take the film off the watchlist.
-export function watchPatch(item, iso) {
-  return { watchedDates: [...new Set([...(item?.watchedDates || []), iso])], watchlist: false };
+// The changes that log a watch: add the date (an exact duplicate is ignored) and take the film off the
+// watchlist. `diary` is the optional scare-diary note for that watch ({ scared, company, when }).
+export function watchPatch(item, iso, diary) {
+  const patch = { watchedDates: [...new Set([...(item?.watchedDates || []), iso])], watchlist: false };
+  if (diary) patch.diary = withDiaryEntry(item?.diary, iso, diary);
+  return patch;
 }
 
 // Remembered so the "it's been a while" nudge knows when you last watched something.

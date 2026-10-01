@@ -1,6 +1,6 @@
 import { watchDays } from "./challenges.js";
 import { addDays, dayKey, parseDay } from "./dates.js";
-import { isScareRated } from "./scare.js";
+import { estimateScare, isScareRated, ownScare, scareBias } from "./scare.js";
 import { plural } from "./text.js";
 
 // Insights: short, plain sentences about your own habits and taste, worked out
@@ -142,6 +142,59 @@ function backlogPace(items, log, now) {
   return { id: "backlog", text: `At your recent pace (about ${one(perMonth)} a month), your ${backlog}-film watchlist would take ${span}.`, evidence: `${plural(recent, "watch")} in the last 90 days`, score: 1 };
 }
 
+// ---- from your scare diary ----
+
+// What a film "should" score for scares before your diary: your slider rating
+// if you set one, else the estimate when there is something to estimate from.
+function baselineScare(item) {
+  if (isScareRated(item)) return item.scares;
+  const est = estimateScare(item);
+  return est.signals > 0 ? est.value : null;
+}
+
+// Your diary scores against that baseline: positive means more scared than expected.
+function diaryDeltas(items) {
+  const out = [];
+  for (const item of items || []) {
+    const baseline = baselineScare(item);
+    if (baseline === null) continue;
+    for (const entry of item.diary || []) if (Number.isFinite(entry.scared)) out.push({ ...entry, delta: entry.scared - baseline });
+  }
+  return out;
+}
+
+function calibration(items) {
+  const observed = (items || []).filter((i) => ownScare(i) !== null && estimateScare(i).signals > 0).length;
+  const bias = scareBias(items);
+  if (observed < 4 || Math.abs(bias) < 0.5) return null;
+  return {
+    id: "calibration",
+    text:
+      bias > 0
+        ? `Horror hits you harder than average: your scare levels run ${one(bias)} above the predictions, so HorrorHub now nudges its estimates up for you.`
+        : `You take horror in stride: your scare levels run ${one(-bias)} below the predictions, so HorrorHub now nudges its estimates down for you.`,
+    evidence: `${observed} films with your own scare level`,
+    score: Math.abs(bias) * 3,
+  };
+}
+
+// "alone vs with others" and "late at night vs other times", on the same kind of film.
+function contextInsights(items) {
+  const deltas = diaryDeltas(items);
+  const out = [];
+  const compare = (id, inGroup, rest, describe) => {
+    if (inGroup.length < 3 || rest.length < 3) return;
+    const diff = mean(inGroup.map((d) => d.delta)) - mean(rest.map((d) => d.delta));
+    if (Math.abs(diff) < 1) return;
+    out.push({ id, text: describe(Math.abs(diff), diff > 0), evidence: `${plural(inGroup.length, "entry")} and ${plural(rest.length, "other")}`, score: Math.abs(diff) * 1.5 });
+  };
+  compare("company", deltas.filter((d) => d.company === "alone"), deltas.filter((d) => d.company && d.company !== "alone"),
+    (gap, more) => `You feel ${one(gap)} points ${more ? "more" : "less"} scared watching alone than with other people, on films of the same kind.`);
+  compare("late-night", deltas.filter((d) => d.when === "late"), deltas.filter((d) => d.when && d.when !== "late"),
+    (gap, more) => `Late at night the same films scare you ${one(gap)} points ${more ? "more" : "less"} than at other times.`);
+  return out;
+}
+
 // Insights for the whole library, strongest first. `ready` says whether there
 // is enough to look at yet; `hint` says what to do when there isn't.
 export function computeInsights(items, { now = new Date(), longAgoYear = 1900, limit = 5 } = {}) {
@@ -152,7 +205,7 @@ export function computeInsights(items, { now = new Date(), longAgoYear = 1900, l
     const need = MIN_FILMS_FOR_INSIGHTS - known;
     return { ready: false, insights: [], hint: `Rate or log ${plural(need, "more film")} and patterns in your taste will start to show up here.` };
   }
-  const insights = [tagGap(items), scareVersusRating(items), scareTrend(log), ...weekdays(log), favoriteDecade(items), backlogPace(items, log, now)]
+  const insights = [calibration(items), ...contextInsights(items), tagGap(items), scareVersusRating(items), scareTrend(log), ...weekdays(log), favoriteDecade(items), backlogPace(items, log, now)]
     .filter(Boolean)
     .sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
   return {

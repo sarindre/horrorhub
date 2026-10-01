@@ -1,5 +1,6 @@
 import { readJSON, writeJSON } from "./storage.js";
 import { canonicalTag } from "./tagging.js";
+import { mergeDiary, normalizeDiary } from "./diary.js";
 
 // Library schema versions
 //   v2 (legacy): bare array of items under "horrorhub.library.v2"
@@ -76,6 +77,7 @@ export function normalizeItem(raw) {
   const runtime = Number(raw.runtime);
   const tags = normalizeTags(raw.tags);
   const contentFlags = normalizeTags(raw.contentFlags);
+  const diary = normalizeDiary(raw.diary);
 
   return {
     ...raw,
@@ -97,6 +99,8 @@ export function normalizeItem(raw) {
     runtime: Number.isFinite(runtime) && runtime > 0 ? Math.round(runtime) : undefined,
     taggedAt: isValidDate(raw.taggedAt) ? raw.taggedAt : undefined,
     watchedDates: normalizeWatchedDates(raw.watchedDates),
+    // the scare diary (see diary.js); left off a film that has none
+    diary: diary.length ? diary : undefined,
     watchlist: !!raw.watchlist,
     notes: typeof raw.notes === "string" ? raw.notes : "",
     addedAt: isValidDate(raw.addedAt) ? raw.addedAt : new Date().toISOString(),
@@ -171,12 +175,13 @@ export function mergeLibraries(existing, incoming) {
     const current = result[idx];
     const merged = { ...current };
     for (const [field, value] of Object.entries(raw)) {
-      if (field === "id" || field === "addedAt" || field === "watchedDates" || UNION_FIELDS.includes(field) || isEmpty(field, value)) continue;
+      if (field === "id" || field === "addedAt" || field === "watchedDates" || field === "diary" || UNION_FIELDS.includes(field) || isEmpty(field, value)) continue;
       merged[field] = value;
     }
     for (const field of UNION_FIELDS) {
       merged[field] = [...(current[field] || []), ...(Array.isArray(raw[field]) ? raw[field] : [])];
     }
+    merged.diary = mergeDiary(current.diary, raw.diary);
     merged.watchedDates = dedupeByDay(
       normalizeWatchedDates([...(current.watchedDates || []), ...(Array.isArray(raw.watchedDates) ? raw.watchedDates : [])]).sort()
     );
