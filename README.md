@@ -22,6 +22,7 @@ Then open **Settings**, paste your TMDb v4 *Read Access Token* (free at themovie
 - **Auto-tagging:** reads TMDb keywords, genres and descriptions and tags films for you (marked ✦). Your own edits always win.
 - **Content warnings:** category warnings (gore, animal harm, and so on) on cards and details, plus limits you set: warn or hide films over them. Warnings are inferred from TMDb keywords, so an absent warning is not a guarantee.
 - **Installable and offline:** install it as an app on your desktop or phone; it opens and works without internet (TMDb searches still need a connection).
+- **Insights and Wrapped:** Stats tells you things about your own habits ("you rate slow-burn films higher than slashers"), gives you a rank, and builds a Horror Wrapped year-in-review you can save as an image.
 - **Planning:** a marathon planner that fits a themed lineup to your time budget and shapes the scare level across the night, a weekly watch plan with warnings shown up front, tonight's pick, saved plans, and calendar export.
 - **Shelves:** your own named lists of films, plus collections curated from your taste ("Top picks for your Occult mood", "Your best Slashers", "Time for a rewatch"). Share a shelf as a file or a text list, no account needed.
 - **Challenges:** 30 Days of Horror, Halloween, Found-Footage Week and more, tracked from your watch dates. Start one today or wait for its date, and get a day-by-day plan (a film per night, building from gentle to intense) you can swap, log and export to your calendar.

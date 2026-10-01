@@ -128,6 +128,35 @@ try {
     if (args.shots) await page.screenshot({ path: path.join(args.shots, `tonight-quiz-${width}.png`) });
     if (!opened) bad.push({ view: "tonight-quiz (button not found)", overflow: 1, culprits: [] });
     else if (quiz.overflow > 0) bad.push({ view: "tonight-quiz", ...quiz });
+    // ...and the Horror Wrapped image really draws (once, at the first width)
+    if (width === widths[0]) {
+      await page.goto(`${url}#stats`, { waitUntil: "networkidle2" });
+      await page.evaluate(() => {
+        window.__blobs = [];
+        const original = URL.createObjectURL;
+        URL.createObjectURL = (blob) => (window.__blobs.push(blob), original.call(URL, blob));
+        [...document.querySelectorAll("button")].find((b) => /Save as image/.test(b.textContent))?.click();
+      });
+      await new Promise((r) => setTimeout(r, 1500));
+      const card = await page.evaluate(async () => {
+        const blob = window.__blobs[0];
+        if (!blob) return null;
+        const bitmap = await createImageBitmap(blob);
+        const canvas = document.createElement("canvas");
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(bitmap, 0, 0);
+        const px = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+        let light = 0;
+        for (let i = 0; i < px.length; i += 4 * 61) if (px[i] + px[i + 1] + px[i + 2] > 450) light++;
+        return { type: blob.type, size: blob.size, width: bitmap.width, height: bitmap.height, light, dataUrl: canvas.toDataURL("image/png") };
+      });
+      const ok = card && card.type === "image/png" && card.width === 1080 && card.height === 1350 && card.light > 300;
+      if (!ok) bad.push({ view: `wrapped-image (${card ? `${card.width}x${card.height}, ${card.light} light pixels` : "no image made"})`, overflow: 1, culprits: [] });
+      if (args.shots && card) fs.writeFileSync(path.join(args.shots, "wrapped-card.png"), Buffer.from(card.dataUrl.split(",")[1], "base64"));
+    }
+
     // ...and a challenge's daily plan, expanded
     await page.goto(`${url}#challenges`, { waitUntil: "networkidle2" });
     const planned = await page.evaluate(() => {

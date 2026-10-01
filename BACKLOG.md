@@ -417,10 +417,18 @@ Priority: P2
 Spoiler-free picking: choose a vibe and intensity, then reveal a film from your watchlist showing only its runtime, subgenre tags and a mood line, with the title and poster hidden until you commit. Content limits still apply. Cheap (all data exists) and very on-brand.
 
 ### 24. Horror Wrapped and insights that say something
-Status: Planned
+Status: Done (see leftovers)
 Priority: P1
 
 Stats today are counters, and XP has no levels or meaning. Replace them with narrative insights computed locally ("you rate slow-burn films 1.2★ higher than slashers", "your Friday-night watches average 7.1 scares", "your scare tolerance is up 1.5 since March") and a yearly "Horror Wrapped" card (top subgenres, scariest film, longest streak, marathon count) that exports as a shareable image. Give XP levels or retire it.
+
+Done (Stats screen, `features/stats`, logic in `lib/insights.js`, `lib/wrapped.js`, `lib/progress.js`):
+- **Insights** ("What your habits say"): plain sentences about your own taste and habits, each showing how many films it rests on, and only appearing when there's enough behind it: your best and worst subgenre by rating, whether you rate scarier films higher, whether your recent watches run scarier than earlier ones (and from which month), the night you mostly watch on and which night is your scary one, your favorite decade, and how long your watchlist would take at your pace. Below five films it says how many more to log.
+- **Horror Wrapped**: your year in horror (pick any year with watches): films, hours, new vs rewatched, a personality from your favorite vibe ("The Slasher Devotee", "The Dread Connoisseur"... or "The Horror Omnivore"), most watched tags, scariest and top-rated films, busiest month, favorite night, longest streak, biggest night. Save it as a 1080x1350 image (drawn on your device, nothing uploaded) or copy it as text.
+- **Rank and badges**: XP now has eight named levels from Fresh Meat to Elder God with a progress bar and "N XP to the next rank"; badges show how close you are ("2/3"). The XP formula is unchanged.
+- **Fixes while rebuilding it**: average scare used a flat 5 for unscored films (it now uses estimates, labelled "(est.)" unless you've set most scare levels), the streak could count one that ended long ago (it is now the live streak, matching Tonight and Challenges), the scatter chart plotted unrated films at zero (it now shows rated films only), and the overview no longer overflows on a phone.
+
+Left for later: a December prompt to open Wrapped; insights are descriptive, not predictions (no recommendations come from them yet); the heatmap, tag matrix and recent list are unchanged; and "Midnight Marathon" now uses your longest streak (so it stays earned) instead of the current one.
 
 ### 25. Scare diary and fear calibration
 Status: Planned

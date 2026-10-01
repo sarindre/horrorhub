@@ -3,60 +3,29 @@ import { AlertCircle } from "lucide-react";
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { Card, CardContent } from "../../components/ui/card.jsx";
 import { Button } from "../../components/ui/button.jsx";
-import { Badge } from "../../components/ui/badge.jsx";
 import { DateField } from "../../components/ui/date-field.jsx";
+import { InsightsCard } from "./InsightsCard.jsx";
+import { WrappedCard } from "./WrappedCard.jsx";
+import { LevelCard } from "./LevelCard.jsx";
+import { scareBias, scareOf } from "../../lib/scare.js";
+import { dayKey } from "../../lib/dates.js";
+import { streaksFrom } from "../../lib/challenges.js";
+import { realWatchDays } from "../../lib/progress.js";
 
 export function StatsView({ items, longAgoYear = 1900 }) {
   const [affOpen, setAffOpen] = useState(false);
   const total = items.length;
   const rated = items.filter(i => (i.rating || 0) > 0);
   const avg = (rated.reduce((s, i) => s + (i.rating || 0), 0) / Math.max(1, rated.length)).toFixed(2);
-  const avgScare = (items.reduce((s, i) => s + (i.scares || 0), 0) / Math.max(1, total)).toFixed(2);
+  // scare levels you haven't set yourself are estimated (see lib/scare.js), not counted as a flat 5
+  const bias = scareBias(items);
+  const scareValues = items.map((i) => scareOf(i, { bias }));
+  const avgScare = (scareValues.reduce((sum, x) => sum + x.value, 0) / Math.max(1, total)).toFixed(1);
+  const scareIsEstimate = scareValues.filter((x) => !x.estimated).length * 2 < total;
   const watches = items.reduce((s, i) => s + (i.watchedDates?.length || 0), 0);
 
-  // Streaks + XP
-  const allDates = items
-    .flatMap(i => (i.watchedDates || []))
-    .filter(d => new Date(d).getFullYear() !== longAgoYear)
-    .map(d => new Date(d).toDateString());
-  const unique = Array.from(new Set(allDates)).map(s=> new Date(s)).sort((a,b)=> a-b);
-  let currentStreak = 0; let streak = 0;
-  if (unique.length){
-    let prev = new Date(unique[unique.length-1]);
-    const today = new Date(); today.setHours(0,0,0,0);
-    if (prev.toDateString() !== today.toDateString()){ /* allow break */ }
-    // Count backwards consecutive days
-    let idx = unique.length - 1; let last = unique[idx];
-    while(idx>=0){
-      const expect = new Date(last); expect.setDate(expect.getDate()-1);
-      if (idx-1>=0 && unique[idx-1].toDateString() === expect.toDateString()){ streak++; last = unique[idx-1]; idx--; }
-      else break;
-    }
-    currentStreak = streak+1; // include last day with a watch
-  }
-  const xp = watches * 10 + Math.max(0, currentStreak-1) * 5;
-
-  // Badges
-  const watchedSet = new Set(items.filter(i=> (i.watchedDates||[]).length).map(i=> i.id));
-  const isWatched = (i)=> watchedSet.has(i.id);
-  const folkBadge = items.filter(i=> isWatched(i) && (i.tags||[]).includes('folk-horror')).length >= 3;
-  const slasher80s = items.filter(i=> isWatched(i) && (i.tags||[]).includes('slasher') && (i.year||0) >= 1980 && (i.year||0) <= 1989).length >= 3;
-  const marathon3 = currentStreak >= 3;
-  const ghosts5 = items.filter(i=> isWatched(i) && ((i.tags||[]).some(t=>['supernatural','haunted','possession'].includes(t)))).length >= 5;
-  const occult4 = items.filter(i=> isWatched(i) && (i.tags||[]).includes('occult')).length >= 4;
-  const footage3 = items.filter(i=> isWatched(i) && (i.tags||[]).includes('found-footage')).length >= 3;
-  const gore5 = items.filter(i=> isWatched(i) && ((i.tags||[]).includes('gore'))).length >= 5;
-  const vamp2 = items.filter(i=> isWatched(i) && (i.tags||[]).includes('vampire')).length >= 2;
-  const zombie3 = items.filter(i=> isWatched(i) && (i.tags||[]).includes('zombie')).length >= 3;
-  const classic5 = items.filter(i=> isWatched(i) && (i.year||9999) <= 1980).length >= 5;
-  const newblood5 = items.filter(i=> isWatched(i) && (i.year||0) >= 2015).length >= 5;
-  const maxDayCount = (()=>{ const m=new Map(); (items||[]).forEach(i=> (i.watchedDates||[]).forEach(d=> m.set(d,(m.get(d)||0)+1))); return Math.max(0,...m.values()); })();
-  const speed2 = maxDayCount >= 2;
-  const reviewer10 = items.filter(i=> isWatched(i) && (i.notes||'').trim().length>0).length >= 10;
-  const uniqueTags = new Set(items.flatMap(i=> i.tags||[])).size;
-  const tagMaster = uniqueTags >= 20;
-  const watchlist10 = items.filter(i=> i.watchlist).length >= 10;
-  const highRatings = items.filter(i=> isWatched(i) && (i.rating||0) >= 4).length >= 5;
+  // the streak that is still alive (it ends today or yesterday), never counting "long ago" placeholder dates
+  const currentStreak = streaksFrom(realWatchDays(items, longAgoYear), dayKey(new Date())).current;
 
   // Date range (default last 6 months)
   const today = new Date();
@@ -87,7 +56,7 @@ export function StatsView({ items, longAgoYear = 1900 }) {
   }
   const maxCount = Math.max(1, ...Array.from(byDay.values()));
 
-  const scatterData = items.map((i) => ({ title: i.title, rating: i.rating || 0, scares: i.scares || 0 }));
+  const scatterData = items.filter((i) => (i.rating || 0) > 0).map((i) => ({ title: i.title, rating: i.rating, scares: scareOf(i, { bias }).value }));
 
   // Build top-10 tags by frequency for affinity matrix
   const tagCounts = new Map();
@@ -123,7 +92,7 @@ export function StatsView({ items, longAgoYear = 1900 }) {
         <CardContent className="p-6 space-y-2">
           <div className="text-sm uppercase tracking-wide opacity-70">Overview</div>
           <div className="text-3xl font-bold">Your horror stats</div>
-          <div className="grid grid-cols-5 gap-4 pt-4">
+          <div className="grid grid-cols-2 gap-3 pt-4 sm:grid-cols-3 lg:grid-cols-5">
             <div className="p-4 rounded-xl bg-muted">
               <div className="text-sm opacity-70">Movies</div>
               <div className="text-2xl font-semibold">{total}</div>
@@ -137,7 +106,7 @@ export function StatsView({ items, longAgoYear = 1900 }) {
               <div className="text-2xl font-semibold">{watches}</div>
             </div>
             <div className="p-4 rounded-xl bg-muted">
-              <div className="text-sm opacity-70">Avg scare</div>
+              <div className="text-sm opacity-70">Avg scare{scareIsEstimate ? " (est.)" : ""}</div>
               <div className="text-2xl font-semibold">{avgScare}</div>
             </div>
             <div className="p-4 rounded-xl bg-muted">
@@ -148,30 +117,11 @@ export function StatsView({ items, longAgoYear = 1900 }) {
         </CardContent>
       </Card>
 
-      <Card className="rounded-2xl">
-        <CardContent className="p-6 space-y-3">
-          <div className="text-lg font-semibold">Badges & XP</div>
-          <div className="text-sm">XP: <span className="font-semibold">{xp}</span></div>
-          <div className="flex flex-wrap gap-2 text-sm">
-            <Badge variant={folkBadge? 'default':'secondary'}>Folk Horror Initiate {folkBadge?'✓':''}</Badge>
-            <Badge variant={slasher80s? 'default':'secondary'}>80s Slasher Fan {slasher80s?'✓':''}</Badge>
-            <Badge variant={marathon3? 'default':'secondary'}>Midnight Marathon (3 in a row) {marathon3?'✓':''}</Badge>
-            <Badge variant={ghosts5? 'default':'secondary'}>Ghost Hunter {ghosts5?'✓':''}</Badge>
-            <Badge variant={occult4? 'default':'secondary'}>Occult Scholar {occult4?'✓':''}</Badge>
-            <Badge variant={footage3? 'default':'secondary'}>Found Footage Addict {footage3?'✓':''}</Badge>
-            <Badge variant={gore5? 'default':'secondary'}>Gore Hound {gore5?'✓':''}</Badge>
-            <Badge variant={vamp2? 'default':'secondary'}>Vamp Acolyte {vamp2?'✓':''}</Badge>
-            <Badge variant={zombie3? 'default':'secondary'}>Zombie Survivalist {zombie3?'✓':''}</Badge>
-            <Badge variant={classic5? 'default':'secondary'}>Classic Connoisseur {classic5?'✓':''}</Badge>
-            <Badge variant={newblood5? 'default':'secondary'}>New Blood {newblood5?'✓':''}</Badge>
-            <Badge variant={speed2? 'default':'secondary'}>Speed Watcher {speed2?'✓':''}</Badge>
-            <Badge variant={reviewer10? 'default':'secondary'}>Reviewer {reviewer10?'✓':''}</Badge>
-            <Badge variant={tagMaster? 'default':'secondary'}>Tag Master {tagMaster?'✓':''}</Badge>
-            <Badge variant={watchlist10? 'default':'secondary'}>Curator (10+ Watchlist) {watchlist10?'✓':''}</Badge>
-            <Badge variant={highRatings? 'default':'secondary'}>Knife Juggler (5×4★) {highRatings?'✓':''}</Badge>
-          </div>
-        </CardContent>
-      </Card>
+      <InsightsCard items={items} longAgoYear={longAgoYear} />
+
+      <WrappedCard items={items} longAgoYear={longAgoYear} />
+
+      <LevelCard items={items} longAgoYear={longAgoYear} />
 
       <Card className="rounded-2xl">
         <CardContent className="p-6 space-y-3">

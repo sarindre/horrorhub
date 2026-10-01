@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added (innovation review, #24)
+- **What your habits say** on Stats: plain-sentence insights about your own taste (best and worst subgenre, whether you rate scarier films higher, a scarier or gentler drift, your watching night, favorite decade, watchlist pace), each with what it rests on.
+- **Horror Wrapped**: your year in horror with a personality, key numbers and highlights; save it as a shareable image or copy it as text. Built on your device.
+- **Ranks**: XP now has eight named levels, a progress bar, and badges that show how close you are.
+
+### Changed (innovation review, #24)
+- Stats' average scare uses estimated scare levels (labelled "est.") instead of a flat 5, the streak is the live one, the scare-versus-rating chart shows only films you've rated, and the overview fits a phone.
+
 ### Added (innovation review, #28)
 - **Installable, works offline.** HorrorHub can be installed as an app (desktop or phone) and opens and works without internet, including every screen; TMDb searches still need a connection. Settings shows an Install button where the browser allows it.
 - **Automatic backup to a folder** (Chromium browsers): pick a folder and a backup is kept there, updated a few seconds after every change, with the newest 7 daily copies. A banner and Reconnect button resume it if the browser forgets folder access.
