@@ -87,7 +87,7 @@ describe("Ask HorrorHub", () => {
 });
 
 describe("looking on TMDb", () => {
-  const stub = (flagsByTitle = {}) => {
+  const stub = () => {
     const calls = [];
     vi.stubGlobal("fetch", vi.fn(async (url) => {
       const u = String(url);
