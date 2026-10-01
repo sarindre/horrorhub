@@ -441,10 +441,14 @@ Done: logging a watch now has an optional "How was it?" section (how scared you 
 Left for later: adding a diary note to a watch you logged earlier (today only new watches take one); a diary timeline view across films; and using company in Group Night (e.g. "nobody here has seen it, and it's a group watch").
 
 ### 26. Double-feature pairing
-Status: Planned
+Status: Done (see leftovers)
 Priority: P2
 
 A "Pair with…" suggestion on any film that picks a companion by contrast or complement: a palate cleanser after something heavy, a same-subgenre deep cut, or a shorter film to fit the night, using the marathon pacing rules and your limits. One tap opens the planner with both films.
+
+Done: a **Pair with…** button on a film's page and on Tonight's pick (`features/pairing/PairWith.jsx`, logic in `lib/pairing.js`) suggests companions from your unwatched library, never films you've seen, unreleased ones, or anything over your content limits. Three kinds: *Same wavelength* (shares a tag, scare level within 2), *Palate cleanser* (at least 3 points lighter; skipped with a reason after an already-gentle film) and *Quick one* (90 minutes or less and shorter than the base film). Each pick shows its scare level (est. when estimated), runtime, the length of the whole night, and why. **Plan this double feature** opens Plan → Watchlist & plans with exactly those two films in order, a start time, Save plan, calendar export and add-to-watchlist; "Plan automatically instead" returns to the normal planner. Marathons now also use diary-derived scare levels.
+
+Left for later: pairing from a film that isn't in your library using TMDb to suggest companions (today companions come from your library only); a "warm-up" companion to watch before a heavy film; and three-film pairings.
 
 ### 27. Ask HorrorHub (natural-language search)
 Status: Planned

@@ -16,6 +16,7 @@ import {
   ANY_THEME,
   FLOW_SHAPES,
   buildMarathon,
+  lineupPlan,
   marathonEvents,
   marathonTimeline,
   runtimeOf,
@@ -43,7 +44,7 @@ function scareLabel(scares, estimated) {
 
 // Builds a themed lineup for one night: fits your time budget, follows the
 // scare-level shape you pick, and stays inside your content limits.
-export function MarathonPlanner({ library, watchlist, planTime = "20:00", store, onUpdate, onOpenDetails }) {
+export function MarathonPlanner({ library, watchlist, planTime = "20:00", store, onUpdate, onOpenDetails, pairing, onClearPairing }) {
   const toast = useToast();
   const prefs = useContentPrefs();
   const [source, setSource] = useState(watchlist.length >= 2 ? "watchlist" : "library");
@@ -61,13 +62,14 @@ export function MarathonPlanner({ library, watchlist, planTime = "20:00", store,
   const profile = useTasteProfile(library);
   const pool = source === "watchlist" ? watchlist : library;
 
+  // a double feature picked on a film's page is a fixed lineup; otherwise the planner builds one
   const plan = useMemo(
-    () => buildMarathon(pool, { count, budgetMinutes: hours * 60, theme, shape, profile, prefs, seed }),
-    [pool, count, hours, theme, shape, profile, prefs, seed]
+    () => (pairing ? lineupPlan(pairing.films, { reasons: pairing.reasons, bias: profile.scareBias || 0 }) : buildMarathon(pool, { count, budgetMinutes: hours * 60, theme, shape, profile, prefs, seed })),
+    [pairing, pool, count, hours, theme, shape, profile, prefs, seed]
   );
   const startAt = startFrom(date, time);
   const timeline = marathonTimeline(plan.films.map((f) => ({ ...f.item, runtime: runtimeOf(f.item) })), startAt);
-  const label = name.trim() || `${theme.label === ANY_THEME.label ? "Horror" : theme.label} night`;
+  const label = name.trim() || (pairing ? `Double feature: ${pairing.films.map((f) => f.title).join(" + ")}` : `${theme.label === ANY_THEME.label ? "Horror" : theme.label} night`);
 
   const eventsFor = (planName, films, at) => marathonEvents(planName, films, at);
   const download = (planName, films, at) => {
@@ -81,7 +83,7 @@ export function MarathonPlanner({ library, watchlist, planTime = "20:00", store,
       name: label,
       startAt: startAt.toISOString(),
       shape,
-      themeLabel: theme.label,
+      themeLabel: pairing ? "Double feature" : theme.label,
       films: plan.films.map((f) => snapshotFilm({ ...f.item, runtime: runtimeOf(f.item) })),
     });
     if (saved) {
@@ -102,7 +104,15 @@ export function MarathonPlanner({ library, watchlist, planTime = "20:00", store,
       <CardContent className="p-4 space-y-4">
         <div className="text-sm uppercase tracking-wide opacity-80">Marathon planner</div>
 
+        {pairing ? (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-red-500/40 bg-red-500/5 p-3 text-sm">
+            <span className="min-w-0">Double feature: <strong>{pairing.films.map((f) => f.title).join(" + ")}</strong>. Pick a start time, then save it or add it to your calendar.</span>
+            <Button size="sm" variant="outline" onClick={onClearPairing}>Plan automatically instead</Button>
+          </div>
+        ) : null}
+
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+          {!pairing ? (<>
           <label className="inline-flex items-center gap-2">
             From
             <select className={select} value={source} onChange={(e) => setSource(e.target.value)}>
@@ -136,13 +146,14 @@ export function MarathonPlanner({ library, watchlist, planTime = "20:00", store,
               {Object.entries(FLOW_SHAPES).map(([id, s]) => <option key={id} value={id}>{s.label}</option>)}
             </select>
           </label>
+          </>) : null}
           <label className="inline-flex flex-wrap items-center gap-2">
             Start
             <Input type="date" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} className="w-40" />
             <Input type="time" value={time} onChange={(e) => setTime(e.target.value || planTime)} className="w-28" />
           </label>
         </div>
-        <div className="text-xs opacity-70">{FLOW_SHAPES[shape].blurb}. Films over your content limits are left out, and there's a 15-minute break between films.</div>
+        {!pairing ? <div className="text-xs opacity-70">{FLOW_SHAPES[shape].blurb}. Films over your content limits are left out, and there's a 15-minute break between films.</div> : null}
 
         {plan.films.length ? (
           <div className="space-y-3">
@@ -181,13 +192,15 @@ export function MarathonPlanner({ library, watchlist, planTime = "20:00", store,
               <span className="opacity-70"> · {plan.flow}</span>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Button size="sm" variant="outline" onClick={() => setSeed((s) => s + 1)}>
-                <Shuffle className="h-4 w-4 mr-1" /> Shuffle
-              </Button>
+              {!pairing ? (
+                <Button size="sm" variant="outline" onClick={() => setSeed((s) => s + 1)}>
+                  <Shuffle className="h-4 w-4 mr-1" /> Shuffle
+                </Button>
+              ) : null}
               <Input placeholder={label} value={name} onChange={(e) => setName(e.target.value)} className="w-48" aria-label="Plan name" />
               <Button size="sm" onClick={save}>Save plan</Button>
               <Button size="sm" variant="outline" onClick={() => download(label, timeline.map((t) => t.film), startAt)}>Download .ics</Button>
-              {source === "library" ? <Button size="sm" variant="outline" onClick={addAllToWatchlist}>Add all to watchlist</Button> : null}
+              {source === "library" || pairing ? <Button size="sm" variant="outline" onClick={addAllToWatchlist}>Add all to watchlist</Button> : null}
             </div>
           </div>
         ) : (

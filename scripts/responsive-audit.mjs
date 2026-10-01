@@ -45,6 +45,7 @@ const films = [
   { id: 4, title: "Hereditary", year: 2018, rating: 5, scares: 9, tags: ["occult", "psychological", "slow-burn"], watchedDates: [day(1), day(2), day(3)].map((d) => d.toISOString()), overview: "A grieving family is haunted by tragic and disturbing occurrences." },
   { id: 5, title: "The Thing", year: 1982, rating: 5, scares: 8, tags: ["creature", "sci-horror", "classic"], watchedDates: [day(400).toISOString()], overview: "A research team in Antarctica is hunted by a shape-shifting alien." },
   { id: 6, title: "Halloween", year: 1978, rating: 4.5, scares: 7, tags: ["slasher", "classic"], watchedDates: [day(500).toISOString()], overview: "Fifteen years after murdering his sister, Michael Myers escapes and returns to his hometown." },
+  { id: 8, title: "Little Fright", year: 1999, rating: 0, scares: 2, runtime: 80, tags: ["campy"], overview: "A gentle, silly little scare to end the night on." },
   { id: 7, title: "A Film With A Deliberately Very Long Title To Test How Cards Cope With Text", year: 2020, rating: 0, scares: 6, tags: ["occult"], watchlist: true, overview: "More of the same." },
 ];
 const dayKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -128,6 +129,30 @@ try {
     if (args.shots) await page.screenshot({ path: path.join(args.shots, `tonight-quiz-${width}.png`) });
     if (!opened) bad.push({ view: "tonight-quiz (button not found)", overflow: 1, culprits: [] });
     else if (quiz.overflow > 0) bad.push({ view: "tonight-quiz", ...quiz });
+    // ...and the "Pair with" panel, then the planner holding a double feature
+    await page.goto(`${url}#library`, { waitUntil: "networkidle2" }); // leave Tonight so the quiz above is closed
+    await page.goto(`${url}#tonight`, { waitUntil: "networkidle2" });
+    const pairOpened = await page.evaluate(() => {
+      const button = [...document.querySelectorAll("button")].find((b) => /^Pair with/.test(b.textContent.trim()));
+      button?.click();
+      return !!button;
+    });
+    await new Promise((r) => setTimeout(r, 300));
+    const pairPanel = await page.evaluate(measure);
+    if (args.shots) await page.screenshot({ path: path.join(args.shots, `tonight-pair-${width}.png`), fullPage: true });
+    if (!pairOpened) bad.push({ view: "tonight-pair (button not found)", overflow: 1, culprits: [] });
+    else if (pairPanel.overflow > 0) bad.push({ view: "tonight-pair", ...pairPanel });
+    const planned2 = await page.evaluate(() => {
+      const button = [...document.querySelectorAll("button")].find((b) => b.textContent.trim() === "Plan this double feature");
+      button?.click();
+      return !!button;
+    });
+    await new Promise((r) => setTimeout(r, 500));
+    const doubleFeature = await page.evaluate(measure);
+    if (args.shots) await page.screenshot({ path: path.join(args.shots, `planner-double-feature-${width}.png`), fullPage: true });
+    if (!planned2) bad.push({ view: "planner-double-feature (no pairing offered)", overflow: 1, culprits: [] });
+    else if (doubleFeature.overflow > 0) bad.push({ view: "planner-double-feature", ...doubleFeature });
+
     // ...and the Horror Wrapped image really draws (once, at the first width)
     if (width === widths[0]) {
       await page.goto(`${url}#stats`, { waitUntil: "networkidle2" });

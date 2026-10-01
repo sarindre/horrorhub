@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added (innovation review, #26)
+- **Pair with…** on a film's page and on Tonight's pick: companions from your library for a double feature, by wavelength (same corner of horror), palate cleanser (lighter, to wind down) or quick one (shorter). One tap loads the pair into the marathon planner with a start time, save and calendar export.
+
+### Fixed
+- The marathon planner now uses scare levels from your scare diary (it used the stored default for those films).
+
 ### Added (innovation review, #25)
 - **Scare diary**: when you log a watch you can note how scared you were, who with and what time of day. Notes show on the film page (and can be removed one by one) and are included in imports, exports and backups.
 - **Personal calibration**: your diary scores replace estimates for those films everywhere, and teach HorrorHub how scary things are *for you*, so estimates for other films shift up or down to match.

@@ -6,6 +6,7 @@ import { Slider } from "../../components/ui/slider.jsx";
 import { ContentWarnings } from "../../components/ContentWarnings.jsx";
 import { HiddenNotice } from "../../components/HiddenNotice.jsx";
 import { CalibrationQuiz } from "./CalibrationQuiz.jsx";
+import { PairWith } from "../pairing/PairWith.jsx";
 import { MOOD_PRESETS } from "../../lib/moods.js";
 import { buildTasteProfile, isLearning } from "../../lib/taste.js";
 import { isCalibrated } from "../../lib/calibration.js";
@@ -18,7 +19,7 @@ import { TMDB_IMG } from "../../lib/tmdb.js";
 
 // The landing screen: one film for tonight, why, and whether it fits your limits.
 // The scare and vibe dials sit behind one line; the deeper tools live under "Tune".
-export function Tonight({ library, calibration, mixer, challenges, onSaveCalibration, onOpenDetails, onGo }) {
+export function Tonight({ library, calibration, mixer, challenges, onSaveCalibration, onOpenDetails, onGo, onPlanPair }) {
   const contentPrefs = useContentPrefs();
   const [quizOpen, setQuizOpen] = useState(false);
   const [dialsOpen, setDialsOpen] = useState(false);
@@ -104,6 +105,9 @@ export function Tonight({ library, calibration, mixer, challenges, onSaveCalibra
           onAnother={() => { setSkipped([...skipped, current.item.id]); setFocusId(null); }}
           onNever={() => { setPassed([...(passed || []), current.item.id]); setFocusId(null); }}
           canReroll={picks.length > 1}
+          library={library}
+          onPlanPair={onPlanPair}
+          onOpenFilm={onOpenDetails}
         />
       ) : (
         <EmptyState
@@ -157,7 +161,7 @@ export function Tonight({ library, calibration, mixer, challenges, onSaveCalibra
   );
 }
 
-function PickCard({ pick, profile, prefs, onOpen, onAnother, onNever, canReroll }) {
+function PickCard({ pick, profile, prefs, onOpen, onAnother, onNever, canReroll, library, onPlanPair, onOpenFilm }) {
   const { item, reasons } = pick;
   const flags = itemFlags(item);
   const verdict = evaluateItem(item, prefs);
@@ -165,7 +169,8 @@ function PickCard({ pick, profile, prefs, onOpen, onAnother, onNever, canReroll 
   const poster = item.poster ? TMDB_IMG(item.poster, "w342") : "";
   return (
     <Card className="overflow-hidden rounded-2xl">
-      <CardContent className="flex gap-4 p-4">
+      <CardContent className="space-y-3 p-4">
+       <div className="flex gap-4">
         {poster ? (
           <img src={poster} alt="" className="h-48 w-32 shrink-0 rounded-lg object-cover sm:h-60 sm:w-40" />
         ) : (
@@ -188,6 +193,8 @@ function PickCard({ pick, profile, prefs, onOpen, onAnother, onNever, canReroll 
             <Button variant="ghost" onClick={onNever} title="Never suggest this film again"><Ban className="mr-1 h-4 w-4" /> Not for me</Button>
           </div>
         </div>
+       </div>
+       {onPlanPair ? <PairWith film={item} library={library} onPlan={onPlanPair} onOpenDetails={onOpenFilm} /> : null}
       </CardContent>
     </Card>
   );

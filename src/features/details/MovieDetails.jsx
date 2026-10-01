@@ -9,6 +9,7 @@ import { TagEditor } from "../../components/TagEditor.jsx";
 import { TMDB_IMG, describeError, isAbort, tmdbGet } from "../../lib/tmdb.js";
 import { WatchDialog } from "../../components/WatchDialog.jsx";
 import { ViewingDiary } from "./ViewingDiary.jsx";
+import { PairWith } from "../pairing/PairWith.jsx";
 import { AddToShelfDialog } from "../../components/AddToShelfDialog.jsx";
 import { snapshotFilm } from "../../lib/shelves.js";
 import { watchPatch } from "../../lib/watch.js";
@@ -22,7 +23,7 @@ import { analysisPatch, analyzeMeta, fetchFilmMeta } from "../../lib/filmMeta.js
 
 const DETAILS_CACHE_MS = 5 * 60 * 1000;
 
-export function MovieDetails({ item, localItem, onUpdate, onAdd, apiKey, omdbKey, dddKey, externalOff = false, region = "US", shelfStore }) {
+export function MovieDetails({ item, localItem, onUpdate, onAdd, apiKey, omdbKey, dddKey, externalOff = false, region = "US", shelfStore, library = [], onPlanPair, onOpenFilm }) {
   const toast = useToast();
   const prefs = useContentPrefs();
   const [details, setDetails] = useState(null);
@@ -381,6 +382,8 @@ export function MovieDetails({ item, localItem, onUpdate, onAdd, apiKey, omdbKey
             ) : null}
 
             <ViewingDiary item={localItem} onUpdate={(next) => onUpdate?.(next)} />
+
+            {onPlanPair ? <PairWith film={base} library={library} onPlan={onPlanPair} onOpenDetails={(f) => onOpenFilm?.(f)} /> : null}
 
             {trailer ? (
               <a

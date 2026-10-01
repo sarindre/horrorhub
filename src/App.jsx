@@ -170,6 +170,9 @@ export function HorrorHub() {
 
   const marathonStore = useMarathons();
 
+  // A double feature picked on a film's page, waiting in the marathon planner
+  const [pairing, setPairing] = useState(null);
+
   // The current view lives in the URL hash so Back/Forward move between views. Opening any
   // view (including the one you're on) leaves a film's details, and so does the browser's Back.
   const [tab, setTab] = useHashTab();
@@ -180,6 +183,10 @@ export function HorrorHub() {
   useEffect(() => {
     setSelected(null);
   }, [tab]);
+  const planPair = (lineup) => {
+    setPairing(lineup);
+    goTab("watchlist");
+  };
 
   // Keeping the library safe: automatic folder backup, installing the app, and a reminder
   const backupData = useMemo(
@@ -328,6 +335,9 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
               <Suspense fallback={<div role="status" className="mt-6 text-sm opacity-70">Loading…</div>}>
               <MovieDetails
                 region={settings.region}
+                library={library}
+                onPlanPair={planPair}
+                onOpenFilm={setSelected}
                 item={selected}
                 localItem={library.find((i) => i.id === selected.id)}
                 onUpdate={upsert}
@@ -346,6 +356,7 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
           <>
         <TabsContent value="tonight" className="mt-6">
           <Tonight
+            onPlanPair={planPair}
             library={library}
             calibration={settings.calibration}
             mixer={mixer}
@@ -369,7 +380,7 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
             </TabsContent>
 
         <TabsContent value="watchlist" className="mt-6">
-          <WatchlistView items={watchlist} library={library} marathonStore={marathonStore} onUpdate={upsert} onRemove={remove} onOpenDetails={setSelected} planDays={settings.planDays} planTime={settings.planTime} />
+          <WatchlistView pairing={pairing} onClearPairing={() => setPairing(null)} items={watchlist} library={library} marathonStore={marathonStore} onUpdate={upsert} onRemove={remove} onOpenDetails={setSelected} planDays={settings.planDays} planTime={settings.planTime} />
         </TabsContent>
 
         <TabsContent value="recs" className="mt-6">

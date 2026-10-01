@@ -98,6 +98,25 @@ function jitter(id, seed) {
   return (((h >>> 0) % 1000) / 1000) * 0.25;
 }
 
+// The film with the scare level the planner should use: your own rating as is, an
+// estimate (flagged `scaresEst` so it can be labelled), or what your scare diary says.
+export function withEffectiveScare(item, bias = 0) {
+  const s = scareOf(item, { bias });
+  return s.estimated || s.source === "diary" ? { ...item, scares: s.value, scaresEst: s.estimated ? true : undefined } : item;
+}
+
+// A fixed lineup (e.g. a double feature picked on a film's page) in the shape the
+// planner shows: `reasons` is one list of strings per film, in order.
+export function lineupPlan(films, { reasons = [], bias = 0 } = {}) {
+  const items = (films || []).map((f) => withEffectiveScare(f, bias));
+  return {
+    films: items.map((item, i) => ({ item, score: 0, reasons: reasons[i] || [], runtime: runtimeOf(item) })),
+    totalMinutes: totalMinutes(items),
+    // the lineup was chosen on purpose, so "consider a build-up shape" would be the wrong advice
+    flow: describeFlow(items).replace(" Consider a build-up shape.", ""),
+  };
+}
+
 // Choose `count` films from `pool` (library-shaped items) within `budgetMinutes`.
 // Returns { films: [{ item, score, reasons, runtime }], totalMinutes, flow }.
 // Films are left out if they're unreleased, over your content limits, or off
@@ -112,11 +131,8 @@ export function buildMarathon(pool, { count = 3, budgetMinutes = 360, theme = AN
       seen.add(item.id);
       return (item.year === undefined || Number(item.year) <= year) && matchesTheme(item, theme) && !evaluateItem(item, prefs).blocked;
     })
-    // films without your own scare rating carry an estimate, flagged so it can be labelled
-    .map((item) => {
-      const s = scareOf(item, { bias: p.scareBias || 0 });
-      return s.estimated ? { ...item, scares: s.value, scaresEst: true } : item;
-    });
+    // films without your own scare rating carry an estimate (flagged so it can be labelled) or your diary's word
+    .map((item) => withEffectiveScare(item, p.scareBias || 0));
 
   const scare = p.scarePref != null ? Math.round(p.scarePref) : 5;
   const ranked = eligible
