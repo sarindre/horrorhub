@@ -108,12 +108,42 @@ describe("first run", () => {
     expect(screen.queryByText("Welcome to HorrorHub")).toBeNull(); // token, films, 3 rated and a comfort limit: all done
   });
 
-  it("shows only the steps still to do", () => {
+  it("shows one next step at a time, with the whole list one click away", () => {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify({ version: 2, settings: { flicker: false, fog: false, apiKey: "tok" } }));
     seedLibrary([{ id: 1, title: "Only One", year: 2000 }]);
     render(<App />);
     expect(screen.getByText(/2 of 4 steps done/)).toBeTruthy();
-    expect(screen.getByText(/Rate 3 films/)).toBeTruthy();
+    expect(screen.getByText("Next step")).toBeTruthy();
+    expect(screen.getByText("Teach HorrorHub your taste", { selector: "div" })).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: "Take the taste quiz" }).length).toBeGreaterThan(0); // here, and Tonight's own invitation
+    expect(screen.getByRole("button", { name: "Rate films" })).toBeTruthy();
+    // the other steps are listed, but their instructions aren't on screen
+    expect(screen.queryByText(/create an account at themoviedb.org/)).toBeNull();
+    expect(screen.getByText("See all steps")).toBeTruthy();
+  });
+
+  it("the quiz button takes you to the quiz on Tonight", () => {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify({ version: 2, settings: { flicker: false, fog: false, apiKey: "tok" } }));
+    seedLibrary([{ id: 1, title: "Only One", year: 2000 }]);
+    render(<App />);
+    fireEvent.click(screen.getByRole("button", { name: "Rate films" }));
+    expect(tab("Discover").getAttribute("aria-selected")).toBe("true");
+    fireEvent.click(screen.getAllByRole("button", { name: "Take the taste quiz" })[0]);
+    expect(tab("Tonight").getAttribute("aria-selected")).toBe("true");
+    expect(screen.getByText(/Film 1 of 13/)).toBeTruthy(); // one press opens the quiz itself
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    fireEvent.click(tab("Settings")); // and coming back to Tonight later does not reopen it
+    fireEvent.click(tab("Tonight"));
+    expect(screen.queryByText(/Film 1 of 13/)).toBeNull();
+  });
+
+  it("moves on to the next step once the taste quiz has been taken", () => {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify({ version: 2, settings: { flicker: false, fog: false, apiKey: "tok", calibration: { answers: { "halloween-1978": "loved" }, doneAt: "2026-01-01T00:00:00.000Z" } } }));
+    seedLibrary([{ id: 1, title: "Only One", year: 2000 }]);
+    render(<App />);
+    expect(screen.getByText(/3 of 4 steps done/)).toBeTruthy();
+    expect(screen.getByText("Next step (optional)")).toBeTruthy();
+    expect(screen.getByText("Set your comfort limits", { selector: "div" })).toBeTruthy();
   });
 });
 

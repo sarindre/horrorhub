@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- **The getting-started guide shows one next step at a time.** A progress bar, the step's instructions, a main button (and an alternative), and "See all steps" for the whole list. "Teach HorrorHub your taste" is now satisfied by the 60-second quiz as well as by rating films, and its "Take the taste quiz" button opens the quiz itself.
+
 ### Added
 - **Settings travel in backups.** Automatic backups and exports now include your comfort limits, region, appearance and taste quiz answers (never your API keys), so a restore on a new device brings your setup back. Importing a file that has settings asks before replacing yours, and a file can't set or change your API keys.
 

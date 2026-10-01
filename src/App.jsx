@@ -181,6 +181,9 @@ export function HorrorHub() {
 
   const marathonStore = useMarathons();
 
+  // "Take the taste quiz" in the getting-started guide opens the quiz itself, not just the screen
+  const [quizRequested, setQuizRequested] = useState(false);
+
   // A double feature picked on a film's page, waiting in the marathon planner
   const [pairing, setPairing] = useState(null);
 
@@ -309,7 +312,7 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
         </div>
       </div>
       {!onboardingDismissed && !isOnboardingDone(steps) && !selected ? (
-        <GettingStarted steps={steps} onGo={goTab} onDismiss={() => setOnboardingDismissed(true)} />
+        <GettingStarted steps={steps} onGo={(tab, intent) => { goTab(tab); if (intent === "quiz") setQuizRequested(true); }} onDismiss={() => setOnboardingDismissed(true)} />
       ) : null}
       <BackupReminder
         reminder={!onboardingDismissed && !isOnboardingDone(steps) ? null : reminder}
@@ -374,6 +377,8 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
           <>
         <TabsContent value="tonight" className="mt-6">
           <Tonight
+            startQuiz={quizRequested}
+            onQuizStarted={() => setQuizRequested(false)}
             onPlanPair={planPair}
             library={library}
             calibration={settings.calibration}

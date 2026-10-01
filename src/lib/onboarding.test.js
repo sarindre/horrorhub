@@ -40,7 +40,22 @@ describe("onboardingSteps", () => {
     expect(nextStep(everything)).toBeNull();
   });
 
-  it("gives every step an action that goes somewhere real", () => {
-    for (const s of steps()) expect(["settings", "discover", "library"]).toContain(s.action.tab);
+  it("gives every step actions that go somewhere real, the first being the main one", () => {
+    for (const s of steps()) {
+      expect(s.actions.length).toBeGreaterThan(0);
+      expect(s.action).toEqual(s.actions[0]);
+      for (const a of s.actions) expect(["settings", "discover", "tonight", "rate"]).toContain(a.tab);
+    }
+  });
+
+  it("counts the taste quiz as teaching it your taste, with or without rated films", () => {
+    const quiz = { calibration: { answers: { "halloween-1978": "loved" }, doneAt: "2026-01-01T00:00:00.000Z" } };
+    expect(byId(steps({ settings: quiz }), "rate").done).toBe(true);
+    expect(byId(steps({ settings: { calibration: { answers: {}, doneAt: "" } } }), "rate").done).toBe(false);
+    expect(byId(steps(), "rate").actions.map((a) => a.label)).toEqual(["Take the taste quiz", "Rate films"]);
+  });
+
+  it("offers a way to add films and a way to import them", () => {
+    expect(byId(steps(), "films").actions.map((a) => a.tab)).toEqual(["discover", "settings"]);
   });
 });

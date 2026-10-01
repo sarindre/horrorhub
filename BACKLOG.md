@@ -490,7 +490,7 @@ Status: Parked
 Community "look away" timestamps, shared live watch parties, and crowd-sourced scare ratings. They'd be the biggest differentiator of all but require accounts and moderation, which the product direction rules out for now.
 
 ### 31. Feature sprawl: tell people where to start
-Status: Planned (first step done: Tonight is the landing screen)
+Status: Partly done (landing screen, one-step guide; see below)
 Priority: P1
 
 There are 10 views in 6 sections and nothing says which to use first. Scope:
@@ -499,6 +499,8 @@ There are 10 views in 6 sections and nothing says which to use first. Scope:
 - Progressive disclosure: hide or collapse Stats, Challenges and Shelves behind a "More" group until the library has enough films to make them useful (setting to show everything)
 - Every empty state points to the one next action, not a menu
 - Measure by running the audit script from a fresh profile: from a blank start, a pick on screen in three taps
+
+Done so far: Tonight is the landing screen; the getting-started card now shows ONE next step at a time with a progress bar, its main button (and an alternative), and "See all steps" tucked away. The taste quiz counts as teaching HorrorHub your taste, and the guide's "Take the taste quiz" opens the quiz itself. Still to do: hiding Stats, Challenges and Shelves until the library is big enough to make them useful (with a setting to show everything), and checking every empty state ends in one clear action.
 
 ### Weakness coverage (from the review)
 Each weakness the review raised is covered by an item above. Scope decisions so none is dropped:

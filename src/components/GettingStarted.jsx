@@ -3,11 +3,12 @@ import { Card, CardContent } from "./ui/card.jsx";
 import { Button } from "./ui/button.jsx";
 import { nextStep } from "../lib/onboarding.js";
 
-// First-run checklist. Each unfinished step has a button that jumps to the
-// right place; the next thing to do is highlighted.
+// First-run guide: one clear next step with a button that takes you there, a progress bar,
+// and the whole list one click away. Steps tick themselves off as you go.
 export function GettingStarted({ steps, onGo, onDismiss }) {
   const next = nextStep(steps);
   const doneCount = steps.filter((s) => s.done).length;
+  const pct = Math.round((doneCount / steps.length) * 100);
   return (
     <Card className="mb-6 rounded-2xl border-red-500/40">
       <CardContent className="space-y-3 p-5">
@@ -18,32 +19,44 @@ export function GettingStarted({ steps, onGo, onDismiss }) {
           </div>
           <Button size="sm" variant="ghost" onClick={onDismiss}>Hide this</Button>
         </div>
-        <ol className="space-y-3">
-          {steps.map((s, i) => {
-            const isNext = next?.id === s.id;
-            return (
-              <li key={s.id} className={`flex gap-3 rounded-xl p-2 ${isNext ? "bg-red-500/10" : ""}`}>
+
+        <div role="progressbar" aria-label="Getting started progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} className="h-1.5 overflow-hidden rounded bg-white/10">
+          <div className="h-full rounded bg-red-600 transition-all" style={{ width: `${pct}%` }} />
+        </div>
+
+        {next ? (
+          <div className="space-y-2 rounded-xl bg-red-500/10 p-3">
+            <div className="text-xs uppercase tracking-wide opacity-70">Next step{next.optional ? " (optional)" : ""}</div>
+            <div className="text-base font-semibold">{next.title}</div>
+            <div className="text-sm opacity-80">{next.detail}</div>
+            <div className="flex flex-wrap gap-2">
+              {next.actions.map((a, i) => (
+                <Button key={a.label} size="sm" variant={i === 0 ? "default" : "outline"} onClick={() => onGo(a.tab, a.intent)}>{a.label}</Button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        <details className="text-sm">
+          <summary className="cursor-pointer opacity-80">See all steps</summary>
+          <ol className="mt-2 space-y-2">
+            {steps.map((s, i) => (
+              <li key={s.id} className="flex items-start gap-3">
                 <span
                   aria-hidden="true"
-                  className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs ${s.done ? "border-emerald-500 bg-emerald-600 text-white" : "opacity-70"}`}
+                  className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-xs ${s.done ? "border-emerald-500 bg-emerald-600 text-white" : "opacity-70"}`}
                 >
-                  {s.done ? <Check className="h-3.5 w-3.5" /> : i + 1}
+                  {s.done ? <Check className="h-3 w-3" /> : i + 1}
                 </span>
-                <div className="min-w-0 flex-1">
-                  <div className={`font-medium ${s.done ? "line-through opacity-60" : ""}`}>
-                    {s.title}
-                    {s.optional ? <span className="ml-2 text-xs font-normal opacity-60">optional</span> : null}
-                    <span className="sr-only">{s.done ? " (done)" : ""}</span>
-                  </div>
-                  {!s.done ? <div className="text-sm opacity-70">{s.detail}</div> : null}
-                </div>
-                {!s.done ? (
-                  <Button size="sm" variant={isNext ? "default" : "outline"} onClick={() => onGo(s.action.tab)}>{s.action.label}</Button>
-                ) : null}
+                <span className={s.done ? "line-through opacity-60" : ""}>
+                  {s.title}
+                  {s.optional ? <span className="ml-2 text-xs opacity-60">optional</span> : null}
+                  <span className="sr-only">{s.done ? " (done)" : ""}</span>
+                </span>
               </li>
-            );
-          })}
-        </ol>
+            ))}
+          </ol>
+        </details>
       </CardContent>
     </Card>
   );

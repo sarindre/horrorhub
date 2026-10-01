@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Moon, RefreshCw, Ban, Flame } from "lucide-react";
 import { Card, CardContent } from "../../components/ui/card.jsx";
 import { Button } from "../../components/ui/button.jsx";
@@ -19,9 +19,15 @@ import { TMDB_IMG } from "../../lib/tmdb.js";
 
 // The landing screen: one film for tonight, why, and whether it fits your limits.
 // The scare and vibe dials sit behind one line; the deeper tools live under "Tune".
-export function Tonight({ library, calibration, mixer, challenges, onSaveCalibration, onOpenDetails, onGo, onPlanPair }) {
+export function Tonight({ library, calibration, mixer, challenges, onSaveCalibration, onOpenDetails, onGo, onPlanPair, startQuiz = false, onQuizStarted }) {
   const contentPrefs = useContentPrefs();
   const [quizOpen, setQuizOpen] = useState(false);
+  // asked to open the quiz from elsewhere (the getting-started guide)
+  useEffect(() => {
+    if (!startQuiz) return;
+    setQuizOpen(true);
+    onQuizStarted?.();
+  }, [startQuiz, onQuizStarted]);
   const [dialsOpen, setDialsOpen] = useState(false);
   const [scareChoice, setScareChoice] = useState(null);
   const [moodId, setMoodId] = useState("all");
