@@ -160,7 +160,7 @@ Acceptance criteria:
 - ✅ A challenge can generate a short watch list automatically
 
 Follow-ups:
-- Days are local calendar days. A Letterboxd/IMDb import stores dates at UTC midnight, which can land on the previous day in timezones west of UTC
+- Days are local calendar days. (Fixed: a Letterboxd CSV import used to store dates at UTC midnight, landing on the previous day west of UTC; imports now keep the calendar day. IMDb imports store the rating date as given.)
 - Count challenges match on your tags and stored keywords, so films that haven't been auto-tagged yet don't count until they are
 - No custom challenges (pick your own rules and dates) yet, and challenges aren't shared or synced anywhere
 - The tab bar now has nine tabs; see #13
@@ -369,7 +369,7 @@ Follow-ups:
 Status: Planned
 Priority: P2
 
-Progress: 231 tests. The pure logic in `lib/*` (recommendation scoring, taste, tagging, content flags, challenges, planning, matching, storage, settings) is covered, every view is smoke-rendered, and the background hooks (`useAutoTagger`, `useImportMatcher`) are tested running for real in jsdom against a stubbed TMDb, which caught restart-on-every-render and dropped-completion bugs. The whole app now also has real click-through tests in jsdom (`App.interaction.test.jsx`: first-run checklist, tab switching, library tag filters, settings persistence). Still open: interaction tests for Discover/Details/Challenges/Planner flows, tests for `useChallenges`/`useMarathons`/`useContentGate`/`useProviders`, and a coverage report in CI.
+Progress (updated): over 840 tests across logic, hooks, interaction and real-browser audits (`npm run audit:responsive`, `npm run audit:offline`). Earlier note: 231 tests. The pure logic in `lib/*` (recommendation scoring, taste, tagging, content flags, challenges, planning, matching, storage, settings) is covered, every view is smoke-rendered, and the background hooks (`useAutoTagger`, `useImportMatcher`) are tested running for real in jsdom against a stubbed TMDb, which caught restart-on-every-render and dropped-completion bugs. The whole app now also has real click-through tests in jsdom (`App.interaction.test.jsx`: first-run checklist, tab switching, library tag filters, settings persistence). Still open: interaction tests for Discover/Details/Challenges/Planner flows, tests for `useChallenges`/`useMarathons`/`useContentGate`/`useProviders`, and a coverage report in CI.
 
 ## Innovation backlog
 Source: the product review of 2026-09-29. The roadmap above is built; these are the ideas that would make HorrorHub *different* from Letterboxd/Trakt-style trackers, plus a few must-fix items the review turned up. Ordered by value for the effort.
@@ -411,10 +411,12 @@ Nothing else does this. Add 2-4 people, each with a quick profile (vibe dials, c
 Done: Tonight → Group night (`features/tonight/GroupNight.jsx`, logic in `lib/group.js`). 2-4 people; each has a scare limit, content to avoid and vibes they enjoy (yours come from Settings). Limits are hard rules, then films are ranked by the least-happy person with the average only breaking ties, and each pick says why it works and whose call the compromise is. A "Ruled out by limits" panel shows what each person's limits removed. Films someone has seen are left out (tick "has seen it" per guest, or include them, listed last). Guests can be saved and re-added; the current group is remembered. Left for later: feeding the group's pick into the marathon planner as a whole night, a Group Night pick that reaches beyond your library (TMDb), and guests with a taste quiz of their own (guests only have vibes and limits, not learned taste).
 
 ### 23. Mystery Reel (blind pick)
-Status: Planned
+Status: Done
 Priority: P2
 
 Spoiler-free picking: choose a vibe and intensity, then reveal a film from your watchlist showing only its runtime, subgenre tags and a mood line, with the title and poster hidden until you commit. Content limits still apply. Cheap (all data exists) and very on-brand.
+
+Done: Tonight → Mystery reel (`features/tonight/MysteryReel.jsx`, logic in `lib/mystery.js`). Choose to draw from your watchlist or whole library, the scare level and the vibe, then "Draw a mystery film" gives a card with only the length, intensity (est. when estimated), subgenre tags, a one-line description ("A #occult and #slow-burn film from the 2010s.") and its content warnings; the title, year, poster and plot are hidden until "Reveal it", then "Open its page". "Draw another" never repeats. Only films that fit the scare level and vibe are drawn (best few, at random); if nothing fits it draws the closest and says so. Films you've watched, unreleased ones and anything over your content limits are never drawn, in warn mode as well as hide mode. A subgenre tag containing a word from the title is never shown, so a tag you typed can't give it away. Tests check that the title, year and plot never appear before the reveal.
 
 ### 24. Horror Wrapped and insights that say something
 Status: Done (see leftovers)

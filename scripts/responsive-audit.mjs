@@ -16,7 +16,7 @@ import puppeteer from "puppeteer-core";
 
 const args = Object.fromEntries(process.argv.slice(2).filter((a) => a.startsWith("--")).map((a) => a.slice(2).split("=")));
 const widths = String(args.widths || "320,360,390,768,1280").split(",").map(Number).filter(Boolean);
-const VIEWS = ["tonight", "group", "ask", "discover", "rate", "library", "shelves", "recs", "continuity", "watchlist", "challenges", "stats", "settings", "help"];
+const VIEWS = ["tonight", "group", "mystery", "ask", "discover", "rate", "library", "shelves", "recs", "continuity", "watchlist", "challenges", "stats", "settings", "help"];
 
 function findBrowser() {
   const candidates = [
@@ -129,6 +129,24 @@ try {
     if (args.shots) await page.screenshot({ path: path.join(args.shots, `tonight-quiz-${width}.png`) });
     if (!opened) bad.push({ view: "tonight-quiz (button not found)", overflow: 1, culprits: [] });
     else if (quiz.overflow > 0) bad.push({ view: "tonight-quiz", ...quiz });
+    // ...and a drawn mystery film, then revealed
+    await page.goto(`${url}#library`, { waitUntil: "networkidle2" });
+    await page.goto(`${url}#mystery`, { waitUntil: "networkidle2" });
+    const drew = await page.evaluate(() => {
+      const button = [...document.querySelectorAll("button")].find((b) => b.textContent.trim() === "Draw a mystery film");
+      button?.click();
+      return !!button;
+    });
+    await new Promise((r) => setTimeout(r, 300));
+    const clueView = await page.evaluate(measure);
+    if (args.shots) await page.screenshot({ path: path.join(args.shots, `mystery-clue-${width}.png`), fullPage: true });
+    await page.evaluate(() => [...document.querySelectorAll("button")].find((b) => b.textContent.trim() === "Reveal it")?.click());
+    await new Promise((r) => setTimeout(r, 300));
+    const revealedView = await page.evaluate(measure);
+    if (!drew) bad.push({ view: "mystery (nothing to draw)", overflow: 1, culprits: [] });
+    else if (clueView.overflow > 0) bad.push({ view: "mystery-clue", ...clueView });
+    else if (revealedView.overflow > 0) bad.push({ view: "mystery-revealed", ...revealedView });
+
     // ...and an Ask HorrorHub answer
     await page.goto(`${url}#ask`, { waitUntil: "networkidle2" });
     const asked = await page.evaluate(() => {

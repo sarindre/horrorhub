@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- **Mystery reel** (Tonight → Mystery reel): a blind pick from your watchlist or library. You see the length, intensity, kind of horror and content warnings, but not the title or poster until you press Reveal. It never draws a film over your content limits, and says so if nothing fits your vibe.
+
 ### Changed
 - **The getting-started guide shows one next step at a time.** A progress bar, the step's instructions, a main button (and an alternative), and "See all steps" for the whole list. "Teach HorrorHub your taste" is now satisfied by the 60-second quiz as well as by rating films, and its "Take the taste quiz" button opens the quiz itself.
 

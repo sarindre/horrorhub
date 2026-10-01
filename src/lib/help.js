@@ -27,6 +27,16 @@ export const HELP = {
     ],
     tips: ["Warnings come from TMDb keywords, so check anything that really matters before pressing play."],
   },
+  mystery: {
+    title: "Mystery reel",
+    what: "A blind pick: you'll see how long a film is, how intense, what kind of horror and any content warnings, but not its title until you reveal it.",
+    points: [
+      "\"Draw from\" chooses your watchlist or your whole library. \"Change\" sets how scared you want to be and the vibe. It starts at your usual level.",
+      "\"Draw a mystery film\" picks one that fits. \"Reveal it\" shows the title and poster, then \"Open its page\" takes you to it.",
+      "\"Draw another\" moves on and won't repeat a film. A film you've watched, one that isn't out yet, or one over your content limits is never drawn.",
+    ],
+    tips: ["Content warnings are always shown, because deciding whether to watch needs them. If nothing fits your vibe it says so and draws the closest."],
+  },
   ask: {
     title: "Ask",
     what: "Describe what you want in your own words and HorrorHub searches your library, then can look on TMDb too.",

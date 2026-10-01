@@ -12,6 +12,7 @@ const loaders = {
   group: () => import("./features/tonight/GroupNight.jsx"),
   ask: () => import("./features/ask/AskView.jsx"),
   help: () => import("./features/help/HelpView.jsx"),
+  mystery: () => import("./features/tonight/MysteryReel.jsx"),
 };
 
 export const StatsView = lazy(() => loaders.stats().then((m) => ({ default: m.StatsView })));
@@ -20,6 +21,7 @@ export const ChallengesView = lazy(() => loaders.challenges().then((m) => ({ def
 export const ContinuityGraph = lazy(() => loaders.continuity().then((m) => ({ default: m.ContinuityGraph })));
 export const RatingRoulette = lazy(() => loaders.roulette().then((m) => ({ default: m.RatingRoulette })));
 export const ShelvesView = lazy(() => loaders.shelves().then((m) => ({ default: m.ShelvesView })));
+export const MysteryReel = lazy(() => loaders.mystery().then((m) => ({ default: m.MysteryReel })));
 export const HelpView = lazy(() => loaders.help().then((m) => ({ default: m.HelpView })));
 export const AskView = lazy(() => loaders.ask().then((m) => ({ default: m.AskView })));
 export const GroupNight = lazy(() => loaders.group().then((m) => ({ default: m.GroupNight })));
