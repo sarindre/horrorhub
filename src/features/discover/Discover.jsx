@@ -38,6 +38,9 @@ export function Discover({ apiKey, region = "US", onAdd, onRemove, inLibraryIds,
   const [results, setResults] = useState([]);
   const [sort, setSort] = useState("popularity.desc");
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [error, setError] = useState(null);
   const [upcoming, setUpcoming] = useState([]);
   const [showUpcoming, setShowUpcoming] = useState(false);
@@ -58,10 +61,13 @@ export function Discover({ apiKey, region = "US", onAdd, onRemove, inLibraryIds,
       abortRef.current = controller;
       lastPathRef.current = path;
       setLoading(true);
+      setLoadingMore(false);
       setError(null);
       try {
         const data = await tmdbGet(path, { apiKey, signal: controller.signal, cacheMs: LIST_CACHE_MS });
         setResults((data.results || []).map(mapMovie));
+        setPage(1);
+        setTotalPages(Math.max(1, Number(data.total_pages) || 1));
       } catch (err) {
         if (!isAbort(err)) setError(err);
       } finally {
@@ -70,6 +76,30 @@ export function Discover({ apiKey, region = "US", onAdd, onRemove, inLibraryIds,
     },
     [apiKey]
   );
+  // The next page of the same list, added below what's already shown. If you start a new
+  // search or sort while it loads, the old request is cancelled and its results dropped.
+  const loadMore = async () => {
+    const path = lastPathRef.current;
+    if (!path || loadingMore || page >= totalPages) return;
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setLoadingMore(true);
+    try {
+      const data = await tmdbGet(`${path}${path.includes("?") ? "&" : "?"}page=${page + 1}`, { apiKey, signal: controller.signal, cacheMs: LIST_CACHE_MS });
+      if (lastPathRef.current !== path) return;
+      setResults((prev) => {
+        const seen = new Set(prev.map((r) => r.id));
+        return [...prev, ...(data.results || []).map(mapMovie).filter((m) => !seen.has(m.id))];
+      });
+      setPage((p) => p + 1);
+    } catch (err) {
+      if (!isAbort(err)) toast(describeError(err), { kind: "error" });
+    } finally {
+      if (abortRef.current === controller) setLoadingMore(false);
+    }
+  };
+
   useEffect(() => setUpcoming([]), [region]);
 
   useEffect(() => {
@@ -276,6 +306,19 @@ export function Discover({ apiKey, region = "US", onAdd, onRemove, inLibraryIds,
           </div>
         ))}
       </div>
+
+      {apiKey && results.length ? (
+        <div className="flex flex-wrap items-center gap-3 text-sm">
+          <span className="opacity-70">
+            Showing {shown.length} of {results.length} loaded
+            {gate.visible.length - shown.length > 0 ? ` (${gate.visible.length - shown.length} hidden by your filters)` : ""}.
+            {page >= totalPages ? " That's everything for this list." : ""}
+          </span>
+          {page < totalPages ? (
+            <Button variant="outline" onClick={loadMore} disabled={loadingMore || loading}>{loadingMore ? "Loading…" : "Show more films"}</Button>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

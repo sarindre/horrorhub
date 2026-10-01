@@ -43,6 +43,7 @@ export const HELP = {
     points: [
       "Type a title and press Enter, or use the buttons for popular, critically rated, newest, oldest, classics under 90 minutes, and upcoming releases.",
       "\"Add\" puts a film in your library (a message says where it went, and the card stays until the list changes). \"Watchlist\" marks it as something you want to see. \"Watched\" logs when you saw it.",
+      "It loads 20 films at a time. \"Show more films\" at the bottom adds the next page below, and a line tells you how many your filters are hiding.",
       "\"Available on\" keeps only films streaming on the services you tick, for the country chosen in Settings.",
       "Click a title for its full page: cast, trailer, ratings and content warnings.",
     ],

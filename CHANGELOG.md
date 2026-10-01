@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- **Browse: "Show more films"**. Browse loaded a single page of 20 films, and your filters then trimmed it further. A button at the bottom now adds the next page below (without repeating films), a line says how many are shown, loaded and hidden by your filters, and it says when you've reached the end. A new search or sort starts again from the top.
+
 ### Fixed
 - **Rate films and Browse**: a card disappeared the moment you rated or added it (the "Hide already rated" / "Skip titles in library" filters dropped it at once). It now stays on screen so you can finish rating, and clears when you change page or search. A message at the bottom says where the film went, for example "Rated Alien 4★ and added it to your library. Find it in My Library → All films."
 
