@@ -56,3 +56,31 @@ jobs:
         with:
           files: installers/*
           generate_release_notes: true
+
+  # Pushes the installers to itch.io (see docs/ITCH.md). It does nothing until you add the
+  # BUTLER_API_KEY secret and the ITCH_TARGET variable (for example "yourname/horrorhub"), so the
+  # workflow stays green without them.
+  itch:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    env:
+      BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+      ITCH_TARGET: ${{ vars.ITCH_TARGET }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: installers
+      - name: Push to itch.io
+        run: |
+          if [ -z "$BUTLER_API_KEY" ] || [ -z "$ITCH_TARGET" ]; then
+            echo "BUTLER_API_KEY or ITCH_TARGET not set; skipping itch.io."
+            exit 0
+          fi
+          curl -fsSL -o butler.zip https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default
+          unzip -q butler.zip -d butler-bin
+          chmod +x butler-bin/butler
+          version="${GITHUB_REF_NAME#v}"
+          ./butler-bin/butler push installers/HorrorHub-windows-latest "$ITCH_TARGET:windows" --userversion "$version"
+          ./butler-bin/butler push installers/HorrorHub-macos-latest "$ITCH_TARGET:mac" --userversion "$version"
+          ./butler-bin/butler push installers/HorrorHub-ubuntu-latest "$ITCH_TARGET:linux" --userversion "$version"
