@@ -5,6 +5,7 @@ import { useProviders } from "../../hooks/useProviders.js";
 import { useContentGate } from "../../hooks/useContentGate.js";
 import { HiddenNotice } from "../../components/HiddenNotice.jsx";
 import { MovieCard } from "../../components/MovieCard.jsx";
+import { NeedsToken } from "../../components/NeedsToken.jsx";
 import { useTouchedCards } from "../../hooks/useTouchedCards.js";
 import { describeError, isAbort, mapMovie, tmdbGet } from "../../lib/tmdb.js";
 
@@ -127,7 +128,7 @@ export function RatingRoulette({ apiKey, region = "US", onAdd, onOpenDetails, ra
       </div>
 
       {!apiKey ? (
-        <div className="text-sm opacity-70">Add your TMDb API token in Settings to start rating films.</div>
+        <NeedsToken>Rating films needs a free TMDb token.</NeedsToken>
       ) : error ? (
         <div role="alert" className="flex items-center gap-3 rounded-xl border border-red-500/40 bg-red-950/40 px-4 py-3 text-sm">
           <span className="flex-1">{describeError(error)}</span>

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Wand2 } from "lucide-react";
 import { Card, CardContent } from "../../components/ui/card.jsx";
 import { Button } from "../../components/ui/button.jsx";
+import { NeedsToken } from "../../components/NeedsToken.jsx";
 import { TMDB_IMG, describeError, isAbort, tmdbGet } from "../../lib/tmdb.js";
 
 export function ContinuityGraph({ items, apiKey, onOpenDetails }){
@@ -77,7 +78,7 @@ export function ContinuityGraph({ items, apiKey, onOpenDetails }){
           </div>
         </div>
         {!apiKey ? (
-          <div className="text-sm opacity-70">Add your TMDb API token in Settings to build a map.</div>
+          <NeedsToken>Building a map needs a free TMDb token.</NeedsToken>
         ) : error ? (
           <div role="alert" className="text-sm text-red-300">{describeError(error)}</div>
         ) : null}

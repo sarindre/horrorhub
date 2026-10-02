@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Easier TMDb token setup.** Settings → Connections now comes first until you have a token, with a step-by-step guide (links to TMDb's sign-up and API pages, and the answers for TMDb's form ready to copy). The token box tidies what you paste (spaces, quotes, "Bearer "), spots the common mistake of pasting the short API Key, and tests the token against TMDb automatically so you know it works. Every screen that needs a token now links straight to the setup.
+
+### Added
 - The official **TMDb logo** (their unmodified file, linking to their site) in the footer, with the exact attribution wording their API terms require.
 
 ### Added

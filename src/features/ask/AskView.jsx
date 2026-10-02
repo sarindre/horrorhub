@@ -6,6 +6,7 @@ import { Input } from "../../components/ui/input.jsx";
 import { MovieCard } from "../../components/MovieCard.jsx";
 import { ContentWarnings } from "../../components/ContentWarnings.jsx";
 import { WatchlistButton } from "../../components/WatchlistButton.jsx";
+import { NeedsToken } from "../../components/NeedsToken.jsx";
 import { HiddenNotice } from "../../components/HiddenNotice.jsx";
 import { useTasteProfile } from "../../lib/calibrationContext.js";
 import { useContentPrefs } from "../../lib/contentContext.js";
@@ -271,7 +272,7 @@ export function AskView({ library, apiKey, region = "US", onOpenDetails, onAdd, 
                 {tmdb.status === "loading" ? "Searching…" : "Also look on TMDb"}
               </Button>
             </div>
-            {!apiKey ? <div className="text-sm opacity-70">Add your TMDb token in Settings to look beyond your library.</div> : null}
+            {!apiKey ? <NeedsToken>Looking beyond your library needs a free TMDb token.</NeedsToken> : null}
             {apiKey && tmdb.status === "idle" ? (
               <div className="text-xs opacity-60">Sends only the length, years and subgenre keywords to TMDb. Scare level, rating and watched-or-not filters apply to your library only.</div>
             ) : null}

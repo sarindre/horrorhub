@@ -110,7 +110,8 @@ describe("looking on TMDb", () => {
     setup();
     ask("folk horror");
     expect(screen.getByRole("button", { name: "Also look on TMDb" }).disabled).toBe(true);
-    expect(screen.getByText(/Add your TMDb token in Settings/)).toBeTruthy();
+    expect(screen.getByText(/needs a free TMDb token/)).toBeTruthy();
+    expect(screen.getByRole("link", { name: /Set up your free TMDb token/ }).getAttribute("href")).toBe("#settings");
   });
 
   it("finds films you don't own and drops the ones that break your exclusions", async () => {

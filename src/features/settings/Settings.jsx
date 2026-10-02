@@ -6,6 +6,8 @@ import { Label } from "../../components/ui/label.jsx";
 import { ExportImport } from "./ExportImport.jsx";
 import { BackupCard } from "./BackupCard.jsx";
 import { ResetCard } from "./ResetCard.jsx";
+import { TokenField } from "../../components/TokenField.jsx";
+import { TokenGuide } from "../../components/TokenGuide.jsx";
 import { ImportedFilms } from "./ImportedFilms.jsx";
 import { usePrefersReducedMotion } from "../../hooks/usePrefersReducedMotion.js";
 import { THEMES } from "../../lib/settings.js";
@@ -79,8 +81,33 @@ function SecretInput({ value, onChange, placeholder }) {
 export function Settings({ backup, app, onExported, onExportNow, onBeforeReset, settings, update, onImport, onRetagAll, onCleanupTags, onRelink, onRetryMatching, watchlist, data, extras = {} }) {
   const thisYear = new Date().getFullYear();
   const reducedMotion = usePrefersReducedMotion();
+  const connections = (
+      <Card className="rounded-2xl" id="connections">
+        <CardContent className="p-6 space-y-3">
+          <div className="text-lg font-semibold">Connections</div>
+          <div className="text-sm opacity-70">Keys are stored only in this browser (localStorage) and sent only to the service they belong to.</div>
+          <Label className="text-sm" htmlFor="tmdb-token">TMDb API Read Access Token (free, needed for search, posters and suggestions)</Label>
+          <TokenField value={settings.apiKey} onChange={(v) => update({ apiKey: v })} />
+          <TokenGuide defaultOpen={!settings.apiKey} />
+          <div className="pt-3" />
+          <Label className="text-sm" htmlFor="region-select">Where you watch</Label>
+          <select id="region-select" value={settings.region} onChange={(e) => update({ region: e.target.value })} className="h-9 w-full max-w-xs rounded-md border bg-transparent px-2 text-sm">
+            {REGIONS.map(([code, name]) => <option key={code} value={code} className="text-black">{name}</option>)}
+          </select>
+          <div className="text-sm opacity-70">Sets which streaming services, release dates and age ratings you see. Descriptions and tags stay in English.</div>
+          <div className="pt-3" />
+          <Label className="text-sm">OMDb API Key (optional, for IMDb/RT ratings)</Label>
+          <SecretInput value={settings.omdbKey} onChange={(v) => update({ omdbKey: v })} placeholder="If set, details pages show IMDb and Rotten Tomatoes" />
+          <div className="pt-3" />
+          <Label className="text-sm">DoesTheDogDie API Key (optional, for jump scares & content)</Label>
+          <SecretInput value={settings.dddKey} onChange={(v) => update({ dddKey: v })} placeholder="If set, details pages auto-fill jump scares/gore/disturbing" />
+        </CardContent>
+      </Card>
+  );
   return (
     <div className="space-y-6">
+      {/* with no token yet, setup comes first */}
+      {!settings.apiKey ? connections : null}
       <Card className="rounded-2xl">
         <CardContent className="p-6 space-y-4">
           <div className="text-lg font-semibold">Appearance & Data</div>
@@ -205,27 +232,7 @@ export function Settings({ backup, app, onExported, onExportNow, onBeforeReset, 
         </CardContent>
       </Card>
 
-      <Card className="rounded-2xl">
-        <CardContent className="p-6 space-y-3">
-          <div className="text-lg font-semibold">Connections</div>
-          <div className="text-sm opacity-70">Keys are stored only in this browser (localStorage) and sent only to the service they belong to.</div>
-          <Label className="text-sm">TMDb API Access Token (v4)</Label>
-          <SecretInput value={settings.apiKey} onChange={(v) => update({ apiKey: v })} placeholder="Paste your Bearer token here" />
-          <div className="text-sm opacity-70">Get a free account at themoviedb.org → Settings → API → v4 auth. Paste the long token here.</div>
-          <div className="pt-3" />
-          <Label className="text-sm" htmlFor="region-select">Where you watch</Label>
-          <select id="region-select" value={settings.region} onChange={(e) => update({ region: e.target.value })} className="h-9 w-full max-w-xs rounded-md border bg-transparent px-2 text-sm">
-            {REGIONS.map(([code, name]) => <option key={code} value={code} className="text-black">{name}</option>)}
-          </select>
-          <div className="text-sm opacity-70">Sets which streaming services, release dates and age ratings you see. Descriptions and tags stay in English.</div>
-          <div className="pt-3" />
-          <Label className="text-sm">OMDb API Key (optional, for IMDb/RT ratings)</Label>
-          <SecretInput value={settings.omdbKey} onChange={(v) => update({ omdbKey: v })} placeholder="If set, details pages show IMDb and Rotten Tomatoes" />
-          <div className="pt-3" />
-          <Label className="text-sm">DoesTheDogDie API Key (optional, for jump scares & content)</Label>
-          <SecretInput value={settings.dddKey} onChange={(v) => update({ dddKey: v })} placeholder="If set, details pages auto-fill jump scares/gore/disturbing" />
-        </CardContent>
-      </Card>
+      {settings.apiKey ? connections : null}
 
       <ResetCard
         counts={{ films: (data || []).length, shelves: (extras.shelves || []).length, challenges: (extras.challenges || []).length, plans: (extras.marathons || []).length }}

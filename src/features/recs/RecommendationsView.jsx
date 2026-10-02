@@ -12,6 +12,7 @@ import { filterByContent } from "../../lib/contentFlags.js";
 import { HiddenNotice } from "../../components/HiddenNotice.jsx";
 import { useHybridRecommendations } from "../../hooks/useHybridRecommendations";
 import { MovieCard } from "../../components/MovieCard.jsx";
+import { NeedsToken } from "../../components/NeedsToken.jsx";
 import { useToast } from "../../lib/toastContext.js";
 import { describeError, tmdbGet } from "../../lib/tmdb.js";
 
@@ -139,7 +140,7 @@ export function RecommendationsView({ items, apiKey, onAdd, onUpdate, onRemove, 
           ) : null}
         </div>
         {!apiKey ? (
-          <div className="text-sm opacity-70">Add your TMDb API token in Settings to get suggestions based on your favorites.</div>
+          <NeedsToken>Suggestions based on your favorites need a free TMDb token.</NeedsToken>
         ) : status === "error" ? (
           <div role="alert" className="text-sm text-red-300">{error?.message || "Couldn't load suggestions."}</div>
         ) : status === "loading" && !external.length ? (

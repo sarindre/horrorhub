@@ -10,6 +10,7 @@ import { useContentGate } from "../../hooks/useContentGate.js";
 import { HiddenNotice } from "../../components/HiddenNotice.jsx";
 import { useToast } from "../../lib/toastContext.js";
 import { MovieCard } from "../../components/MovieCard.jsx";
+import { NeedsToken } from "../../components/NeedsToken.jsx";
 import { useTouchedCards } from "../../hooks/useTouchedCards.js";
 import { TMDB_IMG, describeError, isAbort, mapMovie, tmdbGet } from "../../lib/tmdb.js";
 
@@ -273,7 +274,7 @@ export function Discover({ apiKey, region = "US", onAdd, onRemove, inLibraryIds,
       ) : null}
 
       {!apiKey ? (
-        <div className="text-sm opacity-70">Add your TMDb API token in Settings to browse horror films.</div>
+        <NeedsToken>Browsing and searching films needs a free TMDb token.</NeedsToken>
       ) : error ? (
         <div role="alert" className="flex items-center gap-3 rounded-xl border border-red-500/40 bg-red-950/40 px-4 py-3 text-sm">
           <span className="flex-1">{describeError(error)}</span>

@@ -174,7 +174,7 @@ export const GLOSSARY = [
   { term: "Streak", meaning: "Days in a row with a logged watch. A streak is still alive if it ended yesterday." },
   { term: "XP and rank", meaning: "10 XP for every logged watch, plus 5 for each day of a live streak after the first. XP moves you up the ranks from Fresh Meat to Elder God." },
   { term: "Pacing", meaning: "How the scare level flows across a marathon: building up to the scariest film last, peaking then winding down, or ebbing and flowing." },
-  { term: "TMDb token", meaning: "A free key from themoviedb.org (Settings → API → \"API Read Access Token\") that lets HorrorHub fetch film details, posters and suggestions. It's stored only in this browser." },
+  { term: "TMDb token", meaning: "A free key from themoviedb.org (the long \"API Read Access Token\") that lets HorrorHub fetch film details, posters and suggestions. Settings → Connections has a guide and tests it for you. It's stored only on this device." },
   { term: "Local-first", meaning: "Your library, ratings and settings are stored in this browser on this device, with no account. That's private, but it means a backup matters." },
 ];
 
@@ -182,7 +182,8 @@ export const GLOSSARY = [
 export const FAQ = [
   { q: "Where is my data, and how do I keep it safe?", a: "In this browser on this device. In Settings → Backup & Import, choose a backup folder (Chrome, Edge and other Chromium browsers) and a copy is saved after every change. Elsewhere, use Export now and then, and HorrorHub will remind you when it's been a while." },
   { q: "How do I move to another device?", a: "Export on the old one (Settings → Backup & Import) and Import the file on the new one. Importing merges your films and never deletes any, and asks before replacing your settings with the ones in the file. Your TMDb token and other API keys are never included, so paste them in again." },
-  { q: "How do I get a TMDb token?", a: "Create a free account at themoviedb.org, open Settings → API, and copy the long \"API Read Access Token\". Paste it into HorrorHub under Settings → Connections." },
+  { q: "How do I get a TMDb token?", a: "Open Settings → Preferences → Connections, where a step-by-step guide takes about 3 minutes: create a free TMDb account, request an API key (the guide has the answers for TMDb's form ready to copy), and paste the long \"API Read Access Token\" into the box. HorrorHub tests it for you and says if it works. Be sure to copy the long Read Access Token, not the short API Key above it." },
+  { q: "My token says it was rejected. What now?", a: "The usual cause is copying the short \"API Key\" instead of the long \"API Read Access Token\" (HorrorHub spots that one straight away). Copy the whole long token again from themoviedb.org → Settings → API. If TMDb only just approved your key request, wait a minute and press \"Test token\"." },
   { q: "Why does a scare level say \"est.\"?", a: "You haven't set one for that film, so HorrorHub estimated it from the film's tags and warnings. Move the Scare slider on the film, or log how scared you were, and it becomes yours." },
   { q: "Why can't I see some films?", a: "Check the filters at the top of the screen, and whether your content limits are set to hide films (Settings). Discover and Rate films also have \"Skip titles in library\" style checkboxes." },
   { q: "How do I log a film I saw years ago?", a: "On a film's card (in All films or Browse), press \"Watched\" and choose \"Watched long ago\". It counts as seen without inventing a date." },
