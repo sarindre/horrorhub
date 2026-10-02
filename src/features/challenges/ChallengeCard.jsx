@@ -10,6 +10,7 @@ import { useToast } from "../../lib/toastContext.js";
 import { useContentPrefs } from "../../lib/contentContext.js";
 import { addDays, dayKey, daysBetween, pacePhrase, parseDay, suggestForChallenge } from "../../lib/challenges.js";
 import { ChallengePlan } from "./ChallengePlan.jsx";
+import { ChallengeWatches } from "./ChallengeWatches.jsx";
 import { fetchChallengeIdeas } from "../../lib/challengeIdeas.js";
 import { TMDB_IMG, describeError, isAbort } from "../../lib/tmdb.js";
 
@@ -22,24 +23,28 @@ const STATUS_LABEL = {
   expired: "Ended",
 };
 
-function DayStrip({ challenge, result }) {
+// One square per day. A day you haven't logged anything on is a button: it opens "Log a film I watched" on that day.
+function DayStrip({ challenge, result, onPickDay }) {
   const watched = new Set(result.matched.map((m) => m.day));
-  const today = new Date();
-  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const todayKey = dayKey(new Date());
   const days = Array.from({ length: challenge.target }, (_, i) => addDays(challenge.startDate, i));
   return (
     <div className="flex flex-wrap gap-1" aria-label="Days in this challenge">
-      {days.map((d, i) => (
-        <span
-          key={d}
-          title={`${fmt(d)}${watched.has(d) ? " ✓" : ""}`}
-          className={`h-4 w-4 rounded-sm text-[9px] leading-4 text-center ${
-            watched.has(d) ? "bg-red-600 text-white" : d > todayKey ? "bg-white/5 opacity-50" : "bg-white/10"
-          } ${d === todayKey ? "ring-1 ring-red-400" : ""}`}
-        >
-          {i + 1}
-        </span>
-      ))}
+      {days.map((d, i) => {
+        const open = !watched.has(d) && d <= todayKey && !!onPickDay;
+        const cls = `h-5 min-w-5 rounded-sm px-0.5 text-[9px] leading-5 text-center ${
+          watched.has(d) ? "bg-red-600 text-white" : d > todayKey ? "bg-white/5 opacity-50" : "bg-white/10"
+        } ${d === todayKey ? "ring-1 ring-red-400" : ""}`;
+        return open ? (
+          <button key={d} type="button" title={`${fmt(d)}: log a film you watched`} aria-label={`Log a film for ${fmt(d)}`} onClick={() => onPickDay(d)} className={`${cls} hover:bg-white/25`}>
+            {i + 1}
+          </button>
+        ) : (
+          <span key={d} title={`${fmt(d)}${watched.has(d) ? " ✓" : ""}`} className={cls}>
+            {i + 1}
+          </span>
+        );
+      })}
     </div>
   );
 }
@@ -86,6 +91,7 @@ export function ChallengeCard({ challenge, result, library, profile, apiKey, pla
   const [showAllPicks, setShowAllPicks] = useState(false);
   const [ideas, setIdeas] = useState(null);
   const [loadingIdeas, setLoadingIdeas] = useState(false);
+  const [logDay, setLogDay] = useState(null); // null: closed; "" or a day: the "Log a film I watched" dialog
 
   const live = result.status === "active" || result.status === "upcoming";
   const pace = result.status === "active" ? pacePhrase(result.remaining, result.daysLeft) : "";
@@ -151,22 +157,16 @@ export function ChallengeCard({ challenge, result, library, profile, apiKey, pla
 
         {challenge.kind === "daily" ? (
           <>
-            <DayStrip challenge={challenge} result={result} />
+            <DayStrip challenge={challenge} result={result} onPickDay={result.status !== "upcoming" ? setLogDay : undefined} />
             <div className="flex items-center gap-2 text-sm">
               <Flame className="h-4 w-4" />
               Streak {result.streak.current} day{result.streak.current === 1 ? "" : "s"}
               <span className="opacity-60">· best {result.streak.longest}</span>
             </div>
           </>
-        ) : result.matched.length ? (
-          <ul className="space-y-0.5 text-sm">
-            {result.matched.slice(0, 8).map((m) => (
-              <li key={m.item.id}>
-                <span className="opacity-60">{fmt(m.day)}</span> · {m.item.title}
-              </li>
-            ))}
-          </ul>
         ) : null}
+
+        <ChallengeWatches challenge={challenge} result={result} library={library} apiKey={apiKey} canLog={result.status !== "upcoming"} logDay={logDay} onLogDay={setLogDay} onUpdate={onUpdate} onAdd={onAdd} onOpenDetails={onOpenDetails} />
 
         {result.status === "upcoming" ? (
           <div className="flex flex-wrap items-center gap-2 rounded-xl border border-red-500/40 bg-red-500/5 p-3 text-sm">

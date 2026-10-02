@@ -125,6 +125,7 @@ export const HELP = {
       "\"Start\" begins a challenge. One that hasn't started yet has \"Start today\" to begin straight away.",
       "\"Plan my days\" in the Daily plan picks a film for each night, building from gentle to intense. Swap any night, fill open nights from your library, or download the plan for your calendar.",
       "\"Build my watch list\" suggests films from your library that count. \"Find ideas on TMDb\" suggests films you don't own yet.",
+      "\"Your watches\" lists what has counted so far. \"Log a film I watched\" (or a numbered day square in a daily challenge) adds a film for a day that has already passed, from your library or TMDb, so a night you forgot to log isn't lost. \"Change day\" and \"Remove\" fix a watch you logged wrongly.",
       "A streak counts days in a row with a logged watch.",
     ],
     tips: ["A plan is only an intention: watching something else never breaks a challenge."],
