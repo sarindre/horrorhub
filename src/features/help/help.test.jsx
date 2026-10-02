@@ -143,3 +143,12 @@ describe("in the app", () => {
     expect(await screen.findByLabelText("Search help", {}, WAIT)).toBeTruthy();
   });
 });
+
+describe("About", () => {
+  it("credits the mascot's artist on the Help screen", () => {
+    render(<HelpView onGo={() => {}} />);
+    const about = screen.getByRole("region", { name: "About" });
+    expect(within(about).getByText(/PumpBoy/)).toBeTruthy();
+    expect(within(about).getByText(/totalnightmare/)).toBeTruthy();
+  });
+});

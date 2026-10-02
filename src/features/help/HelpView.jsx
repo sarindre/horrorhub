@@ -9,6 +9,9 @@ import { setPref } from "../../lib/prefs.js";
 import { usePersistentState } from "../../lib/usePersistentState.js";
 import { useToast } from "../../lib/toastContext.js";
 
+// HorrorHub's mascot, drawn by the maintainer's daughter, who is happy for him to be used here.
+export const MASCOT_NOTE = "PumpBoy, HorrorHub's mascot, was drawn by totalnightmare, who is happy for him to be used here. The artwork is hers.";
+
 const SCREEN_ORDER = NAV.flatMap((g) => g.views.map((v) => v.id)).filter((id) => id !== "help");
 const labelFor = (id) => NAV.flatMap((g) => g.views).find((v) => v.id === id)?.label || id;
 
@@ -117,6 +120,10 @@ export function HelpView({ onGo }) {
             </label>
             <Button size="sm" variant="outline" onClick={showTipsAgain}>Show every tip again</Button>
             <div className="text-xs opacity-60">Every screen also has a "How this screen works" button at the top.</div>
+          </section>
+          <section aria-label="About" className="space-y-2 border-t pt-4">
+            <h3 className="text-sm uppercase tracking-wide opacity-80">About</h3>
+            <p className="text-sm opacity-80">{MASCOT_NOTE}</p>
           </section>
         </>
       ) : null}

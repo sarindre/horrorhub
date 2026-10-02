@@ -76,6 +76,10 @@ HorrorHub has no backend. Your library, settings and API keys are stored in this
 - **API keys** (TMDb, OMDb, DoesTheDogDie) are stored here too, in plain text, and only ever sent to the service they belong to. Don't paste them on a shared computer, and export your library (not your settings) when sharing a backup.
 - If the browser refuses to save (for example, storage is full), a banner tells you so and suggests exporting a backup.
 
+## Credits
+- **PumpBoy**, the mascot, was drawn by **totalnightmare**, who is happy for him to be used in HorrorHub. The artwork is hers; the code's license doesn't cover it.
+- Movie data and images come from [TMDb](https://www.themoviedb.org/). This product uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.
+
 ## Project layout
 
 ```
