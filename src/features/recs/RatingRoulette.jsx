@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../../components/ui/button.jsx";
 import { usePersistentState } from "../../lib/usePersistentState.js";
-import { useProviders } from "../../hooks/useProviders.js";
 import { useContentGate } from "../../hooks/useContentGate.js";
 import { HiddenNotice } from "../../components/HiddenNotice.jsx";
 import { MovieCard } from "../../components/MovieCard.jsx";
@@ -9,7 +8,7 @@ import { NeedsToken } from "../../components/NeedsToken.jsx";
 import { useTouchedCards } from "../../hooks/useTouchedCards.js";
 import { describeError, isAbort, mapMovie, tmdbGet } from "../../lib/tmdb.js";
 
-export function RatingRoulette({ apiKey, region = "US", onAdd, onOpenDetails, ratingMap={}, inLibraryIds = new Set(), watchlistIds = new Set() }){
+export function RatingRoulette({ apiKey, onAdd, onOpenDetails, ratingMap={}, inLibraryIds = new Set(), watchlistIds = new Set() }){
   const [page, setPage] = useState(1);
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -18,12 +17,10 @@ export function RatingRoulette({ apiKey, region = "US", onAdd, onOpenDetails, ra
   const [hideRated, setHideRated] = usePersistentState('roulette.hideRated', true);
   const [hideInLibrary, setHideInLibrary] = usePersistentState('roulette.hideInLibrary', false);
   const [hideWatchlisted, setHideWatchlisted] = usePersistentState('roulette.hideWatchlisted', false);
-  const [providersSel, setProvidersSel] = usePersistentState('roulette.providers', []);
   const [totalPages, setTotalPages] = useState(null);
   const [jumpVal, setJumpVal] = useState(1);
   const cacheRef = useRef(new Map()); // page -> rows
   const abortRef = useRef(null);
-  const { map: providerMap } = useProviders(rows.map((r) => r.id), apiKey, (providersSel || []).length > 0, region);
   const gate = useContentGate(rows, apiKey);
   // a film you've just rated or added stays on screen (the filters below would drop it at once)
   const { touched, handle } = useTouchedCards({ ratingById: ratingMap, inLibraryIds, watchlistIds, onAdd, resetKey: page });
@@ -64,10 +61,6 @@ export function RatingRoulette({ apiKey, region = "US", onAdd, onOpenDetails, ra
     if (hideRated && (r.rating||0) > 0) return false;
     if (hideInLibrary && inLibraryIds.has(r.id)) return false;
     if (hideWatchlisted && watchlistIds.has(r.id)) return false;
-    if ((providersSel||[]).length){
-      const prov = providerMap[r.id] || [];
-      if (!prov.some(p=> providersSel.includes(p))) return false;
-    }
     return true;
   });
   const display = filtered.slice(0, pageSize);
@@ -106,18 +99,7 @@ export function RatingRoulette({ apiKey, region = "US", onAdd, onOpenDetails, ra
                    onKeyDown={(e)=> { if (e.key==='Enter') goJump(); }} />
             <Button size="sm" variant="outline" onClick={goJump}>Go</Button>
           </div>
-          <div className="flex flex-wrap items-center gap-2 text-sm">
-            <span>Available on</span>
-            {['netflix','prime','hulu','disney'].map(k=> (
-              <label key={k} className="inline-flex items-center gap-1">
-                <input type="checkbox" checked={providersSel.includes(k)} onChange={(e)=>{
-                  setProvidersSel(prev=> e.target.checked ? Array.from(new Set([...(prev||[]), k])) : (prev||[]).filter(x=> x!==k));
-                }} />
-                <span className="capitalize">{k}</span>
-              </label>
-            ))}
-          </div>
-          <Button size="sm" variant="ghost" onClick={()=>{ setHideRated(true); setHideInLibrary(false); setHideWatchlisted(false); setProvidersSel([]); setPageSize(12); }}>
+          <Button size="sm" variant="ghost" onClick={()=>{ setHideRated(true); setHideInLibrary(false); setHideWatchlisted(false); setPageSize(12); }}>
             Reset to defaults
           </Button>
           <div className="flex gap-2">
@@ -144,7 +126,7 @@ export function RatingRoulette({ apiKey, region = "US", onAdd, onOpenDetails, ra
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {display.map(r => (
-          <MovieCard key={r.id} item={r} onAdd={handle} onUpdate={handle} onOpenDetails={onOpenDetails} showWatchlist={false} compact isInLibrary={inLibraryIds.has(r.id)} isWatchlisted={watchlistIds.has(r.id)} providers={providerMap[r.id] || []} warnings={gate.flagsById[r.id] || []} />
+          <MovieCard key={r.id} item={r} onAdd={handle} onUpdate={handle} onOpenDetails={onOpenDetails} showWatchlist={false} compact isInLibrary={inLibraryIds.has(r.id)} isWatchlisted={watchlistIds.has(r.id)} warnings={gate.flagsById[r.id] || []} />
         ))}
       </div>
     </div>

@@ -235,13 +235,6 @@ export function LibraryView({ items, onUpdate, onRemove, onOpenDetails }) {
         <span className="inline-block text-[10px] leading-3 px-1.5 py-0.5 rounded bg-rose-600 text-white">Watchlist</span>
         <span>(badges appear on poster)</span>
       </div>
-      <div className="flex items-center gap-2 text-[11px] opacity-70 mb-2">
-        <span className="inline-block text-[9px] leading-3 px-1 rounded text-white bg-[#e50914]" title="Netflix">N</span>
-        <span className="inline-block text-[9px] leading-3 px-1 rounded text-white bg-[#00a8e1]" title="Prime Video">P</span>
-        <span className="inline-block text-[9px] leading-3 px-1 rounded text-white bg-[#1ce783]" title="Hulu">H</span>
-        <span className="inline-block text-[9px] leading-3 px-1 rounded text-white bg-[#113ccf]" title="Disney+">D</span>
-        <span>provider legends</span>
-      </div>
       {!items.length ? (
         <div className="rounded-2xl border p-6 text-center text-sm">
           <div className="mb-1 text-base font-medium">Your library is empty</div>
@@ -273,13 +266,6 @@ export function LibraryView({ items, onUpdate, onRemove, onOpenDetails }) {
             <span className="inline-block text-[10px] leading-3 px-1.5 py-0.5 rounded bg-emerald-600 text-white">Library</span>
             <span className="inline-block text-[10px] leading-3 px-1.5 py-0.5 rounded bg-rose-600 text-white">Watchlist</span>
             <span>(badges appear on poster)</span>
-          </div>
-          <div className="flex items-center gap-2 text-[11px] opacity-70 mb-2">
-            <span className="inline-block text-[9px] leading-3 px-1 rounded text-white bg-[#e50914]" title="Netflix">N</span>
-            <span className="inline-block text-[9px] leading-3 px-1 rounded text-white bg-[#00a8e1]" title="Prime Video">P</span>
-            <span className="inline-block text-[9px] leading-3 px-1 rounded text-white bg-[#1ce783]" title="Hulu">H</span>
-            <span className="inline-block text-[9px] leading-3 px-1 rounded text-white bg-[#113ccf]" title="Disney+">D</span>
-            <span>provider legends</span>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
             {watchlist.map((i) => (

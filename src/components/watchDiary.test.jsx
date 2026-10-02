@@ -89,3 +89,18 @@ describe("ViewingDiary", () => {
     expect(container.textContent).toBe("");
   });
 });
+
+describe("rating from the watch dialog", () => {
+  it("passes a rating only when you pick one", () => {
+    const onLog = open();
+    fireEvent.click(screen.getByRole("button", { name: "Watched today" }));
+    expect(onLog.mock.calls[0][2]).toBeUndefined();
+  });
+
+  it("passes the knife rating you picked", () => {
+    const onLog = open();
+    fireEvent.click(screen.getAllByTitle("Right-click for halves")[3]);
+    fireEvent.click(screen.getByRole("button", { name: "Watched today" }));
+    expect(onLog.mock.calls[0][2]).toBe(4);
+  });
+});

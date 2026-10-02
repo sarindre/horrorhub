@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { clearTmdbCache, describeError, mapMovie, parseProviders, TmdbError, tmdbGet } from "./tmdb.js";
+import { clearTmdbCache, describeError, mapMovie, TmdbError, tmdbGet } from "./tmdb.js";
 
 const okJson = (body) => ({ ok: true, status: 200, json: async () => body });
 
@@ -13,34 +13,6 @@ describe("mapMovie", () => {
 
   it("tolerates missing fields", () => {
     expect(mapMovie({ id: 1, title: "Y" })).toMatchObject({ id: 1, year: undefined, voteAvg: undefined });
-  });
-});
-
-describe("parseProviders in other regions", () => {
-  const data = { results: { US: { flatrate: [{ provider_name: "Netflix" }] }, GB: { flatrate: [{ provider_name: "Disney Plus" }] } } };
-  it("reads the requested region only", () => {
-    expect(parseProviders(data, "GB")).toEqual(["disney"]);
-    expect(parseProviders(data, "US")).toEqual(["netflix"]);
-    expect(parseProviders(data, "FR")).toEqual([]);
-  });
-});
-
-describe("parseProviders", () => {
-  it("collects known US streaming services once, from flatrate and ad tiers", () => {
-    const data = {
-      results: {
-        US: {
-          flatrate: [{ provider_name: "Netflix" }, { provider_name: "Amazon Prime Video" }, { provider_name: "Some Other" }],
-          ads: [{ provider_name: "Hulu" }, { provider_name: "Netflix Basic with Ads" }],
-        },
-      },
-    };
-    expect(parseProviders(data).sort()).toEqual(["hulu", "netflix", "prime"]);
-  });
-
-  it("returns an empty list when there is no US data", () => {
-    expect(parseProviders({})).toEqual([]);
-    expect(parseProviders(null)).toEqual([]);
   });
 });
 

@@ -22,7 +22,7 @@ export const DEFAULT_SETTINGS = {
   omdbKey: "",
   dddKey: "",
   externalOff: false,
-  // where you watch: streaming availability, release dates, age ratings
+  // where you watch: release dates, age ratings
   region: "US",
   // appearance
   theme: "dark",

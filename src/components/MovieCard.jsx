@@ -19,7 +19,7 @@ import { evaluateContent, itemFlags } from "../lib/contentFlags.js";
 import { editTags } from "../lib/tagging.js";
 import { scareOf } from "../lib/scare.js";
 
-export function MovieCard({ item, onAdd, onUpdate, onRemove, showWatchlist = true, compact = false, onOpenDetails, isInLibrary = false, isWatchlisted = false, providers = [], warnings }) {
+export function MovieCard({ item, onAdd, onUpdate, onRemove, showWatchlist = true, compact = false, onOpenDetails, isInLibrary = false, isWatchlisted = false, warnings }) {
   const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState(item.notes || "");
   const [tags, setTags] = useState(item.tags || []);
@@ -123,19 +123,6 @@ export function MovieCard({ item, onAdd, onUpdate, onRemove, showWatchlist = tru
                     {isWatchlisted && <span className="text-[10px] px-1 rounded bg-rose-600/80 text-white">Watchlist</span>}
                   </span>
                 )}
-                {Array.isArray(providers) && providers.length ? (
-                  <span className="ml-2 inline-flex gap-0.5 align-middle">
-                    {providers.slice(0,3).map((p)=> (
-                      <span
-                        key={p}
-                        title={p==='netflix'?'Netflix': p==='prime'?'Prime Video': p==='hulu'?'Hulu': p==='disney'?'Disney+': p}
-                        className={`text-[9px] px-1 rounded text-white ${p==='netflix'?'bg-[#e50914]': p==='prime'?'bg-[#00a8e1]': p==='hulu'?'bg-[#1ce783]': p==='disney'?'bg-[#113ccf]':'bg-zinc-600'}`}
-                      >
-                        {p==='netflix'?'N': p==='prime'?'P': p==='hulu'?'H': p==='disney'?'D': p.slice(0,1).toUpperCase()}
-                      </span>
-                    ))}
-                  </span>
-                ) : null}
               </div>
               <div className="text-sm opacity-80 line-clamp-2">{item.overview}</div>
               {warningsEl}
@@ -175,7 +162,7 @@ export function MovieCard({ item, onAdd, onUpdate, onRemove, showWatchlist = tru
                   <span className="tabular-nums">{scares}{scareInfo.estimated ? <span className="ml-1 text-[10px] opacity-70">est.</span> : null}</span>
                 </div>
                 {onUpdate && (
-                  <WatchDialog label="Watched" longAgo onLog={(iso, diary) => onUpdate?.({ ...item, ...watchPatch(item, iso, diary) })} />
+                  <WatchDialog label="Watched" longAgo rating={item.rating} onLog={(iso, diary, rating) => onUpdate?.({ ...item, ...watchPatch(item, iso, diary, rating) })} />
                 )}
                 {onAdd && (
                   <>
@@ -291,19 +278,6 @@ export function MovieCard({ item, onAdd, onUpdate, onRemove, showWatchlist = tru
                       {isWatchlisted && <span className="text-[10px] px-1 rounded bg-rose-600/80 text-white">Watchlist</span>}
                     </span>
                   )}
-                  {Array.isArray(providers) && providers.length ? (
-                    <span className="ml-2 inline-flex gap-0.5 align-middle">
-                      {providers.slice(0,3).map((p)=> (
-                        <span
-                          key={p}
-                          title={p==='netflix'?'Netflix': p==='prime'?'Prime Video': p==='hulu'?'Hulu': p==='disney'?'Disney+': p}
-                          className={`text-[9px] px-1 rounded text-white ${p==='netflix'?'bg-[#e50914]': p==='prime'?'bg-[#00a8e1]': p==='hulu'?'bg-[#1ce783]': p==='disney'?'bg-[#113ccf]':'bg-zinc-600'}`}
-                        >
-                          {p==='netflix'?'N': p==='prime'?'P': p==='hulu'?'H': p==='disney'?'D': p.slice(0,1).toUpperCase()}
-                        </span>
-                      ))}
-                    </span>
-                  ) : null}
                 </h3>
                 <div className="text-sm opacity-80 line-clamp-2">{item.overview}</div>
               {warningsEl}
@@ -345,7 +319,7 @@ export function MovieCard({ item, onAdd, onUpdate, onRemove, showWatchlist = tru
               </div>
 
               <div className="flex gap-2">
-                <WatchDialog label="Log watch" longAgo onLog={(iso, diary) => onUpdate?.({ ...item, ...watchPatch(item, iso, diary) })} />
+                <WatchDialog label="Log watch" longAgo rating={item.rating} onLog={(iso, diary, rating) => onUpdate?.({ ...item, ...watchPatch(item, iso, diary, rating) })} />
 
                 <Dialog open={open} onOpenChange={setOpen}>
                   <DialogTrigger asChild>

@@ -129,3 +129,11 @@ describe("the diary changes scare levels", () => {
     expect(estimateScare(items[0]).value).toBeLessThan(10);
   });
 });
+
+describe("watchPatch with a rating", () => {
+  it("sets the rating only when one is given", () => {
+    expect(watchPatch(film(), at(2026, 5, 6), undefined, 4).rating).toBe(4);
+    expect(watchPatch(film(), at(2026, 5, 6), undefined, 0).rating).toBe(0);
+    expect(watchPatch(film(), at(2026, 5, 6)).rating).toBeUndefined();
+  });
+});

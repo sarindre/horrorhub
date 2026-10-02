@@ -71,15 +71,3 @@ export function mapMovie(m) {
     voteAvg: typeof m.vote_average === "number" ? m.vote_average : undefined,
   };
 }
-
-// Streaming services we show badges for, from a /watch/providers response.
-const PROVIDER_SLUGS = [["netflix", "netflix"], ["prime", "prime"], ["hulu", "hulu"], ["disney", "disney"]];
-export function parseProviders(data, region = "US") {
-  const us = data?.results?.[region] || {};
-  const all = [...(Array.isArray(us.flatrate) ? us.flatrate : []), ...(Array.isArray(us.ads) ? us.ads : [])];
-  const slugs = all.map((p) => {
-    const name = String(p?.provider_name || "").toLowerCase();
-    return PROVIDER_SLUGS.find(([needle]) => name.includes(needle))?.[1] || null;
-  });
-  return [...new Set(slugs.filter(Boolean))];
-}

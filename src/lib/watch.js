@@ -6,8 +6,9 @@ export const LAST_WATCH_KEY = "horrorhub.lastWatch";
 
 // The changes that log a watch: add the date (an exact duplicate is ignored) and take the film off the
 // watchlist. `diary` is the optional scare-diary note for that watch ({ scared, company, when }).
-export function watchPatch(item, iso, diary) {
+export function watchPatch(item, iso, diary, rating) {
   const patch = { watchedDates: [...new Set([...(item?.watchedDates || []), iso])], watchlist: false };
+  if (typeof rating === "number") patch.rating = rating; // only when you rated it in the dialog
   if (diary) patch.diary = withDiaryEntry(item?.diary, iso, diary);
   return patch;
 }

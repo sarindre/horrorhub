@@ -52,9 +52,8 @@ export const HELP = {
     what: "Search TMDb for horror films and add them to your library or watchlist.",
     points: [
       "Type a title and press Enter, or use the buttons for popular, critically rated, newest, oldest, classics under 90 minutes, and upcoming releases.",
-      "\"Add\" puts a film in your library (a message says where it went, and the card stays until the list changes). \"Watchlist\" marks it as something you want to see. \"Watched\" logs when you saw it.",
+      "\"Add\" puts a film in your library (a message says where it went, and the card stays until the list changes). \"Watchlist\" marks it as something you want to see. \"Watched\" logs when you saw it, and lets you give it a knife rating, say who you watched with and how scared you were.",
       "It loads 20 films at a time. \"Show more films\" at the bottom adds the next page below, and a line tells you how many your filters are hiding.",
-      "\"Available on\" keeps only films streaming on the services you tick, for the country chosen in Settings.",
       "Click a title for its full page: cast, trailer, ratings and content warnings.",
     ],
     tips: ["This screen needs your free TMDb token (Settings → Connections)."],

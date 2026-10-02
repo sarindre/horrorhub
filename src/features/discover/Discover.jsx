@@ -4,8 +4,6 @@ import { Card, CardContent } from "../../components/ui/card.jsx";
 import { Button } from "../../components/ui/button.jsx";
 import { Input } from "../../components/ui/input.jsx";
 import { usePersistentState } from "../../lib/usePersistentState.js";
-import { REGIONS } from "../../lib/regions.js";
-import { useProviders } from "../../hooks/useProviders.js";
 import { useContentGate } from "../../hooks/useContentGate.js";
 import { HiddenNotice } from "../../components/HiddenNotice.jsx";
 import { useToast } from "../../lib/toastContext.js";
@@ -14,7 +12,6 @@ import { NeedsToken } from "../../components/NeedsToken.jsx";
 import { useTouchedCards } from "../../hooks/useTouchedCards.js";
 import { TMDB_IMG, describeError, isAbort, mapMovie, tmdbGet } from "../../lib/tmdb.js";
 
-const PROVIDER_NAMES = { netflix: "Netflix", prime: "Prime Video", hulu: "Hulu", disney: "Disney+" };
 const NO_KEY_MESSAGE = "Add your TMDb API token in Settings first.";
 const LIST_CACHE_MS = 5 * 60 * 1000;
 const discoverBase = (region) => `/discover/movie?include_adult=false&language=en-US&with_genres=27&region=${region}`;
@@ -47,8 +44,6 @@ export function Discover({ apiKey, region = "US", onAdd, onRemove, inLibraryIds,
   const [showUpcoming, setShowUpcoming] = useState(false);
   const [hideWatchlisted, setHideWatchlisted] = usePersistentState('discover.hideWatchlisted', false);
   const [hideInLibrary, setHideInLibrary] = usePersistentState('discover.hideInLibrary', false);
-  const [providersSel, setProvidersSel] = usePersistentState('discover.providers', []);
-  const { map: providerMap, loading: providersLoading, failed: providersFailed, retry: retryProviders } = useProviders(results.map((r) => r.id), apiKey, (providersSel || []).length > 0, region);
   const gate = useContentGate(results, apiKey);
 
   // Every list request goes through here. Starting a new one cancels the previous,
@@ -146,12 +141,7 @@ export function Discover({ apiKey, region = "US", onAdd, onRemove, inLibraryIds,
 
   const shown = gate.visible
     .filter((r) => touched.has(r.id) || (hideWatchlisted ? !watchlistIds?.has(r.id) : true))
-    .filter((r) => touched.has(r.id) || (hideInLibrary ? !inLibraryIds?.has(r.id) : true))
-    .filter((r) => {
-      if (touched.has(r.id)) return true;
-      if (!(providersSel || []).length) return true;
-      return (providerMap[r.id] || []).some((p) => providersSel.includes(p));
-    });
+    .filter((r) => touched.has(r.id) || (hideInLibrary ? !inLibraryIds?.has(r.id) : true));
 
   return (
     <div className="space-y-6">
@@ -238,40 +228,9 @@ export function Discover({ apiKey, region = "US", onAdd, onRemove, inLibraryIds,
         <span className="inline-block text-[10px] leading-3 px-1.5 py-0.5 rounded bg-rose-600 text-white">Watchlist</span>
         <span>(badges appear on poster)</span>
       </div>
-      <div className="flex items-center gap-2 text-[11px] opacity-70">
-        <span className="inline-block text-[9px] leading-3 px-1 rounded text-white bg-[#e50914]" title="Netflix">N</span>
-        <span className="inline-block text-[9px] leading-3 px-1 rounded text-white bg-[#00a8e1]" title="Prime Video">P</span>
-        <span className="inline-block text-[9px] leading-3 px-1 rounded text-white bg-[#1ce783]" title="Hulu">H</span>
-        <span className="inline-block text-[9px] leading-3 px-1 rounded text-white bg-[#113ccf]" title="Disney+">D</span>
-        <span>provider legends</span>
-      </div>
-
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
-        <span>Available on</span>
-        {['netflix','prime','hulu','disney'].map(k=> (
-          <label key={k} className="inline-flex items-center gap-1">
-            <input type="checkbox" checked={providersSel.includes(k)} onChange={(e)=>{
-              setProvidersSel(prev=> e.target.checked ? Array.from(new Set([...(prev||[]), k])) : (prev||[]).filter(x=> x!==k));
-            }} />
-            <span className="capitalize">{k}</span>
-          </label>
-        ))}
-        <Button size="sm" variant="ghost" onClick={()=>{ setHideWatchlisted(false); setHideInLibrary(false); setProvidersSel([]); }}>Reset to defaults</Button>
+        <Button size="sm" variant="ghost" onClick={()=>{ setHideWatchlisted(false); setHideInLibrary(false); }}>Reset to defaults</Button>
       </div>
-      {(providersSel || []).length && apiKey && results.length ? (
-        <div role="status" className="text-sm opacity-80">
-          {providersLoading ? (
-            "Checking where these are streaming…"
-          ) : providersFailed ? (
-            <>
-              Couldn't check {providersFailed} film{providersFailed === 1 ? "" : "s"}, so {providersFailed === 1 ? "it is" : "they are"} hidden.{" "}
-              <Button size="sm" variant="outline" onClick={retryProviders}>Try again</Button>
-            </>
-          ) : !shown.length ? (
-            `None of these are streaming on ${providersSel.map((k) => PROVIDER_NAMES[k] || k).join(" or ")} in ${REGIONS.find(([c]) => c === region)?.[1] || region}. New releases often aren't yet. Try another service, or Reset.`
-          ) : null}
-        </div>
-      ) : null}
 
       {!apiKey ? (
         <NeedsToken>Browsing and searching films needs a free TMDb token.</NeedsToken>
@@ -301,7 +260,6 @@ export function Discover({ apiKey, region = "US", onAdd, onRemove, inLibraryIds,
               onOpenDetails={onOpenDetails}
               isInLibrary={inLibraryIds.has(r.id)}
               isWatchlisted={watchlistIds ? watchlistIds.has(r.id) : false}
-              providers={providerMap[r.id] || []}
               warnings={gate.flagsById[r.id] || []}
             />
           </div>

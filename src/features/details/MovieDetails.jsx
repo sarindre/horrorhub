@@ -349,7 +349,7 @@ export function MovieDetails({ item, localItem, onUpdate, onAdd, apiKey, omdbKey
             )}
 
             {/* Watched logging */}
-            <WatchDialog label="Watched" onLog={(iso, diary) => onUpdate?.({ ...(localItem || item), ...watchPatch(localItem || item, iso, diary) })} />
+            <WatchDialog label="Watched" rating={(localItem || item).rating} onLog={(iso, diary, rating) => onUpdate?.({ ...(localItem || item), ...watchPatch(localItem || item, iso, diary, rating) })} />
 
             {shelfStore ? <AddToShelfDialog film={snapshotFilm({ ...base, poster: base.poster || details?.poster_path })} store={shelfStore} /> : null}
 

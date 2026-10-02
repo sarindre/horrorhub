@@ -94,7 +94,7 @@ export function Settings({ backup, app, onExported, onExportNow, onBeforeReset, 
           <select id="region-select" value={settings.region} onChange={(e) => update({ region: e.target.value })} className="h-9 w-full max-w-xs rounded-md border bg-transparent px-2 text-sm">
             {REGIONS.map(([code, name]) => <option key={code} value={code} className="text-black">{name}</option>)}
           </select>
-          <div className="text-sm opacity-70">Sets which streaming services, release dates and age ratings you see. Descriptions and tags stay in English.</div>
+          <div className="text-sm opacity-70">Sets which release dates and age ratings you see. Descriptions and tags stay in English.</div>
           <div className="pt-3" />
           <Label className="text-sm">OMDb API Key (optional, for IMDb/RT ratings)</Label>
           <SecretInput value={settings.omdbKey} onChange={(v) => update({ omdbKey: v })} placeholder="If set, details pages show IMDb and Rotten Tomatoes" />
