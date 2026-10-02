@@ -17,8 +17,8 @@ export function BackupReminder({ reminder, paused, supported, lastBackupAt, onRe
     <div role="status" className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-red-500/30 bg-red-950/30 px-4 py-3 text-sm">
       <span className="min-w-0 flex-1">
         {reminder.kind === "never"
-          ? "Your library only lives in this browser, and you haven't backed it up yet."
-          : `Your last backup was ${ageLabel(lastBackupAt)}. Your library only lives in this browser.`}
+          ? "Your library only lives on this device, and you haven't backed it up yet."
+          : `Your last backup was ${ageLabel(lastBackupAt)}. Your library only lives on this device.`}
       </span>
       <div className="flex flex-wrap gap-2">
         <Button size="sm" onClick={onExport}>Export now</Button>

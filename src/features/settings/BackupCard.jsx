@@ -2,6 +2,7 @@ import { FolderSync, Download, ShieldCheck } from "lucide-react";
 import { Button } from "../../components/ui/button.jsx";
 import { ageLabel } from "../../lib/backup.js";
 import { KEEP_DATED_BACKUPS } from "../../lib/backup.js";
+import { isDesktopApp } from "../../lib/desktop.js";
 
 // Where your library is kept safe: automatic backups to a folder, installing
 // the app, and asking the browser not to clear its data. `backup` is
@@ -73,6 +74,7 @@ export function BackupCard({ backup, app }) {
         )}
       </section>
 
+      {isDesktopApp() ? null : (
       <section aria-label="Storage" className="space-y-2">
         <div className="flex items-center gap-2 text-sm font-semibold"><ShieldCheck className="h-4 w-4" /> Browser storage</div>
         {app.persisted === true ? (
@@ -85,6 +87,7 @@ export function BackupCard({ backup, app }) {
           </div>
         )}
       </section>
+      )}
     </div>
   );
 }

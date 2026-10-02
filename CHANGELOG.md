@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Desktop app** for Windows, macOS and Linux (Electron): the same app in its own window, offline-capable, with its data on your computer. Installers are built by GitHub (`Desktop app` workflow, attached to a Release on a version tag). `npm run desktop` runs it from source and `npm run audit:desktop` checks the real app.
+
+### Changed
+- The app says your library is kept "on this device" (it was "in this browser"), and the browser-storage card is hidden in the desktop app.
+
+### Added
 - **Easier TMDb token setup.** Settings → Connections now comes first until you have a token, with a step-by-step guide (links to TMDb's sign-up and API pages, and the answers for TMDb's form ready to copy). The token box tidies what you paste (spaces, quotes, "Bearer "), spots the common mistake of pasting the short API Key, and tests the token against TMDb automatically so you know it works. Every screen that needs a token now links straight to the setup.
 
 ### Added

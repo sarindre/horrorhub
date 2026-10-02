@@ -42,6 +42,17 @@ Every push to `main` is checked (lint and tests) and published to **https://sari
 - One-time setup for a fork: repo Settings → Pages → Source: "GitHub Actions".
 - To preview the sub-path build locally: `BASE_PATH=/horrorhub/ npm run build`, or run `BASE_PATH=/horrorhub/ npm run audit:offline` (on Windows Git Bash prefix `MSYS_NO_PATHCONV=1`).
 
+## Desktop app (Windows, macOS, Linux)
+
+The same app in its own window, for people who would rather not use a browser. It works offline (searching TMDb still needs a connection) and keeps your data on your computer. It's built with Electron: `electron/` is a small shell around the built web app, served from its own `app://horrorhub/` address, with links opened in your normal browser and nothing else allowed to load.
+
+- **Get it:** installers for each system are attached to a [GitHub Release](https://github.com/sarindre/horrorhub/releases) when a version tag (such as `v0.1.0`) is pushed, built by `.github/workflows/desktop.yml`.
+- **Unsigned for now,** so your system will warn on first run. Windows: "More info" → "Run anyway". macOS: right-click the app → Open (or System Settings → Privacy & Security → Open Anyway). Linux: `chmod +x HorrorHub-*.AppImage`, then run it.
+- **Its data is separate** from the browser and phone versions (each keeps its own library). Move between them with Export and Import.
+- **Run it from source:** `npm run desktop`. **Build an installer:** `npm run desktop:dist` (installers appear in `release/`). If the project sits inside OneDrive, building can fail while OneDrive syncs the output; build elsewhere with `npm run desktop:dist -- -c.directories.output=C:/temp/hh-release`.
+- **Check it:** `npm run audit:desktop` launches the real app and checks that it loads, can't reach Node, can't be navigated away from the app, keeps your data across a restart, and can reach TMDb. Add `-- --packed=<path to HorrorHub.exe>` to check a built package.
+- **Gotcha:** if Electron starts as plain Node, `ELECTRON_RUN_AS_NODE` is set in your environment (some editors set it); unset it.
+
 ## Scripts
 
 | Command | What it does |
@@ -51,6 +62,7 @@ Every push to `main` is checked (lint and tests) and published to **https://sari
 | `npm run lint` | ESLint |
 | `npm test` | Unit, render and interaction tests (Vitest) |
 | `npm run audit:offline` | Builds the app, installs it in a real browser, stops the server and checks it still opens and works offline; also checks that the browser considers it installable. Needs Edge or Chrome |
+| `npm run audit:desktop` | Launches the real desktop app and checks it from the outside (see Desktop app). Needs `npm install` to have fetched Electron |
 | `npm run audit:responsive` | Opens every screen in Edge/Chrome at phone, tablet and desktop widths and fails if anything makes the page wider than the screen. Needs Edge or Chrome installed (set `CHROME_PATH` if it isn't found); add `-- --shots=./shots` to save screenshots |
 
 ## Your data

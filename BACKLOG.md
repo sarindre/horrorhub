@@ -533,5 +533,13 @@ Done: every screen has a "How this screen works" panel at the top (`components/S
 
 Left for later: small "what's this?" hints on individual controls (the est. label, the Subgenre Mixer), and translated help.
 
+### 34. Desktop app (Windows, macOS, Linux)
+Status: Done (unsigned; see leftovers)
+Priority: P1
+
+Done: an Electron shell (`electron/`) around the built web app, served from its own `app://horrorhub/` address with isolation on (no Node in the page), external links opened in the user's browser, anything else refused, and only clipboard, notifications and the backup-folder picker permitted. The app knows when it's the desktop version (no service worker, no Install prompt). A real-app audit (`npm run audit:desktop`) launches it and checks isolation, blocked navigation and path traversal, TMDb reachability from its origin and data surviving a restart; it passes against the source and against the packaged Windows build. electron-builder makes the Windows installer (about 103 MB), and `.github/workflows/desktop.yml` builds Windows, macOS and Linux installers on GitHub's machines (by hand, or on a version tag, which also publishes a GitHub Release).
+
+Left for later: code signing (Windows SmartScreen and macOS Gatekeeper warn until installers are signed; a certificate costs money, and macOS needs an Apple developer account); automatic updates for the non-Steam builds (Steam would handle its own); the macOS and Linux builds come from GitHub's machines and have only been run there, not by hand on a Mac or Linux PC; a native (non-browser) backup-folder path in case the browser folder picker proves unreliable on some systems.
+
 ## Notes
 The product should feel like a personal horror curator, not just a database. The strongest differentiator is a recommendation system that understands horror taste, mood, and watch planning.

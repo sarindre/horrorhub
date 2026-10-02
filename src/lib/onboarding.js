@@ -12,7 +12,7 @@ export function onboardingSteps({ settings, library, signalCount }) {
     {
       id: "token",
       title: "Add your TMDb token",
-      detail: "It's free: create an account at themoviedb.org, then Settings → API, and copy the long \"API Read Access Token\". It unlocks search, posters, suggestions and auto-tagging.",
+      detail: "It's free and takes about 3 minutes; Settings has a step-by-step guide. It unlocks search, posters, suggestions and auto-tagging.",
       done: !!settings.apiKey,
       actions: [{ label: "Open Settings", tab: "settings" }],
     },

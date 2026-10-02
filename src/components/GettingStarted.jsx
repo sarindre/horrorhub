@@ -15,7 +15,7 @@ export function GettingStarted({ steps, onGo, onDismiss }) {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <div className="text-lg font-semibold">Welcome to HorrorHub</div>
-            <div className="text-sm opacity-70">Your personal horror library. Everything stays in this browser. {doneCount} of {steps.length} steps done.</div>
+            <div className="text-sm opacity-70">Your personal horror library. Everything stays on this device. {doneCount} of {steps.length} steps done.</div>
           </div>
           <Button size="sm" variant="ghost" onClick={onDismiss}>Hide this</Button>
         </div>

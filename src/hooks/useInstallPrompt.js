@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 
+import { isDesktopApp } from "../lib/desktop.js";
+
 const isStandalone = () =>
-  typeof window !== "undefined" && (window.matchMedia?.("(display-mode: standalone)").matches || window.navigator.standalone === true);
+  isDesktopApp() || (typeof window !== "undefined" && (window.matchMedia?.("(display-mode: standalone)").matches || window.navigator.standalone === true));
 
 // Installing HorrorHub as an app (Chrome, Edge and Android offer a prompt the
 // page can trigger; Safari and Firefox only offer it from their own menus).

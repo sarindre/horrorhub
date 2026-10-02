@@ -85,7 +85,7 @@ export function Settings({ backup, app, onExported, onExportNow, onBeforeReset, 
       <Card className="rounded-2xl" id="connections">
         <CardContent className="p-6 space-y-3">
           <div className="text-lg font-semibold">Connections</div>
-          <div className="text-sm opacity-70">Keys are stored only in this browser (localStorage) and sent only to the service they belong to.</div>
+          <div className="text-sm opacity-70">Keys are stored only on this device and sent only to the service they belong to.</div>
           <Label className="text-sm" htmlFor="tmdb-token">TMDb API Read Access Token (free, needed for search, posters and suggestions)</Label>
           <TokenField value={settings.apiKey} onChange={(v) => update({ apiKey: v })} />
           <TokenGuide defaultOpen={!settings.apiKey} />

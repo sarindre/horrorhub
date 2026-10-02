@@ -32,3 +32,6 @@ Thumbs.db
 *.local
 *.swp
 *.swo
+
+# desktop installers
+release/

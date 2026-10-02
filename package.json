@@ -1,7 +1,7 @@
 {
   "name": "horrorhub",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,7 +11,11 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "audit:responsive": "node scripts/responsive-audit.mjs",
-    "audit:offline": "node scripts/verify-offline.mjs"
+    "audit:offline": "node scripts/verify-offline.mjs",
+    "audit:desktop": "node scripts/verify-desktop.mjs",
+    "desktop": "npm run build && electron .",
+    "desktop:pack": "npm run build && electron-builder --dir",
+    "desktop:dist": "npm run build && electron-builder --publish never"
   },
   "dependencies": {
     "lucide-react": "^0.552.0",
@@ -27,6 +31,8 @@
     "@types/react-dom": "^19.1.9",
     "@vitejs/plugin-react": "^5.0.4",
     "autoprefixer": "^10.4.21",
+    "electron": "^44.5.1",
+    "electron-builder": "^26.15.3",
     "eslint": "^9.36.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.22",
@@ -37,5 +43,64 @@
     "tailwindcss": "^4.1.16",
     "vite": "^7.1.7",
     "vitest": "^5.0.2"
+  },
+  "description": "HorrorHub: a private, local-first horror movie library, tracker and planner.",
+  "author": "Sarindre",
+  "homepage": "https://github.com/sarindre/horrorhub",
+  "main": "electron/main.cjs",
+  "build": {
+    "appId": "com.sarindre.horrorhub",
+    "productName": "HorrorHub",
+    "copyright": "HorrorHub",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json",
+      "!node_modules/**/*"
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "category": "public.app-category.entertainment",
+      "icon": "build/icon.png"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "AudioVideo",
+      "icon": "build/icon.png"
+    },
+    "electronLanguages": [
+      "en-US"
+    ]
   }
 }

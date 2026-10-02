@@ -1,0 +1,58 @@
+# Builds the desktop app for Windows, macOS and Linux.
+#
+# - Run it by hand (Actions -> Desktop app -> Run workflow) to get the three installers as
+#   downloadable "artifacts" without publishing anything.
+# - Push a version tag (git tag v0.1.0 && git push origin v0.1.0) to also publish them on a
+#   GitHub Release.
+#
+# The installers are not code-signed, so Windows SmartScreen and macOS Gatekeeper will warn
+# on first run (see the README for how to open them).
+name: Desktop app
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npx electron-builder --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false" # no signing certificate: skip looking for one
+      - uses: actions/upload-artifact@v4
+        with:
+          name: HorrorHub-${{ matrix.os }}
+          if-no-files-found: error
+          path: |
+            release/*.exe
+            release/*.dmg
+            release/*.AppImage
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: installers
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: installers/*
+          generate_release_notes: true

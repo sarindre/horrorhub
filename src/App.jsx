@@ -466,7 +466,7 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
       </Tabs>
 
       <p className="mt-10 text-sm opacity-60">
-        Your library lives in this browser. Back it up any time in Settings → Backup &amp; Import.
+        Your library lives on this device. Back it up any time in Settings → Backup &amp; Import.
       </p>
       <Attribution />
       {settings.flicker && !reducedMotion && <FlickerOverlay />}

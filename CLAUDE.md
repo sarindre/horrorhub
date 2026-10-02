@@ -70,6 +70,10 @@ This project should stay local-first, lightweight, and highly personalized. It i
 ## Deployment
 - The app is static and deploys to GitHub Pages from `.github/workflows/deploy.yml` (lint, tests, build, publish) on every push to `main`. Pages serves it under `/<repo>/`, so never hard-code a root-relative path (`/assets/...`); use `import.meta.env.BASE_URL` or relative URLs. `vite.config.js` reads `BASE_PATH` for this, and `BASE_PATH=/horrorhub/ npm run audit:offline` checks the build under a sub-path.
 
+## Desktop app
+- `electron/main.cjs` (the window), `electron/preload.cjs` (tells the app it's the desktop version) and `electron/policy.cjs` (the rules for which addresses load, which links open externally, which permissions are allowed; tested in `src/desktop/policy.test.js`). The web app is the single source of truth: desktop only changes behavior through `src/lib/desktop.js` (`isDesktopApp()`), e.g. no service worker or Install prompt. Don't add Node access to the page. Electron and electron-builder are devDependencies only.
+- Check changes with `npm run audit:desktop`. Building installers inside OneDrive can fail (file locks): build to a folder outside it. If Electron starts as plain Node, `ELECTRON_RUN_AS_NODE` is set.
+
 ## Help text
 - All help lives in `src/lib/help.js` (per-screen entries, glossary, FAQ). When you add a screen or change what one does, update its entry: a test fails if a view has no help. Write for someone who has never seen the app, and use the names of the buttons as they appear on screen.
 

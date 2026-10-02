@@ -149,9 +149,9 @@ export const HELP = {
       "Catalog & Content: turn auto-tagging on or off and set content limits: which content to avoid, a maximum scare level, and whether films over your limits are flagged or hidden.",
       "Backup & Import: choose a backup folder so a copy is saved after every change, install the app, export, and import from Letterboxd or IMDb.",
       "Appearance: theme, the spooky font, effects, high contrast and a dyslexia-friendly font.",
-      "Reset app (at the bottom) erases everything HorrorHub has stored in this browser. It asks you to type RESET, offers to export a backup first, and can keep your settings and API keys.",
+      "Reset app (at the bottom) erases everything HorrorHub has stored on this device. It asks you to type RESET, offers to export a backup first, and can keep your settings and API keys.",
     ],
-    tips: ["Your library lives only in this browser, so set up a backup."],
+    tips: ["Your library lives only on this device, so set up a backup."],
   },
   help: {
     title: "Help",

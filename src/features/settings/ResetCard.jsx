@@ -45,7 +45,7 @@ export function ResetCard({ counts, onExportNow, onBeforeReset, resetFn = resetA
   return (
     <div className="space-y-3 rounded-2xl border border-red-500/40 bg-red-950/10 p-6">
       <div className="flex items-center gap-2 text-lg font-semibold text-red-300"><TriangleAlert className="h-5 w-5" /> Reset app</div>
-      <div className="text-sm opacity-80">Erases everything HorrorHub has stored in this browser and starts fresh, as if you'd just opened it for the first time. You'll be asked to confirm, and you can export a backup first.</div>
+      <div className="text-sm opacity-80">Erases everything HorrorHub has stored on this device and starts fresh, as if you'd just opened it for the first time. You'll be asked to confirm, and you can export a backup first.</div>
       <Dialog open={open} onOpenChange={change}>
         <DialogTrigger>
           <Button variant="outline" className="border-red-500/60 text-red-300">Reset app…</Button>
