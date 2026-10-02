@@ -67,6 +67,9 @@ This project should stay local-first, lightweight, and highly personalized. It i
 - Run `npm test`, `npm run lint` and `npm run build` before committing.
 - Tests: pure logic gets plain Vitest tests next to the code; views are smoke-rendered on the server (`renderToString`, so text nodes can be split by `<!-- -->` markers when matching); hooks with effects or async loops are tested in jsdom with `// @vitest-environment jsdom` at the top of the file and a stubbed `fetch`. Background work (auto-tagging, import matching) must depend only on stable callbacks so it doesn't restart on every render.
 
+## Deployment
+- The app is static and deploys to GitHub Pages from `.github/workflows/deploy.yml` (lint, tests, build, publish) on every push to `main`. Pages serves it under `/<repo>/`, so never hard-code a root-relative path (`/assets/...`); use `import.meta.env.BASE_URL` or relative URLs. `vite.config.js` reads `BASE_PATH` for this, and `BASE_PATH=/horrorhub/ npm run audit:offline` checks the build under a sub-path.
+
 ## Help text
 - All help lives in `src/lib/help.js` (per-screen entries, glossary, FAQ). When you add a screen or change what one does, update its entry: a test fails if a view has no help. Write for someone who has never seen the app, and use the names of the buttons as they appear on screen.
 

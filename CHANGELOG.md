@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Deployment to GitHub Pages**: every push to `main` is linted, tested and published, so the installable app can be opened on a phone at the repo's Pages address. The build now supports being served from a sub-path (`BASE_PATH`), and the offline audit can check that (`BASE_PATH=/horrorhub/ npm run audit:offline`).
+
+### Added
 - **Mystery reel** (Tonight → Mystery reel): a blind pick from your watchlist or library. You see the length, intensity, kind of horror and content warnings, but not the title or poster until you press Reveal. It never draws a film over your content limits, and says so if nothing fits your vibe.
 
 ### Changed

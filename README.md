@@ -33,6 +33,15 @@ Then open **Settings**, paste your TMDb v4 *Read Access Token* (free at themovie
 - **Shelves:** your own named lists of films, plus collections curated from your taste ("Top picks for your Occult mood", "Your best Slashers", "Time for a rewatch"). Share a shelf as a file or a text list, no account needed.
 - **Challenges:** 30 Days of Horror, Halloween, Found-Footage Week and more, tracked from your watch dates. Start one today or wait for its date, and get a day-by-day plan (a film per night, building from gentle to intense) you can swap, log and export to your calendar.
 
+## Using it on your phone (GitHub Pages)
+
+Every push to `main` is checked (lint and tests) and published to **https://sarindre.github.io/horrorhub/** by `.github/workflows/deploy.yml`. Open that on your phone, then use your browser's menu: "Install app" in Chrome, or Share → Add to Home Screen on iPhone. It works offline once loaded.
+
+- Only the app's code is hosted. Your films, settings and TMDb token stay in the browser they were entered in, so a new device starts empty: Export on one and Import on the other (API keys aren't included, so paste your token in again).
+- Browser storage belongs to the web address. Keep using the same address; moving to another host later means exporting and importing.
+- One-time setup for a fork: repo Settings → Pages → Source: "GitHub Actions".
+- To preview the sub-path build locally: `BASE_PATH=/horrorhub/ npm run build`, or run `BASE_PATH=/horrorhub/ npm run audit:offline` (on Windows Git Bash prefix `MSYS_NO_PATHCONV=1`).
+
 ## Scripts
 
 | Command | What it does |

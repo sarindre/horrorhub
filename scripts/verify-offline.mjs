@@ -3,6 +3,7 @@
 // visited online. Also asks the browser whether the app is installable.
 //
 //   npm run audit:offline
+//   BASE_PATH=/horrorhub/ npm run audit:offline     the same, served under a sub-path like GitHub Pages
 //
 // Needs Edge or Chrome (set CHROME_PATH if it isn't found). Uses a fresh browser profile.
 
@@ -35,7 +36,9 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 console.log("Building...");
 await build({ logLevel: "error" });
 let server = await preview({ preview: { port: 4179, strictPort: true, host: "127.0.0.1" } });
-const url = "http://127.0.0.1:4179/";
+// BASE_PATH (e.g. /horrorhub/) checks the app the way GitHub Pages serves it, under a sub-path
+const base = process.env.BASE_PATH || "/";
+const url = `http://127.0.0.1:4179${base}`;
 
 const browser = await puppeteer.launch({ executablePath: browserPath, headless: "new", args: ["--no-sandbox"] });
 try {
@@ -68,7 +71,7 @@ try {
   });
   check(!!cached.shell, "app files stored", cached.shell ? "" : "no shell cache");
   check(cached.keys.some((k) => /StatsView-.*\.js$/.test(k)), "screens that load on demand are stored too (Stats)");
-  check(cached.keys.includes("/manifest.webmanifest") && cached.keys.some((k) => k.includes("icon-512")), "manifest and icons stored");
+  check(cached.keys.some((k) => k.endsWith("/manifest.webmanifest")) && cached.keys.some((k) => k.includes("icon-512")), "manifest and icons stored");
 
   const client = await page.createCDPSession();
   const { installabilityErrors } = await client.send("Page.getInstallabilityErrors");

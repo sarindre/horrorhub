@@ -37,6 +37,9 @@ function offlineManifest() {
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Served from the site root by default. On GitHub Pages the app lives under /<repo>/, so the
+  // deploy workflow sets BASE_PATH (see .github/workflows/deploy.yml).
+  base: process.env.BASE_PATH || '/',
   plugins: [react(), offlineManifest()],
   test: {
     setupFiles: ["./src/test/setup.js"],
