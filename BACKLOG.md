@@ -382,7 +382,7 @@ Priority: P0
 - The Creepster header font is loaded from Google Fonts on every visit, which sends your IP to Google, at odds with a local-first, private app. Self-host it (the font file ships with the build)
 - Discover and streaming badges are hard-coded to the US (`region=US`, `results.US`, `en-US`). Add a region/language setting so non-US users get their own availability and titles
 
-Done: footer notice on every screen; Creepster bundled in `src/assets/fonts` (no request to Google); a "Where you watch" region setting (Settings → Connections) drives streaming badges, Discover release dates and the age rating on details. Left for later: the TMDb logo image (the text notice is in place), OMDb/DoesTheDogDie credit lines, and translated titles (text stays English because tag and warning matching reads English TMDb keywords).
+Done: footer notice on every screen; Creepster bundled in `src/assets/fonts` (no request to Google); a "Where you watch" region setting (Settings → Connections) drives streaming badges, Discover release dates and the age rating on details. Update: the official TMDb logo (their unmodified SVG, linked to their site) and their required wording now appear in the footer. Left for later: OMDb/DoesTheDogDie credit lines, and translated titles (text stays English because tag and warning matching reads English TMDb keywords).
 
 ### 20. "Tonight" home screen (make the core promise the front door)
 Status: Done (see leftovers)

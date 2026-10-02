@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- The official **TMDb logo** (their unmodified file, linking to their site) in the footer, with the exact attribution wording their API terms require.
+
+### Added
 - **Deployment to GitHub Pages**: every push to `main` is linted, tested and published, so the installable app can be opened on a phone at the repo's Pages address. The build now supports being served from a sub-path (`BASE_PATH`), and the offline audit can check that (`BASE_PATH=/horrorhub/ npm run audit:offline`).
 
 ### Added

@@ -1,0 +1,2 @@
+# TMDb's logo must stay byte-for-byte as they publish it (a test checks its hash), so Git must not touch its line endings.
+src/assets/tmdb-logo.svg -text
