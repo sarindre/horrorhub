@@ -62,6 +62,7 @@ The same app in its own window, for people who would rather not use a browser. I
 | `npm run lint` | ESLint |
 | `npm test` | Unit, render and interaction tests (Vitest) |
 | `npm run audit:offline` | Builds the app, installs it in a real browser, stops the server and checks it still opens and works offline; also checks that the browser considers it installable. Needs Edge or Chrome |
+| `npm run licenses` | Rewrites `THIRD_PARTY_NOTICES.md` from the installed production dependencies and warns about copyleft or unknown licenses |
 | `npm run audit:desktop` | Launches the real desktop app and checks it from the outside (see Desktop app). Needs `npm install` to have fetched Electron |
 | `npm run audit:responsive` | Opens every screen in Edge/Chrome at phone, tablet and desktop widths and fails if anything makes the page wider than the screen. Needs Edge or Chrome installed (set `CHROME_PATH` if it isn't found); add `-- --shots=./shots` to save screenshots |
 

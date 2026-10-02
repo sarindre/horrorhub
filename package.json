@@ -13,6 +13,7 @@
     "audit:responsive": "node scripts/responsive-audit.mjs",
     "audit:offline": "node scripts/verify-offline.mjs",
     "audit:desktop": "node scripts/verify-desktop.mjs",
+    "licenses": "node scripts/third-party-notices.mjs",
     "desktop": "npm run build && electron .",
     "desktop:pack": "npm run build && electron-builder --dir",
     "desktop:dist": "npm run build && electron-builder --publish never"
