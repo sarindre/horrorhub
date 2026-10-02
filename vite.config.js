@@ -43,6 +43,9 @@ export default defineConfig({
   plugins: [react(), offlineManifest()],
   test: {
     setupFiles: ["./src/test/setup.js"],
+    // Generous on purpose: screens load lazily, and a busy machine or a cold CI runner can take
+    // seconds. The tests wait for what they expect, so this only costs time when something is wrong.
+    testTimeout: 30000,
     // Tests run in a timezone west of UTC on purpose: that is where date bugs (the previous
     // evening) show up. Override with TZ=... to try others.
     env: { TZ: process.env.TZ || "America/Los_Angeles" },
