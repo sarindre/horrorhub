@@ -1,6 +1,7 @@
-// Draws the app icons (public/icons/*.png) with a real browser, so the emoji is
-// rendered by the system font and baked into the PNGs. Run it only when the
-// icon design changes:  node scripts/make-icons.mjs
+// Draws the app icons from the PumpBoy artwork (design/pumpboy-original.png) with a real browser:
+// public/icons/*.png (web app and phone), build/icon.png (desktop installers) and
+// src/assets/pumpboy.png (the mascot shown in the app). Run it only when the artwork changes:
+//   node scripts/make-icons.mjs
 // Set CHROME_PATH if Edge or Chrome isn't found.
 
 import fs from "node:fs";
@@ -22,32 +23,66 @@ if (!browserPath) {
   process.exit(1);
 }
 
-// name, pixel size, how much of the square the emoji fills (maskable icons keep it inside the safe zone)
+// The artwork is signed in its bottom-left corner; the icons use the picture above the signature.
+// The flat red background is extended to fill the square, so nothing needs cutting out.
+const SOURCE = path.resolve("design", "pumpboy-original.png");
+const SIGNATURE_TOP = 538; // the signature starts on row 538; the drawing ends on row 537
+const CROP_HEIGHT = 546; // a little below the drawing; the signature rows are painted over first
+
+// file, pixel size, how much of the square the picture fills (maskable icons keep it inside the safe zone)
 const ICONS = [
-  ["icon-192.png", 192, 0.56],
-  ["icon-512.png", 512, 0.56],
-  ["icon-maskable-512.png", 512, 0.42],
-  ["apple-touch-icon.png", 180, 0.5],
+  ["public/icons/icon-192.png", 192, 0.92],
+  ["public/icons/icon-512.png", 512, 0.92],
+  ["public/icons/icon-maskable-512.png", 512, 0.74],
+  ["public/icons/apple-touch-icon.png", 180, 0.92],
+  ["public/icons/favicon-48.png", 48, 0.92],
+  ["build/icon.png", 512, 0.92],
+  ["src/assets/pumpboy.png", 256, 0.92],
 ];
 
-const page = (size, fill) => `<!doctype html><meta charset="utf-8"><style>
-  html,body{margin:0;background:transparent}
-  .icon{width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center;
-    background:radial-gradient(circle at 50% 38%, #5a0d0d 0%, #1c0606 55%, #090909 100%);
-    font-size:${Math.round(size * fill)}px;line-height:1;font-family:"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif}
-</style><div class="icon">🔪</div>`;
+const dataUrl = "data:image/png;base64," + fs.readFileSync(SOURCE).toString("base64");
 
-const out = path.resolve("public", "icons");
-fs.mkdirSync(out, { recursive: true });
+// Runs in the page: paints the cropped artwork centred on its own background colour.
+const draw = async ({ url, size, fill, cropHeight, signatureTop }) => {
+  const img = new Image();
+  img.src = url;
+  await img.decode();
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  const probe = document.createElement("canvas");
+  probe.width = probe.height = 1;
+  const pctx = probe.getContext("2d");
+  pctx.drawImage(img, 3, 3, 1, 1, 0, 0, 1, 1);
+  const [r, g, b] = pctx.getImageData(0, 0, 1, 1).data;
+  const background = `rgb(${r},${g},${b})`;
+  ctx.fillStyle = background;
+  ctx.fillRect(0, 0, size, size);
+  // a copy of the artwork with the signature painted out
+  const clean = document.createElement("canvas");
+  clean.width = img.width;
+  clean.height = img.height;
+  const cctx = clean.getContext("2d");
+  cctx.drawImage(img, 0, 0);
+  cctx.fillStyle = background;
+  cctx.fillRect(0, signatureTop, img.width, img.height - signatureTop);
+  ctx.imageSmoothingQuality = "high";
+  const scale = (size * fill) / cropHeight;
+  const w = img.width * scale;
+  const h = cropHeight * scale;
+  ctx.drawImage(clean, 0, 0, img.width, cropHeight, (size - w) / 2, (size - h) / 2, w, h);
+  return canvas.toDataURL("image/png");
+};
+
 const browser = await puppeteer.launch({ executablePath: browserPath, headless: "new", args: ["--no-sandbox"] });
 try {
-  for (const [name, size, fill] of ICONS) {
-    const tab = await browser.newPage();
-    await tab.setViewport({ width: size, height: size, deviceScaleFactor: 1 });
-    await tab.setContent(page(size, fill));
-    await tab.screenshot({ path: path.join(out, name), clip: { x: 0, y: 0, width: size, height: size } });
-    await tab.close();
-    console.log("wrote", path.join("public", "icons", name));
+  const tab = await browser.newPage();
+  await tab.setContent("<!doctype html><meta charset=\"utf-8\">");
+  for (const [file, size, fill] of ICONS) {
+    const url = await tab.evaluate(draw, { url: dataUrl, size, fill, cropHeight: CROP_HEIGHT, signatureTop: SIGNATURE_TOP });
+    fs.mkdirSync(path.dirname(path.resolve(file)), { recursive: true });
+    fs.writeFileSync(path.resolve(file), Buffer.from(url.split(",")[1], "base64"));
+    console.log("wrote", file);
   }
 } finally {
   await browser.close();

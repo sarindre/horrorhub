@@ -11,6 +11,9 @@ All notable changes to this project will be documented in this file.
 - The "Watched" dialog now lets you give the film a knife rating too, so you can log the date, rating, company and scare level in one go.
 - "Log a watch date" now labels its two button rows: "Who did you watch with?" and "What time of day?".
 
+### Changed
+- **PumpBoy is the new app icon**, favicon and desktop installer icon (replacing the knife emoji), and appears in Help → About. Drawn by totalnightmare. `node scripts/make-icons.mjs` rebuilds every icon from `design/pumpboy-original.png`.
+
 ### Added
 - An "About" note at the bottom of Help (and a Credits section in the README) crediting PumpBoy, the mascot, to its artist, totalnightmare.
 - **Challenges: add and fix watches for days that have passed.** Each challenge has a "Your watches" list with "Log a film I watched" (pick a past day and a film from your library or TMDb, with an optional rating); in a daily challenge, any numbered day with nothing logged is a button that does the same for that day. Each watch can be moved to another day or removed.

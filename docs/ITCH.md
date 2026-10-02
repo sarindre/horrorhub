@@ -42,7 +42,7 @@ It's free and open source: https://github.com/sarindre/horrorhub
 *This product uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.* Privacy: https://github.com/sarindre/horrorhub/blob/main/PRIVACY.md
 
 ## Images
-- **Cover image:** itch.io recommends about 630x500 (minimum 315x250). Needs original art.
+- **Cover image:** itch.io recommends about 630x500 (minimum 315x250). Use PumpBoy (the lettered "HorrorHub" version, when it's ready) on his red background.
 - **Screenshots:** 3 to 5, from the real app (Library, Discover, Insights, a film's detail). Take them with real, fully horror-themed data, and check the posters for anything very graphic first.
 - **Banner/background:** optional.
 
@@ -61,5 +61,5 @@ The first push to a channel creates it. Until the secret and variable exist the 
 ## Before going public
 - [ ] The TMDB question is answered, or the page stays free with no payment option (it is today).
 - [ ] Try each installer on the page from a fresh download.
-- [ ] Original icon and cover art in place.
+- [ ] Cover art in place (PumpBoy with "HorrorHub" lettering, ideally from a larger original). The icon is already PumpBoy.
 - [ ] Set the page to Public (it's Draft or Restricted until you do).

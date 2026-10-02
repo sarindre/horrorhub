@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { LifeBuoy } from "lucide-react";
+import pumpboy from "../../assets/pumpboy.png";
 import { Card, CardContent } from "../../components/ui/card.jsx";
 import { Button } from "../../components/ui/button.jsx";
 import { Input } from "../../components/ui/input.jsx";
@@ -123,7 +124,10 @@ export function HelpView({ onGo }) {
           </section>
           <section aria-label="About" className="space-y-2 border-t pt-4">
             <h3 className="text-sm uppercase tracking-wide opacity-80">About</h3>
-            <p className="text-sm opacity-80">{MASCOT_NOTE}</p>
+            <div className="flex items-center gap-3">
+              <img src={pumpboy} alt="PumpBoy, the HorrorHub mascot" width={72} height={72} className="h-[72px] w-[72px] shrink-0 rounded-2xl" />
+              <p className="min-w-0 text-sm opacity-80">{MASCOT_NOTE}</p>
+            </div>
           </section>
         </>
       ) : null}

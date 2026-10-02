@@ -34,7 +34,7 @@ Steam's onboarding page describes accepted non-game software as "animation, audi
 - **Where does movie data come from for a stranger?** Today each user pastes their own TMDb token (fine for a free hobby app; a hurdle for retail). Options: keep that with the guided setup (done), license TMDb and run a small proxy, or build a dataset (large; see the conversation notes: Wikidata is the main open source, with no keywords, summaries or posters).
 - **Repository license.** The code is public on GitHub with no license file, which means all rights are reserved by default. If you plan to sell, decide deliberately between keeping it closed and an open license (an open license lets anyone else sell it too).
 - **Name.** Search for existing uses of "HorrorHub" (apps, sites, trademarks) before investing in branding.
-- **Art.** The current icon is a system emoji on a gradient. A release needs original art and a proper logo (and all the store assets below).
+- **Art.** The icon is now PumpBoy, drawn by totalnightmare (with her permission, credited in Help and the README). A release still needs the store assets below, ideally from a higher-resolution original than the 426x567 file we have, plus the version lettered "HorrorHub" for the capsules.
 
 ## Store assets (Steam's required sizes)
 | Asset | Size |
