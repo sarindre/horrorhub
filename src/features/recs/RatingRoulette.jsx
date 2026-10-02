@@ -129,6 +129,14 @@ export function RatingRoulette({ apiKey, onAdd, onOpenDetails, ratingMap={}, inL
           <MovieCard key={r.id} item={r} onAdd={handle} onUpdate={handle} onOpenDetails={onOpenDetails} showWatchlist={false} compact isInLibrary={inLibraryIds.has(r.id)} isWatchlisted={watchlistIds.has(r.id)} warnings={gate.flagsById[r.id] || []} />
         ))}
       </div>
+
+      {display.length ? (
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <Button variant="outline" onClick={()=> { setPage(p=> Math.max(1, p-1)); window.scrollTo(0, 0); }} disabled={!canPrev}>Previous page</Button>
+          <span className="text-sm opacity-70">Page {page}{totalPages? ` / ${totalPages}`: ''}</span>
+          <Button onClick={()=> { setPage(p=> p+1); window.scrollTo(0, 0); }} disabled={!canNext}>Next page</Button>
+        </div>
+      ) : null}
     </div>
   );
 }

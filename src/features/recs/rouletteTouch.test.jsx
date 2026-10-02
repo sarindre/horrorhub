@@ -98,6 +98,19 @@ describe("Rating Roulette keeps a card you've touched", () => {
   });
 });
 
+describe("Rating Roulette bottom page buttons", () => {
+  it("goes to the next page from the bottom of the list", async () => {
+    window.scrollTo = vi.fn();
+    render(<Harness />);
+    await waitFor(() => expect(titles().length).toBe(3), WAIT);
+    fireEvent.click(screen.getByRole("button", { name: "Next page" }));
+    await waitFor(() => expect(titles()).toEqual(["Movie 11", "Movie 12", "Movie 13"]), WAIT);
+    expect(window.scrollTo).toHaveBeenCalledWith(0, 0);
+    fireEvent.click(screen.getByRole("button", { name: "Previous page" }));
+    await waitFor(() => expect(titles()).toEqual(["Movie 1", "Movie 2", "Movie 3"]), WAIT);
+  });
+});
+
 describe("Discover keeps a card you've touched too", () => {
   it("stays visible with 'Skip titles in library' on, and says where it went", async () => {
     localStorage.setItem("horrorhub.prefs.v1", JSON.stringify({ version: 1, values: { "discover.hideInLibrary": true } }));
