@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { LifeBuoy } from "lucide-react";
-import pumpboy from "../../assets/pumpboy.png";
+import pumpboy from "../../assets/pumpboy-original.png"; // the full drawing, signature and all
 import { Card, CardContent } from "../../components/ui/card.jsx";
 import { Button } from "../../components/ui/button.jsx";
 import { Input } from "../../components/ui/input.jsx";
@@ -127,9 +127,9 @@ export function HelpView({ onGo }) {
           </section>
           <section aria-label="About" className="space-y-2 border-t pt-4">
             <h3 className="text-sm uppercase tracking-wide opacity-80">About</h3>
-            <div className="flex items-center gap-3">
-              <img src={pumpboy} alt="PumpBoy, the HorrorHub mascot" width={72} height={72} className="h-[72px] w-[72px] shrink-0 rounded-2xl" />
-              <div className="min-w-0 space-y-1 text-sm opacity-80">
+            <div className="flex flex-wrap items-center gap-4">
+              <img src={pumpboy} alt="PumpBoy, the HorrorHub mascot, drawn by totalnightmare" width={426} height={567} className="h-auto w-36 shrink-0 rounded-2xl sm:w-44" />
+              <div className="min-w-[14rem] flex-1 space-y-1 text-sm opacity-80">
                 <p>{MASCOT_NOTE}</p>
                 <p>You can find TotalNightmar3 on ArtFight.</p>
                 <p>{pumpBoyFinds ? `He hides on a few screens each day. You've found him ${pumpBoyFinds} time${pumpBoyFinds === 1 ? "" : "s"}.` : "He hides on a few screens each day. Can you find him?"}</p>
