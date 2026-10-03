@@ -11,6 +11,9 @@ All notable changes to this project will be documented in this file.
 - The "Watched" dialog now lets you give the film a knife rating too, so you can log the date, rating, company and scare level in one go.
 - "Log a watch date" now labels its two button rows: "Who did you watch with?" and "What time of day?".
 
+### Fixed
+- **Back from a film's page now returns to your search results.** Pressing the browser's Back button (or "← Back") on a film's details used to throw you out of the screen, and coming back to a list started it over: search, filters, "Show more" and scroll position were lost. The details now have their own history entry, and the screen underneath is kept (just hidden), so you land exactly where you were.
+
 ### Changed
 - **PumpBoy is the new app icon**, favicon and desktop installer icon (replacing the knife emoji), and appears in Help → About. Drawn by totalnightmare. `node scripts/make-icons.mjs` rebuilds every icon from `design/pumpboy-original.png`.
 

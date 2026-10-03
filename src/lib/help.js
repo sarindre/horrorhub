@@ -201,6 +201,7 @@ export const SHORTCUTS = [
   "In the top bar, use the left and right arrow keys to move between sections, and Home or End to jump to the first or last.",
   "The same keys move between the small tabs under a section, such as Browse, Rate films and Ask.",
   "Each screen has its own web address (for example #library), so the browser's Back button and bookmarks work.",
+  "Open a film from a list and press the browser's Back button (or \"← Back\") to return to that list exactly as you left it: your search, filters and place on the page are kept.",
 ];
 
 // Case-insensitive search over everything above. Returns what matches, so the

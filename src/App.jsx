@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { CircleHelp, Sparkles } from "lucide-react";
 import { Button } from "./components/ui/button.jsx";
 import { Tabs, TabsContent } from "./components/ui/tabs.jsx";
@@ -188,14 +188,62 @@ export function HorrorHub() {
   // A double feature picked on a film's page, waiting in the marathon planner
   const [pairing, setPairing] = useState(null);
 
+  // A film's details open on their own history entry, so the browser's Back closes them and drops
+  // you back on the list (search results, filters and scroll position intact: the screen underneath
+  // stays mounted, just hidden).
+  const listScroll = useRef(0);
+  const detailsPushed = useRef(false);
+  const hadDetails = useRef(false);
+  const selectedRef = useRef(null);
+  useEffect(() => {
+    selectedRef.current = selected;
+  }, [selected]);
+  const openDetails = useCallback((film) => {
+    if (!selectedRef.current) listScroll.current = window.scrollY;
+    setSelected(film);
+  }, []);
+  const closeDetails = useCallback(() => {
+    setSelected(null);
+    if (detailsPushed.current) {
+      detailsPushed.current = false;
+      window.history.back();
+    }
+  }, []);
+  useLayoutEffect(() => {
+    if (selected && !hadDetails.current) {
+      window.history.pushState({ hhFilm: true }, "");
+      detailsPushed.current = true;
+      window.scrollTo(0, 0);
+    } else if (!selected && hadDetails.current) {
+      window.scrollTo(0, listScroll.current);
+    }
+    hadDetails.current = !!selected;
+  }, [selected]);
+  useEffect(() => {
+    if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual";
+    const onPop = () => {
+      const onDetailsEntry = window.history.state?.hhFilm === true; // the entry we pushed when details opened
+      if (selectedRef.current && !onDetailsEntry) {
+        detailsPushed.current = false;
+        setSelected(null); // Back from the details: close them
+      } else if (!selectedRef.current && onDetailsEntry) {
+        window.history.back(); // an entry for details that are already closed: step past it
+      }
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
   // The current view lives in the URL hash so Back/Forward move between views. Opening any
   // view (including the one you're on) leaves a film's details, and so does the browser's Back.
   const [tab, setTab] = useHashTab();
   const goTab = (next) => {
+    listScroll.current = 0; // a different screen starts at the top
     setSelected(null);
     setTab(next);
   };
   useEffect(() => {
+    listScroll.current = 0;
     setSelected(null);
   }, [tab]);
   const planPair = (lineup) => {
@@ -348,7 +396,7 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
 
         {selected ? (
           <div className="mt-6">
-            <Button variant="outline" onClick={() => setSelected(null)}>
+            <Button variant="outline" onClick={closeDetails}>
               ← Back
             </Button>
           <div className="mt-4">
@@ -357,7 +405,7 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
                 region={settings.region}
                 library={library}
                 onPlanPair={planPair}
-                onOpenFilm={setSelected}
+                onOpenFilm={openDetails}
                 item={selected}
                 localItem={library.find((i) => i.id === selected.id)}
                 onUpdate={upsert}
@@ -371,8 +419,8 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
               </Suspense>
             </div>
           </div>
-        ) : (
-          <>
+        ) : null}
+          <div hidden={!!selected}>
           {tab !== "help" ? <ScreenHelp key={tab} view={tab} onOpenHelp={() => goTab("help")} /> : null}
           <Suspense fallback={<div role="status" className="mt-6 text-sm opacity-70">Loading…</div>}>
           <>
@@ -386,33 +434,33 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
             mixer={mixer}
             challenges={challengeStore.challenges}
             onSaveCalibration={(c) => updateSettings({ calibration: c })}
-            onOpenDetails={setSelected}
+            onOpenDetails={openDetails}
             onGo={goTab}
           />
         </TabsContent>
 
         <TabsContent value="mystery" className="mt-6">
-          <MysteryReel library={library} onOpenDetails={setSelected} onGo={goTab} />
+          <MysteryReel library={library} onOpenDetails={openDetails} onGo={goTab} />
         </TabsContent>
 
         <TabsContent value="ask" className="mt-6">
-          <AskView library={library} apiKey={settings.apiKey} region={settings.region} onOpenDetails={setSelected} onAdd={addToLibrary} onUpdate={upsert} />
+          <AskView library={library} apiKey={settings.apiKey} region={settings.region} onOpenDetails={openDetails} onAdd={addToLibrary} onUpdate={upsert} />
         </TabsContent>
 
         <TabsContent value="group" className="mt-6">
-          <GroupNight library={library} settings={settings} onOpenDetails={setSelected} />
+          <GroupNight library={library} settings={settings} onOpenDetails={openDetails} />
         </TabsContent>
 
         <TabsContent value="discover" className="mt-6">
-          <Discover apiKey={settings.apiKey} region={settings.region} onAdd={addToLibrary} onRemove={remove} inLibraryIds={inLibraryIds} onToggleWatchlist={addToLibrary} onOpenDetails={setSelected} watchlistIds={watchlistIds} ratingById={ratingById} />
+          <Discover apiKey={settings.apiKey} region={settings.region} onAdd={addToLibrary} onRemove={remove} inLibraryIds={inLibraryIds} onToggleWatchlist={addToLibrary} onOpenDetails={openDetails} watchlistIds={watchlistIds} ratingById={ratingById} />
         </TabsContent>
 
             <TabsContent value="library" className="mt-6">
-              <LibraryView items={library} onUpdate={upsert} onRemove={remove} onOpenDetails={setSelected} />
+              <LibraryView items={library} onUpdate={upsert} onRemove={remove} onOpenDetails={openDetails} />
             </TabsContent>
 
         <TabsContent value="watchlist" className="mt-6">
-          <WatchlistView pairing={pairing} onClearPairing={() => setPairing(null)} items={watchlist} library={library} marathonStore={marathonStore} onUpdate={upsert} onRemove={remove} onOpenDetails={setSelected} planDays={settings.planDays} planTime={settings.planTime} />
+          <WatchlistView pairing={pairing} onClearPairing={() => setPairing(null)} items={watchlist} library={library} marathonStore={marathonStore} onUpdate={upsert} onRemove={remove} onOpenDetails={openDetails} planDays={settings.planDays} planTime={settings.planTime} />
         </TabsContent>
 
         <TabsContent value="recs" className="mt-6">
@@ -422,7 +470,7 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
     onAdd={addToLibrary}
     onUpdate={upsert}
     onRemove={remove}
-    onOpenDetails={setSelected}
+    onOpenDetails={openDetails}
     inLibraryIds={inLibraryIds}
     watchlistIds={watchlistIds}
     ratingById={ratingById}
@@ -433,20 +481,20 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
 </TabsContent>
         <TabsContent value="continuity" className="mt-6">
           <div className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6">
-            <ContinuityGraph items={library} apiKey={settings.apiKey} onOpenDetails={setSelected} />
+            <ContinuityGraph items={library} apiKey={settings.apiKey} onOpenDetails={openDetails} />
           </div>
         </TabsContent>
 
         <TabsContent value="rate" className="mt-6">
-          <RatingRoulette apiKey={settings.apiKey} region={settings.region} onAdd={addToLibrary} onOpenDetails={setSelected} ratingMap={ratingById} inLibraryIds={inLibraryIds} watchlistIds={watchlistIds} />
+          <RatingRoulette apiKey={settings.apiKey} region={settings.region} onAdd={addToLibrary} onOpenDetails={openDetails} ratingMap={ratingById} inLibraryIds={inLibraryIds} watchlistIds={watchlistIds} />
         </TabsContent>
 
             <TabsContent value="shelves" className="mt-6">
-              <ShelvesView library={library} store={shelfStore} apiKey={settings.apiKey} onUpdate={upsert} onAdd={addToLibrary} onOpenDetails={setSelected} />
+              <ShelvesView library={library} store={shelfStore} apiKey={settings.apiKey} onUpdate={upsert} onAdd={addToLibrary} onOpenDetails={openDetails} />
             </TabsContent>
 
             <TabsContent value="challenges" className="mt-6">
-              <ChallengesView library={library} store={challengeStore} apiKey={settings.apiKey} planTime={settings.planTime} onUpdate={upsert} onAdd={addToLibrary} onOpenDetails={setSelected} />
+              <ChallengesView library={library} store={challengeStore} apiKey={settings.apiKey} planTime={settings.planTime} onUpdate={upsert} onAdd={addToLibrary} onOpenDetails={openDetails} />
             </TabsContent>
 
             <TabsContent value="stats" className="mt-6">
@@ -462,8 +510,7 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
             </TabsContent>
           </>
           </Suspense>
-          </>
-        )}
+          </div>
       </Tabs>
 
       <p className="mt-10 text-sm opacity-60">
@@ -481,7 +528,7 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
             <span className="text-sm">It’s been a while — roll a pick?</span>
             <Button size="sm" onClick={()=>{
               const pool = watchlist.length? watchlist : library;
-              if (pool.length){ const pick = pool[Math.floor(Math.random()*pool.length)]; setSelected(pick); }
+              if (pool.length){ const pick = pool[Math.floor(Math.random()*pool.length)]; openDetails(pick); }
               setShowNudge(false); writeString('horrorhub.lastNudge', Date.now());
             }}>Roll</Button>
             <Button size="sm" variant="outline" onClick={()=>{ setShowNudge(false); writeString('horrorhub.lastNudge', Date.now()); }}>Dismiss</Button>
