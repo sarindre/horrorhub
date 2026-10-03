@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Wand2, AlarmClock } from "lucide-react";
 import { Card, CardContent } from "../../components/ui/card.jsx";
 import { Button } from "../../components/ui/button.jsx";
@@ -7,6 +7,7 @@ import { MOOD_PRESETS } from "../../lib/moods.js";
 import { buildTasteProfile, rankLibrary } from "../../lib/taste.js";
 import { TasteSummary } from "./TasteSummary.jsx";
 import { useContentGate } from "../../hooks/useContentGate.js";
+import { useTouchedCards } from "../../hooks/useTouchedCards.js";
 import { useContentPrefs } from "../../lib/contentContext.js";
 import { filterByContent } from "../../lib/contentFlags.js";
 import { HiddenNotice } from "../../components/HiddenNotice.jsx";
@@ -38,11 +39,23 @@ export function RecommendationsView({ items, apiKey, onAdd, onUpdate, onRemove, 
     .filter((r) => !inLibraryIds?.has(r.id))
     .slice(0, 12);
 
+  // Rating or adding a suggestion puts it in your library, which would drop it from this list (and
+  // reshuffle the next one) under your hand. So the lists below are held steady until you change
+  // the vibe or the films in your library change; touching a card tells you where it went instead.
+  const { handle } = useTouchedCards({ ratingById, inLibraryIds, watchlistIds, onAdd, resetKey: moodPreset });
+  const externalHold = useRef({ vibe: null, list: [] });
+  if (externalHold.current.vibe !== moodPreset || (!externalHold.current.list.length && external.length)) externalHold.current = { vibe: moodPreset, list: external };
+  const externalShown = externalHold.current.list;
+
   // your own library picks: hide films over your limits (in hide mode), otherwise the card warns
   const [showAllLibrary, setShowAllLibrary] = useState(false);
   const libraryLimited = contentPrefs.contentMode === "hide" && !showAllLibrary ? filterByContent(recs.map((r) => r.item), contentPrefs) : null;
   const libraryPicks = libraryLimited ? recs.filter((r) => !libraryLimited.hidden.includes(r.item)) : recs;
   const libraryHidden = recs.length - libraryPicks.length;
+  const libraryKey = `${items.map((i) => i.id).join(",")}|${moodPreset}|${mood}|${JSON.stringify(mixer)}|${showAllLibrary}|${contentPrefs.contentMode}`;
+  const libraryHold = useRef({ key: null, picks: [] });
+  if (libraryHold.current.key !== libraryKey) libraryHold.current = { key: libraryKey, picks: libraryPicks };
+  const libraryShown = libraryHold.current.picks.map((p) => ({ ...p, item: items.find((i) => i.id === p.item.id) || p.item }));
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto px-3 sm:px-4 md:px-6">
@@ -154,12 +167,12 @@ export function RecommendationsView({ items, apiKey, onAdd, onUpdate, onRemove, 
             <HiddenNotice count={gate.hiddenCount} onReveal={gate.reveal} />
             <div className="text-xs opacity-60">Based on {seedTitles.slice(0, 3).join(", ")}{seedTitles.length > 3 ? ` and ${seedTitles.length - 3} more` : ""}.</div>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
-              {external.map((r) => (
+              {externalShown.map((r) => (
                 <div key={r.id} className="min-w-0 space-y-1">
                   <MovieCard
                     item={{ id: r.id, title: r.title, year: r.year ? Number(r.year) : undefined, poster: r.poster, overview: "", voteAvg: r.voteAvg, rating: ratingById?.[r.id] || 0 }}
-                    onAdd={onAdd}
-                    onUpdate={(it) => onAdd?.(it)}
+                    onAdd={handle}
+                    onUpdate={handle}
                     compact
                     onOpenDetails={onOpenDetails}
                     isInLibrary={inLibraryIds?.has(r.id)}
@@ -184,9 +197,9 @@ export function RecommendationsView({ items, apiKey, onAdd, onUpdate, onRemove, 
           ) : null}
         </div>
         <HiddenNotice count={libraryHidden} onReveal={() => setShowAllLibrary(true)} />
-        {libraryPicks.length ? (
+        {libraryShown.length ? (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
-            {libraryPicks.map(({ item, reasons }) => (
+            {libraryShown.map(({ item, reasons }) => (
               <div key={item.id} className="min-w-0 space-y-1">
                 <MovieCard item={item} onUpdate={onUpdate} onRemove={onRemove} compact onOpenDetails={onOpenDetails} />
                 <div className="px-1 text-xs opacity-60">{reasons.join(" · ")}</div>
