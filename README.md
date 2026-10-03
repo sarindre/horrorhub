@@ -77,7 +77,7 @@ HorrorHub has no backend. Your library, settings and API keys are stored in this
 - If the browser refuses to save (for example, storage is full), a banner tells you so and suggests exporting a backup.
 
 ## Credits
-- **PumpBoy**, the mascot, was drawn by **totalnightmare**, who is happy for him to be used in HorrorHub. You can find TotalNightmar3 on [ArtFight](https://artfight.net/~TotalNightmar3). The artwork is hers; the code's license doesn't cover it.
+- **PumpBoy**, the mascot, was drawn by **totalnightmare**, who is happy for him to be used in HorrorHub. You can find TotalNightmar3 on ArtFight. The artwork is hers; the code's license doesn't cover it.
 - Movie data and images come from [TMDb](https://www.themoviedb.org/). This product uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.
 
 ## Project layout
