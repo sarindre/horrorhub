@@ -15,11 +15,11 @@ import { COMPANY, WHEN } from "../lib/diary.js";
 // the stored date, the note (undefined if you skipped it) and the rating (a number only if
 // you changed it in the dialog); the caller decides what to
 // do with them (see lib/watch.js).
-export function WatchDialog({ label = "Watched", variant = "secondary", longAgo = false, rating = 0, onLog }) {
+export function WatchDialog({ label = "Watched", variant = "secondary", longAgo = false, rating = 0, scared: filmScare = null, onLog }) {
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState(() => new Date());
   const fieldId = useId();
-  const [scared, setScared] = useState(null); // null until you move the slider
+  const [scared, setScared] = useState(filmScare); // starts at the scare level already set on the film; null if none
   const [company, setCompany] = useState(null);
   const [when, setWhen] = useState(null);
   const [rated, setRated] = useState(null); // null until you pick a rating here
@@ -27,7 +27,7 @@ export function WatchDialog({ label = "Watched", variant = "secondary", longAgo 
   const change = (next) => {
     if (next) {
       setDate(new Date()); // start from today each time
-      setScared(null);
+      setScared(filmScare);
       setCompany(null);
       setWhen(null);
       setRated(null);

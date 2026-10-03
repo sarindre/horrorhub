@@ -104,3 +104,27 @@ describe("rating from the watch dialog", () => {
     expect(onLog.mock.calls[0][2]).toBe(4);
   });
 });
+
+describe("scare level carried from the film", () => {
+  it("starts at the scare level already set on the film and logs it", () => {
+    const onLog = open({ scared: 7 });
+    expect(screen.getByText("7/10")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Watched today" }));
+    expect(onLog.mock.calls[0][1]).toEqual({ scared: 7 });
+  });
+
+  it("can still be changed or cleared in the dialog", () => {
+    const onLog = open({ scared: 7 });
+    fireEvent.change(screen.getByRole("slider", { name: "How scared were you?" }), { target: { value: "9" } });
+    expect(screen.getByText("9/10")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Clear" }));
+    expect(screen.getByText("not set")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Watched today" }));
+    expect(onLog.mock.calls[0][1]).toBeUndefined();
+  });
+
+  it("starts unset when the film has no scare rating of yours", () => {
+    open();
+    expect(screen.getByText("not set")).toBeTruthy();
+  });
+});

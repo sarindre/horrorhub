@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - "Log a watch date" now labels its two button rows: "Who did you watch with?" and "What time of day?".
 
 ### Fixed
+- **The Watched dialog starts at the scare level you set.** If you moved a film's Scare slider, the "How scared were you?" slider in the Watched dialog now starts there (you can still change or clear it), so the rating carries through to your scare diary.
 - **Back from a film's page now returns to your search results.** Pressing the browser's Back button (or "← Back") on a film's details used to throw you out of the screen, and coming back to a list started it over: search, filters, "Show more" and scroll position were lost. The details now have their own history entry, and the screen underneath is kept (just hidden), so you land exactly where you were.
 
 ### Changed

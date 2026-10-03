@@ -162,7 +162,7 @@ export function MovieCard({ item, onAdd, onUpdate, onRemove, showWatchlist = tru
                   <span className="tabular-nums">{scares}{scareInfo.estimated ? <span className="ml-1 text-[10px] opacity-70">est.</span> : null}</span>
                 </div>
                 {onUpdate && (
-                  <WatchDialog label="Watched" longAgo rating={item.rating} onLog={(iso, diary, rating) => onUpdate?.({ ...item, ...watchPatch(item, iso, diary, rating) })} />
+                  <WatchDialog label="Watched" longAgo rating={item.rating} scared={item.scaresRated || scares !== scareInfo.value ? scares : null} onLog={(iso, diary, rating) => onUpdate?.({ ...item, ...watchPatch(item, iso, diary, rating) })} />
                 )}
                 {onAdd && (
                   <>
@@ -319,7 +319,7 @@ export function MovieCard({ item, onAdd, onUpdate, onRemove, showWatchlist = tru
               </div>
 
               <div className="flex gap-2">
-                <WatchDialog label="Log watch" longAgo rating={item.rating} onLog={(iso, diary, rating) => onUpdate?.({ ...item, ...watchPatch(item, iso, diary, rating) })} />
+                <WatchDialog label="Log watch" longAgo rating={item.rating} scared={item.scaresRated || scares !== scareInfo.value ? scares : null} onLog={(iso, diary, rating) => onUpdate?.({ ...item, ...watchPatch(item, iso, diary, rating) })} />
 
                 <Dialog open={open} onOpenChange={setOpen}>
                   <DialogTrigger asChild>
