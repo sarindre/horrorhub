@@ -33,6 +33,7 @@ import { parseShelfPayload } from "./lib/shelves.js";
 import { usePrefersReducedMotion } from "./hooks/usePrefersReducedMotion.js";
 import { Settings } from "./features/settings/Settings.jsx";
 import { Attribution } from "./components/Attribution.jsx";
+import { PumpBoyHider } from "./components/PumpBoyHider.jsx";
 import { CalibrationContext } from "./lib/calibrationContext.js";
 import { Tonight } from "./features/tonight/Tonight.jsx";
 import { BackupReminder } from "./components/BackupReminder.jsx";
@@ -469,6 +470,7 @@ They came from TMDb keywords (like "based-on-novel"). Your own tags and the cura
         Your library lives on this device. Back it up any time in Settings → Backup &amp; Import.
       </p>
       <Attribution />
+      <PumpBoyHider view={tab} enabled={settings.pumpBoy} />
       {settings.flicker && !reducedMotion && <FlickerOverlay />}
       {settings.fog && !reducedMotion && <FogOverlay />}
       {settings.ambientAudio ? <AmbientAudio /> : null}

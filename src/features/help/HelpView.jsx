@@ -7,6 +7,7 @@ import { Input } from "../../components/ui/input.jsx";
 import { FAQ, GLOSSARY, HELP, SHORTCUTS, searchHelp } from "../../lib/help.js";
 import { NAV, VIEW_IDS } from "../../lib/nav.js";
 import { setPref } from "../../lib/prefs.js";
+import { emptyFinds, normalizeFinds } from "../../lib/pumpboy.js";
 import { usePersistentState } from "../../lib/usePersistentState.js";
 import { useToast } from "../../lib/toastContext.js";
 
@@ -22,6 +23,8 @@ export function HelpView({ onGo }) {
   const toast = useToast();
   const [query, setQuery] = useState("");
   const [autoOpen, setAutoOpen] = usePersistentState("help.autoOpen", true);
+  const [finds] = usePersistentState("pumpboy.finds", emptyFinds());
+  const pumpBoyFinds = normalizeFinds(finds).total;
   const found = useMemo(() => searchHelp(query, { views: SCREEN_ORDER }), [query]);
   const nothing = !found.screens.length && !found.glossary.length && !found.faq.length;
 
@@ -126,7 +129,10 @@ export function HelpView({ onGo }) {
             <h3 className="text-sm uppercase tracking-wide opacity-80">About</h3>
             <div className="flex items-center gap-3">
               <img src={pumpboy} alt="PumpBoy, the HorrorHub mascot" width={72} height={72} className="h-[72px] w-[72px] shrink-0 rounded-2xl" />
-              <p className="min-w-0 text-sm opacity-80">{MASCOT_NOTE}</p>
+              <div className="min-w-0 space-y-1 text-sm opacity-80">
+                <p>{MASCOT_NOTE}</p>
+                <p>{pumpBoyFinds ? `He hides on a few screens each day. You've found him ${pumpBoyFinds} time${pumpBoyFinds === 1 ? "" : "s"}.` : "He hides on a few screens each day. Can you find him?"}</p>
+              </div>
             </div>
           </section>
         </>

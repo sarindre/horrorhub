@@ -125,6 +125,7 @@ export function Settings({ backup, app, onExported, onExportNow, onBeforeReset, 
           ) : null}
           <Toggle id="flicker-toggle" label="Ambient edge flicker" checked={settings.flicker} onChange={(v) => update({ flicker: v })} />
           <Toggle id="fog-toggle" label="Fog overlay" checked={settings.fog} onChange={(v) => update({ fog: v })} />
+          <Toggle id="pumpboy-toggle" label="PumpBoy hides around the app" checked={settings.pumpBoy} onChange={(v) => update({ pumpBoy: v })} />
           <Toggle id="audio-toggle" label="Ambient whispers/heartbeat" checked={settings.ambientAudio} onChange={(v) => update({ ambientAudio: v })} />
           <Toggle id="externaloff-toggle" label="Disable external lookups (OMDb / DoesTheDogDie)" checked={settings.externalOff} onChange={(v) => update({ externalOff: v })} />
           <Toggle id="lightsout-toggle" label="Lights‑Out dimmer" checked={settings.lightsOut} onChange={(v) => update({ lightsOut: v })} />

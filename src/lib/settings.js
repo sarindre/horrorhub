@@ -29,6 +29,7 @@ export const DEFAULT_SETTINGS = {
   spookyFont: true,
   flicker: true,
   fog: true,
+  pumpBoy: true, // PumpBoy hides on a few screens each day
   ambientAudio: false,
   lightsOut: false,
   highContrast: false,
@@ -80,6 +81,7 @@ export function normalizeSettings(raw) {
     spookyFont: bool(s.spookyFont, d.spookyFont),
     flicker: bool(s.flicker, d.flicker),
     fog: bool(s.fog, d.fog),
+    pumpBoy: bool(s.pumpBoy, d.pumpBoy),
     ambientAudio: bool(s.ambientAudio, d.ambientAudio),
     lightsOut: bool(s.lightsOut, d.lightsOut),
     highContrast: bool(s.highContrast, d.highContrast),
