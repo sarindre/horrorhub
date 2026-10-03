@@ -146,9 +146,12 @@ export function Discover({ apiKey, region = "US", onAdd, onRemove, inLibraryIds,
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap gap-2 items-center">
-        <div className="relative flex-1 min-w-[240px]">
-          <Input placeholder="Search horror (title)..." value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") search(); }} />
-          <SearchIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-60" />
+        <div className="flex flex-1 min-w-[280px] items-center gap-2">
+          <Input className="min-w-0 flex-1" placeholder="Search horror (title)..." value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") search(); }} />
+          <Button size="sm" className="shrink-0" onClick={search}>
+            <SearchIcon className="h-4 w-4 mr-2" />
+            Search
+          </Button>
         </div>
 
         {/* sort quick buttons */}
@@ -159,11 +162,6 @@ export function Discover({ apiKey, region = "US", onAdd, onRemove, inLibraryIds,
           <Button size="sm" variant={sort === "primary_release_date.asc" ? "default" : "outline"} onClick={() => setSort("primary_release_date.asc")}>Oldest</Button>
           <Button size="sm" variant="outline" onClick={classicUnder90}>Classic &lt;90m</Button>
         </div>
-
-        <Button size="sm" onClick={search}>
-          <SearchIcon className="h-4 w-4 mr-2" />
-          Search
-        </Button>
 
         <Button size="sm" variant="outline" onClick={loadUpcoming}>
           <BellRing className="h-4 w-4 mr-2" />
