@@ -150,5 +150,6 @@ describe("About", () => {
     const about = screen.getByRole("region", { name: "About" });
     expect(within(about).getByText(/PumpBoy/)).toBeTruthy();
     expect(within(about).getByText(/totalnightmare/)).toBeTruthy();
+    expect(within(about).getByRole("link", { name: "ArtFight" }).getAttribute("href")).toBe("https://artfight.net/~TotalNightmar3");
   });
 });

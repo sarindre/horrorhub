@@ -131,6 +131,10 @@ export function HelpView({ onGo }) {
               <img src={pumpboy} alt="PumpBoy, the HorrorHub mascot" width={72} height={72} className="h-[72px] w-[72px] shrink-0 rounded-2xl" />
               <div className="min-w-0 space-y-1 text-sm opacity-80">
                 <p>{MASCOT_NOTE}</p>
+                <p>
+                  You can find TotalNightmar3 on{" "}
+                  <a href="https://artfight.net/~TotalNightmar3" target="_blank" rel="noreferrer" className="underline">ArtFight</a>.
+                </p>
                 <p>{pumpBoyFinds ? `He hides on a few screens each day. You've found him ${pumpBoyFinds} time${pumpBoyFinds === 1 ? "" : "s"}.` : "He hides on a few screens each day. Can you find him?"}</p>
               </div>
             </div>
