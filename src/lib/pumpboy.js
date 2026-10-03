@@ -60,7 +60,7 @@ export function recordFind(finds, day, view) {
 }
 
 export function findMessage(total) {
-  if (total <= 1) return "You found PumpBoy! He'll hide somewhere new tomorrow.";
+  if (total <= 1) return "You found PumpBoy, drawn by totalnightmare! He'll hide somewhere new tomorrow.";
   if (total % 10 === 0) return `Found him again! That's ${total} times. You're good at this.`;
   return `Found him! That's ${total} so far.`;
 }

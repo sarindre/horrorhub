@@ -11,6 +11,9 @@ All notable changes to this project will be documented in this file.
 - The "Watched" dialog now lets you give the film a knife rating too, so you can log the date, rating, company and scare level in one go.
 - "Log a watch date" now labels its two button rows: "Who did you watch with?" and "What time of day?".
 
+### Changed
+- PumpBoy's artist signature (totalnightmare) now stays on the app icon, favicon and installer icon, and on the hide-and-seek PumpBoy, instead of being cropped out.
+
 ### Fixed
 - **Tune your picks: a card no longer vanishes when you rate it.** Rating or adding a suggestion put it in your library, which dropped it from the list under your cursor and reshuffled the rest. The lists are now held steady (until you change the vibe or your library's films change), and a message says where the film went.
 - **The Watched dialog starts at the scare level you set.** If you moved a film's Scare slider, the "How scared were you?" slider in the Watched dialog now starts there (you can still change or clear it), so the rating carries through to your scare diary.

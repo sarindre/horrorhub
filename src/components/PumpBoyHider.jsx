@@ -1,17 +1,18 @@
 import { useMemo } from "react";
-import pumpboy from "../assets/pumpboy.png";
+import pumpboy from "../assets/pumpboy-original.png"; // the full drawing, with its artist's signature
 import { dayKey } from "../lib/dates.js";
 import { VIEW_IDS } from "../lib/nav.js";
 import { emptyFinds, findMessage, foundToday, hidingPlaces, recordFind } from "../lib/pumpboy.js";
 import { useToast } from "../lib/toastContext.js";
 import { usePersistentState } from "../lib/usePersistentState.js";
 
-// Where he sits for each hiding spot: most of him is off the edge of the screen.
+// Where he sits for each hiding spot: much of him is off the edge of the screen, and he slides fully
+// into view (signature and all) when you point at him.
 const SPOT_CLASS = {
-  "bottom-right": "bottom-0 right-6 translate-y-[45%] hover:translate-y-[15%] focus-visible:translate-y-[15%]",
-  "bottom-left": "bottom-0 left-6 translate-y-[45%] hover:translate-y-[15%] focus-visible:translate-y-[15%]",
-  right: "right-0 top-1/2 translate-x-[45%] hover:translate-x-[15%] focus-visible:translate-x-[15%]",
-  left: "left-0 top-[60%] -translate-x-[45%] hover:-translate-x-[15%] focus-visible:-translate-x-[15%]",
+  "bottom-right": "bottom-0 right-6 translate-y-[45%] hover:translate-y-0 focus-visible:translate-y-0",
+  "bottom-left": "bottom-0 left-6 translate-y-[45%] hover:translate-y-0 focus-visible:translate-y-0",
+  right: "right-0 top-1/2 translate-x-[45%] hover:translate-x-0 focus-visible:translate-x-0",
+  left: "left-0 top-[60%] -translate-x-[45%] hover:translate-x-0 focus-visible:translate-x-0",
 };
 
 // PumpBoy, hiding on today's chosen screens until you click him. Switch him off in Settings.
@@ -37,7 +38,7 @@ export function PumpBoyHider({ view, enabled = true }) {
       title="Psst…"
       className={`fixed z-30 rounded-2xl p-0 opacity-90 motion-safe:transition-transform motion-safe:duration-200 ${SPOT_CLASS[spot]}`}
     >
-      <img src={pumpboy} alt="" width={56} height={56} className="h-14 w-14 rounded-2xl" draggable={false} />
+      <img src={pumpboy} alt="" width={426} height={567} className="h-[76px] w-auto rounded-2xl" draggable={false} />
     </button>
   );
 }
